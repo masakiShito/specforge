@@ -1,0 +1,12 @@
+{
+  "name": "@specforge/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'ui package build is not initialized yet'",
+    "lint": "echo 'ui package lint is not initialized yet'",
+    "test": "echo 'ui package test is not initialized yet'",
+    "format": "echo 'ui package format is not initialized yet'"
+  }
+}

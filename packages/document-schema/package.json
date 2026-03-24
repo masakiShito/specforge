@@ -1,0 +1,12 @@
+{
+  "name": "@specforge/document-schema",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'document-schema build is not initialized yet'",
+    "lint": "echo 'document-schema lint is not initialized yet'",
+    "test": "echo 'document-schema test is not initialized yet'",
+    "format": "echo 'document-schema format is not initialized yet'"
+  }
+}

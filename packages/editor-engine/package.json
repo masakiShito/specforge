@@ -1,0 +1,12 @@
+{
+  "name": "@specforge/editor-engine",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'editor-engine build is not initialized yet'",
+    "lint": "echo 'editor-engine lint is not initialized yet'",
+    "test": "echo 'editor-engine test is not initialized yet'",
+    "format": "echo 'editor-engine format is not initialized yet'"
+  }
+}

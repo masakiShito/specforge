@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: specforge-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: specforge
+      POSTGRES_USER: specforge
+      POSTGRES_PASSWORD: specforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - specforge-db-data:/var/lib/postgresql/data
+
+volumes:
+  specforge-db-data:
