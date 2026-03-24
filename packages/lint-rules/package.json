@@ -1,0 +1,12 @@
+{
+  "name": "@specforge/lint-rules",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'lint-rules build is not initialized yet'",
+    "lint": "echo 'lint-rules lint is not initialized yet'",
+    "test": "echo 'lint-rules test is not initialized yet'",
+    "format": "echo 'lint-rules format is not initialized yet'"
+  }
+}

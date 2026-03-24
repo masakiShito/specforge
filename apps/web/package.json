@@ -1,0 +1,12 @@
+{
+  "name": "@specforge/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'web app scaffold is not initialized yet'",
+    "build": "echo 'web build is not initialized yet'",
+    "lint": "echo 'web lint is not initialized yet'",
+    "test": "echo 'web test is not initialized yet'",
+    "format": "echo 'web format is not initialized yet'"
+  }
+}
