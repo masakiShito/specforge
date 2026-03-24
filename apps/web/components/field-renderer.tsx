@@ -11,9 +11,14 @@ interface FieldRendererProps {
 
 const inputStyle: CSSProperties = {
   width: "100%",
-  border: "1px solid #CBD5E1",
+  border: "1px solid #E2E8F0",
   borderRadius: "6px",
-  padding: "8px"
+  padding: "8px 10px",
+  fontSize: "0.875rem",
+  color: "#0F172A",
+  backgroundColor: "#FFFFFF",
+  boxSizing: "border-box",
+  outline: "none"
 };
 
 export function FieldRenderer({ field, value, onValueChange }: FieldRendererProps) {
@@ -22,6 +27,7 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
       <input
         style={inputStyle}
         type="text"
+        placeholder="テキストを入力"
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(field.id, event.target.value)}
       />
@@ -31,7 +37,8 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
   if (field.valueType === "textarea") {
     return (
       <textarea
-        style={{ ...inputStyle, minHeight: "90px" }}
+        style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
+        placeholder="テキストを入力"
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(field.id, event.target.value)}
       />
@@ -55,8 +62,8 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
         }}
       >
         <option value="">未選択</option>
-        <option value="true">true</option>
-        <option value="false">false</option>
+        <option value="true">はい</option>
+        <option value="false">いいえ</option>
       </select>
     );
   }
@@ -80,15 +87,33 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
 
   if (field.valueType === "table" || field.valueType === "reference" || field.valueType === "number") {
     return (
-      <div style={{ border: "1px dashed #94A3B8", borderRadius: "6px", padding: "8px", color: "#334155" }}>
-        この型（{field.valueType}）は今回の最小実装では未対応です。
+      <div
+        style={{
+          border: "1px dashed #CBD5E1",
+          borderRadius: "6px",
+          padding: "10px 12px",
+          color: "#94A3B8",
+          fontSize: "0.8rem",
+          backgroundColor: "#F8FAFC"
+        }}
+      >
+        この型（{field.valueType}）は現在未対応です
       </div>
     );
   }
 
   return (
-    <div style={{ border: "1px dashed #EF4444", borderRadius: "6px", padding: "8px", color: "#B91C1C" }}>
-      Unknown field type.
+    <div
+      style={{
+        border: "1px dashed #FCA5A5",
+        borderRadius: "6px",
+        padding: "10px 12px",
+        color: "#EF4444",
+        fontSize: "0.8rem",
+        backgroundColor: "#FEF2F2"
+      }}
+    >
+      不明なフィールド型です
     </div>
   );
 }

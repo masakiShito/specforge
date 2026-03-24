@@ -12,31 +12,44 @@ interface SectionFormProps {
 export function SectionForm({ section, fieldValues, onValueChange }: SectionFormProps) {
   return (
     <section>
-      <header style={{ marginBottom: "12px" }}>
-        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{section.title}</h2>
-        <p style={{ margin: "6px 0 0", color: "#475569", fontSize: "0.95rem" }}>
-          key: {section.key} / required: {String(section.required)}
+      <header style={{ marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "12px" }}>
+        <h2 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600, color: "#0F172A" }}>{section.title}</h2>
+        <p style={{ margin: "4px 0 0", color: "#94A3B8", fontSize: "0.75rem" }}>
+          {section.required ? "必須セクション" : "任意セクション"}
         </p>
       </header>
 
-      <div style={{ display: "grid", gap: "12px" }}>
+      <div style={{ display: "grid", gap: "16px" }}>
         {section.fields.map((field) => (
-          <div
-            key={field.id}
-            style={{
-              border: "1px solid #E2E8F0",
-              borderRadius: "8px",
-              padding: "12px",
-              backgroundColor: "#FFFFFF"
-            }}
-          >
-            <label style={{ display: "block", fontWeight: 600, marginBottom: "6px" }}>
+          <div key={field.id}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                color: "#334155",
+                marginBottom: "6px"
+              }}
+            >
               {field.label}
-              {field.required ? <span style={{ color: "#B91C1C", marginLeft: "6px" }}>*required</span> : null}
+              {field.required && (
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 600,
+                    color: "#EF4444",
+                    border: "1px solid #FCA5A5",
+                    borderRadius: "4px",
+                    padding: "0 4px",
+                    lineHeight: "1.6"
+                  }}
+                >
+                  必須
+                </span>
+              )}
             </label>
-            <p style={{ margin: "0 0 8px", color: "#64748B", fontSize: "0.85rem" }}>
-              key: {field.key} / valueType: {field.valueType}
-            </p>
             <FieldRenderer field={field} value={fieldValues[field.id]} onValueChange={onValueChange} />
           </div>
         ))}
