@@ -36,7 +36,7 @@ export function ValidationPanel({ document, state, warnings }: ValidationPanelPr
   const preview = buildPreview(document, state);
 
   return (
-    <aside style={{ display: "grid", gap: "16px" }}>
+    <aside style={{ display: "grid", gap: "16px", minWidth: 0 }}>
       <section
         style={{
           border: "1px solid #E2E8F0",
@@ -86,7 +86,9 @@ export function ValidationPanel({ document, state, warnings }: ValidationPanelPr
             backgroundColor: "#1E293B",
             color: "#E2E8F0",
             padding: "12px",
-            borderRadius: "6px"
+            borderRadius: "6px",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-all" as const
           }}
         >
           {JSON.stringify(preview, null, 2)}

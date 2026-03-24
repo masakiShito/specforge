@@ -39,7 +39,10 @@ export function DocumentEditor() {
         fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
         backgroundColor: "#F1F5F9",
         minHeight: "100vh",
-        padding: "24px"
+        padding: "24px",
+        boxSizing: "border-box" as const,
+        maxWidth: "100vw",
+        overflow: "hidden"
       }}
     >
       <header style={{ marginBottom: "20px" }}>
@@ -54,9 +57,10 @@ export function DocumentEditor() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "260px 1fr 380px",
+          gridTemplateColumns: "240px 1fr 320px",
           gap: "16px",
-          alignItems: "start"
+          alignItems: "start",
+          minWidth: 0
         }}
       >
         <aside
@@ -64,7 +68,8 @@ export function DocumentEditor() {
             border: "1px solid #E2E8F0",
             borderRadius: "8px",
             padding: "16px",
-            backgroundColor: "#FFFFFF"
+            backgroundColor: "#FFFFFF",
+            minWidth: 0
           }}
         >
           <h2 style={{ margin: "0 0 4px", fontSize: "1rem", fontWeight: 600, color: "#0F172A" }}>
@@ -86,7 +91,8 @@ export function DocumentEditor() {
             border: "1px solid #E2E8F0",
             borderRadius: "8px",
             padding: "16px",
-            backgroundColor: "#FFFFFF"
+            backgroundColor: "#FFFFFF",
+            minWidth: 0
           }}
         >
           {selectedSection ? (
