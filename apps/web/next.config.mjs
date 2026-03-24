@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone'
+  output: 'standalone',
+  transpilePackages: ['@specforge/document-schema']
 };
 
 export default nextConfig;
