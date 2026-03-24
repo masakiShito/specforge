@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   web:
     build:
@@ -13,6 +15,8 @@ services:
       WATCHPACK_POLLING: "true"
     volumes:
       - .:/workspace
+      - web-node-modules:/workspace/node_modules
+      - web-app-node-modules:/workspace/apps/web/node_modules
     depends_on:
       - api
 
@@ -50,3 +54,5 @@ services:
 
 volumes:
   specforge-db-data:
+  web-node-modules:
+  web-app-node-modules:
