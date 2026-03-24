@@ -1,14 +1,52 @@
 version: "3.9"
 
 services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: specforge-web
+    working_dir: /workspace/apps/web
+    command: pnpm dev
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/workspace
+      - web-node-modules:/workspace/node_modules
+      - web-app-node-modules:/workspace/apps/web/node_modules
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: specforge-api
+    working_dir: /app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-specforge}
+      POSTGRES_USER: ${POSTGRES_USER:-specforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-specforge}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://specforge:specforge@db:5432/specforge}
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      - db
+
   db:
     image: postgres:16
     container_name: specforge-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: specforge
-      POSTGRES_USER: specforge
-      POSTGRES_PASSWORD: specforge
+      POSTGRES_DB: ${POSTGRES_DB:-specforge}
+      POSTGRES_USER: ${POSTGRES_USER:-specforge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-specforge}
     ports:
       - "5432:5432"
     volumes:
@@ -16,3 +54,5 @@ services:
 
 volumes:
   specforge-db-data:
+  web-node-modules:
+  web-app-node-modules:

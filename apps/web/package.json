@@ -3,10 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "echo 'web app scaffold is not initialized yet'",
-    "build": "echo 'web build is not initialized yet'",
-    "lint": "echo 'web lint is not initialized yet'",
-    "test": "echo 'web test is not initialized yet'",
-    "format": "echo 'web format is not initialized yet'"
+    "dev": "next dev -H 0.0.0.0 -p 3000",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0 -p 3000",
+    "lint": "next lint",
+    "test": "echo 'web tests are not configured yet'",
+    "format": "echo 'web format is not configured yet'"
+  },
+  "dependencies": {
+    "next": "14.2.18",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.7.2"
   }
 }

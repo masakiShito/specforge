@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "echo 'api app scaffold is not initialized yet'",
-    "build": "echo 'api build is not initialized yet'",
-    "lint": "echo 'api lint is not initialized yet'",
-    "test": "echo 'api test is not initialized yet'",
-    "format": "echo 'api format is not initialized yet'"
+    "dev": "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "build": "echo 'api build is not required for FastAPI in dev environment'",
+    "lint": "echo 'api lint is not configured yet'",
+    "test": "echo 'api tests are not configured yet'",
+    "format": "echo 'api format is not configured yet'"
   }
 }

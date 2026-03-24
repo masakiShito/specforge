@@ -49,18 +49,46 @@ specforge/
     └── docker/             # インフラ定義の置き場
 ```
 
+## 開発環境（Docker Compose）
+
+ローカル開発用に、以下 3 サービスを `docker-compose.yml` で起動できます。
+
+- `web`: Next.js + TypeScript (port `3000`)
+- `api`: FastAPI + Uvicorn (port `8000`)
+- `db`: PostgreSQL 16 (port `5432`)
+
+### 起動方法
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+または npm script を使う場合:
+
+```bash
+pnpm docker:up
+```
+
+### アクセス先
+
+- Web: http://localhost:3000
+- API root: http://localhost:8000/
+- API health: http://localhost:8000/health
+- PostgreSQL: `localhost:5432`
+
+### 停止
+
+```bash
+docker compose down
+```
+
 ## 開発方針
 1. apps と packages の責務を混ぜない
 2. document-schema / editor-engine / lint-rules を中核として育てる
 3. Markdown は出力形式の一つであり、内部表現の前提にしない
 4. 汎用的すぎる `utils` / `common` の乱立を避ける
 5. 仕様と思想を docs に明文化し、実装より先に整合性を取る
-
-## セットアップ（初期）
-```bash
-pnpm install
-pnpm dev
-```
 
 ## ドキュメント
 - Docs Index: `docs/README.md`
