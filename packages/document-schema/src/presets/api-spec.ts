@@ -1,4 +1,4 @@
-import type { Document } from "../core/document.js";
+import type { Document } from "../core/document";
 
 export const apiSpecPreset: Document = {
   id: "preset-api-spec",

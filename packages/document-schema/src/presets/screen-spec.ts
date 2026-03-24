@@ -1,4 +1,4 @@
-import type { Document } from "../core/document.js";
+import type { Document } from "../core/document";
 
 export const screenSpecPreset: Document = {
   id: "preset-screen-spec",

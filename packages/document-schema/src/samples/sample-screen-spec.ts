@@ -1,4 +1,4 @@
-import type { Project } from "../core/project.js";
+import type { Project } from "../core/project";
 
 export const sampleScreenSpecProject: Project = {
   id: "project-payment",

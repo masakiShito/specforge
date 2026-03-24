@@ -1,4 +1,4 @@
-import type { ReferenceKind } from "../enums/reference-kind.js";
+import type { ReferenceKind } from "../enums/reference-kind";
 
 export interface Reference {
   id: string;

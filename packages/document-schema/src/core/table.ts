@@ -1,4 +1,4 @@
-import type { Field } from "./field.js";
+import type { Field } from "./field";
 
 export interface Table {
   id: string;
