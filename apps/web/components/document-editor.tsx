@@ -34,26 +34,44 @@ export function DocumentEditor() {
   };
 
   return (
-    <main style={{ fontFamily: "sans-serif", backgroundColor: "#F8FAFC", minHeight: "100vh", padding: "18px" }}>
-      <header style={{ marginBottom: "14px" }}>
-        <h1 style={{ margin: 0 }}>SpecForge Structured Document Editor</h1>
-        <p style={{ margin: "8px 0 0", color: "#475569" }}>
-          Markdown ではなく、schema 駆動で設計書構造を編集する最小エディタ
+    <main
+      style={{
+        fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
+        backgroundColor: "#F1F5F9",
+        minHeight: "100vh",
+        padding: "24px"
+      }}
+    >
+      <header style={{ marginBottom: "20px" }}>
+        <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "#0F172A" }}>
+          SpecForge
+        </h1>
+        <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.875rem" }}>
+          スキーマ駆動の構造化設計書エディタ
         </p>
       </header>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "280px minmax(420px, 1fr) 420px",
-          gap: "14px",
+          gridTemplateColumns: "260px 1fr 380px",
+          gap: "16px",
           alignItems: "start"
         }}
       >
-        <aside style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", backgroundColor: "#FFFFFF" }}>
-          <h2 style={{ marginTop: 0, marginBottom: "8px", fontSize: "1.1rem" }}>{state.document.title}</h2>
-          <p style={{ margin: "0 0 12px", color: "#64748B", fontSize: "0.86rem" }}>
-            kind: {state.document.kind} / version: {state.document.version}
+        <aside
+          style={{
+            border: "1px solid #E2E8F0",
+            borderRadius: "8px",
+            padding: "16px",
+            backgroundColor: "#FFFFFF"
+          }}
+        >
+          <h2 style={{ margin: "0 0 4px", fontSize: "1rem", fontWeight: 600, color: "#0F172A" }}>
+            {state.document.title}
+          </h2>
+          <p style={{ margin: "0 0 16px", color: "#94A3B8", fontSize: "0.75rem" }}>
+            種別: {state.document.kind}　／　バージョン: {state.document.version}
           </p>
           <SectionList
             sections={state.document.sections}
@@ -63,11 +81,18 @@ export function DocumentEditor() {
           />
         </aside>
 
-        <section style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", backgroundColor: "#FFFFFF" }}>
+        <section
+          style={{
+            border: "1px solid #E2E8F0",
+            borderRadius: "8px",
+            padding: "16px",
+            backgroundColor: "#FFFFFF"
+          }}
+        >
           {selectedSection ? (
             <SectionForm section={selectedSection} fieldValues={state.fieldValues} onValueChange={handleFieldValueChange} />
           ) : (
-            <p>セクションが存在しません。</p>
+            <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
           )}
         </section>
 

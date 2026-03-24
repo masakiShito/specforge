@@ -14,8 +14,8 @@ export function SectionList({
   onSelectSection
 }: SectionListProps) {
   return (
-    <nav aria-label="section-list">
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "8px" }}>
+    <nav aria-label="セクション一覧">
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "6px" }}>
         {sections.map((section) => {
           const isSelected = section.id === selectedSectionId;
           const missingCount = missingRequiredBySection[section.id] ?? 0;
@@ -28,20 +28,32 @@ export function SectionList({
                 style={{
                   width: "100%",
                   textAlign: "left",
-                  border: isSelected ? "1px solid #1D4ED8" : "1px solid #CBD5E1",
-                  borderRadius: "8px",
-                  padding: "10px",
+                  border: isSelected ? "2px solid #3B82F6" : "1px solid #E2E8F0",
+                  borderRadius: "6px",
+                  padding: "10px 12px",
                   backgroundColor: isSelected ? "#EFF6FF" : "#FFFFFF",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  transition: "all 0.15s ease"
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontWeight: 600 }}>{section.title}</span>
-                  <span style={{ color: missingCount > 0 ? "#B91C1C" : "#166534", fontSize: "0.85rem" }}>
-                    未入力: {missingCount}
-                  </span>
+                  <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#0F172A" }}>{section.title}</span>
+                  {missingCount > 0 && (
+                    <span
+                      style={{
+                        fontSize: "0.7rem",
+                        fontWeight: 600,
+                        color: "#FFFFFF",
+                        backgroundColor: "#EF4444",
+                        borderRadius: "9999px",
+                        padding: "1px 7px",
+                        lineHeight: "1.4"
+                      }}
+                    >
+                      {missingCount}
+                    </span>
+                  )}
                 </div>
-                <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.82rem" }}>key: {section.key}</p>
               </button>
             </li>
           );

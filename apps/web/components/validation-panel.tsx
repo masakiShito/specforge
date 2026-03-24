@@ -36,34 +36,57 @@ export function ValidationPanel({ document, state, warnings }: ValidationPanelPr
   const preview = buildPreview(document, state);
 
   return (
-    <aside style={{ display: "grid", gap: "12px" }}>
-      <section style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", backgroundColor: "#FFFFFF" }}>
-        <h3 style={{ marginTop: 0, marginBottom: "10px" }}>Validation Warnings</h3>
+    <aside style={{ display: "grid", gap: "16px" }}>
+      <section
+        style={{
+          border: "1px solid #E2E8F0",
+          borderRadius: "8px",
+          padding: "16px",
+          backgroundColor: "#FFFFFF"
+        }}
+      >
+        <h3 style={{ margin: "0 0 12px", fontSize: "0.875rem", fontWeight: 600, color: "#0F172A" }}>
+          バリデーション
+        </h3>
         {warnings.length === 0 ? (
-          <p style={{ margin: 0, color: "#166534" }}>必須項目の未入力はありません。</p>
+          <p style={{ margin: 0, color: "#22C55E", fontSize: "0.8rem", fontWeight: 500 }}>
+            未入力の必須項目はありません
+          </p>
         ) : (
-          <ul style={{ margin: 0, paddingLeft: "18px", color: "#991B1B" }}>
+          <ul style={{ margin: 0, paddingLeft: "16px", display: "grid", gap: "4px" }}>
             {warnings.map((warning) => (
-              <li key={warning.id} style={{ marginBottom: "6px" }}>
-                [{warning.sectionTitle}] {warning.fieldLabel}: {warning.message}
+              <li key={warning.id} style={{ fontSize: "0.8rem", color: "#EF4444" }}>
+                <span style={{ fontWeight: 500 }}>{warning.sectionTitle}</span>
+                {" — "}
+                {warning.fieldLabel}: {warning.message}
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section style={{ border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px", backgroundColor: "#FFFFFF" }}>
-        <h3 style={{ marginTop: 0, marginBottom: "10px" }}>Document State JSON</h3>
+      <section
+        style={{
+          border: "1px solid #E2E8F0",
+          borderRadius: "8px",
+          padding: "16px",
+          backgroundColor: "#FFFFFF"
+        }}
+      >
+        <h3 style={{ margin: "0 0 12px", fontSize: "0.875rem", fontWeight: 600, color: "#0F172A" }}>
+          ドキュメント JSON
+        </h3>
         <pre
           style={{
             margin: 0,
             maxHeight: "420px",
             overflow: "auto",
-            fontSize: "0.78rem",
-            backgroundColor: "#0F172A",
+            fontSize: "0.72rem",
+            lineHeight: "1.5",
+            backgroundColor: "#1E293B",
             color: "#E2E8F0",
-            padding: "10px",
-            borderRadius: "8px"
+            padding: "12px",
+            borderRadius: "6px"
           }}
         >
           {JSON.stringify(preview, null, 2)}
