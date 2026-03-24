@@ -1,5 +1,5 @@
-import type { Field } from "./field.js";
-import type { Reference } from "./reference.js";
+import type { Field } from "./field";
+import type { Reference } from "./reference";
 
 export interface Section {
   id: string;

@@ -1,6 +1,6 @@
-import type { FieldValueType } from "../enums/field-value-type.js";
-import type { Reference } from "./reference.js";
-import type { Table } from "./table.js";
+import type { FieldValueType } from "../enums/field-value-type";
+import type { Reference } from "./reference";
+import type { Table } from "./table";
 
 export interface FieldOption {
   id: string;
