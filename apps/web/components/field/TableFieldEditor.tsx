@@ -13,6 +13,7 @@ interface TableFieldEditorProps {
   cellErrors?: Set<string>;
   cellWarnings?: Set<string>;
   onRowsChange: (rows: TableRowValue[]) => void;
+  apiReferenceOptions?: { id: string; value: string; label: string }[];
 }
 
 function createEmptyRow(columns: Field[]): TableRowValue {
@@ -103,7 +104,7 @@ function ColumnHeader({ column }: { column: Field }) {
   const [expanded, setExpanded] = useState(false);
   const desc = column.description ?? "";
   const isLong = desc.length > DESCRIPTION_TRUNCATE;
-  const displayDesc = !isLong || expanded ? desc : desc.slice(0, DESCRIPTION_TRUNCATE) + "…";
+  const displayDesc = !isLong || expanded ? desc : desc.slice(0, DESCRIPTION_TRUNCATE) + "...";
 
   return (
     <th style={thStyle}>
@@ -149,7 +150,7 @@ function ColumnHeader({ column }: { column: Field }) {
                 cursor: "pointer",
               }}
             >
-              {expanded ? "閉じる" : "…"}
+              {expanded ? "閉じる" : "..."}
             </button>
           )}
         </div>
@@ -166,6 +167,7 @@ export function TableFieldEditor({
   cellErrors,
   cellWarnings,
   onRowsChange,
+  apiReferenceOptions,
 }: TableFieldEditorProps) {
   const columns = table.columns;
 
@@ -191,6 +193,12 @@ export function TableFieldEditor({
   };
 
   if (rows.length === 0) {
+    // Show column hints in empty state
+    const columnHints = columns
+      .filter((col) => col.required)
+      .map((col) => col.label)
+      .join("、");
+
     return (
       <div
         style={{
@@ -203,13 +211,24 @@ export function TableFieldEditor({
       >
         <p
           style={{
-            margin: "0 0 10px",
+            margin: "0 0 6px",
             color: "#94A3B8",
             fontSize: "0.825rem",
           }}
         >
           行を追加してください
         </p>
+        {columnHints && (
+          <p
+            style={{
+              margin: "0 0 10px",
+              color: "#CBD5E1",
+              fontSize: "0.72rem",
+            }}
+          >
+            必須列: {columnHints}
+          </p>
+        )}
         <button type="button" style={addButtonStyle} onClick={handleAddRow}>
           + 行を追加
         </button>
@@ -267,7 +286,8 @@ export function TableFieldEditor({
                           cellHasError,
                           cellHasWarning,
                           (value) =>
-                            handleCellChange(rowIndex, col.key, value)
+                            handleCellChange(rowIndex, col.key, value),
+                          apiReferenceOptions
                         )}
                       </td>
                     );
@@ -318,9 +338,31 @@ function renderCellInput(
   value: string | number | boolean | undefined,
   hasError: boolean,
   hasWarning: boolean,
-  onChange: (value: string | number | boolean | undefined) => void
+  onChange: (value: string | number | boolean | undefined) => void,
+  apiReferenceOptions?: { id: string; value: string; label: string }[]
 ) {
   const inputStyle = getCellInputStyle(hasError, hasWarning);
+
+  // Special handling for targetDocumentId — render as API reference selector
+  if (column.key === "targetDocumentId" && apiReferenceOptions) {
+    return (
+      <select
+        style={{
+          ...inputStyle,
+          color: value ? "#0F172A" : "#94A3B8",
+        }}
+        value={typeof value === "string" ? value : ""}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">API仕様書を選択</option>
+        {apiReferenceOptions.map((opt) => (
+          <option key={opt.id} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
 
   if (column.valueType === "boolean") {
     const normalizedValue =

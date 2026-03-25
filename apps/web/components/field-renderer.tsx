@@ -11,6 +11,7 @@ interface FieldRendererProps {
   cellErrors?: Set<string>;
   cellWarnings?: Set<string>;
   onValueChange: (fieldId: string, value: FieldValue) => void;
+  apiReferenceOptions?: { id: string; value: string; label: string }[];
 }
 
 function getInputStyle(hasError: boolean): CSSProperties {
@@ -28,7 +29,7 @@ function getInputStyle(hasError: boolean): CSSProperties {
 }
 
 export const FieldRenderer = forwardRef(function FieldRenderer(
-  { field, value, hasError = false, cellErrors, cellWarnings, onValueChange }: FieldRendererProps,
+  { field, value, hasError = false, cellErrors, cellWarnings, onValueChange, apiReferenceOptions }: FieldRendererProps,
   ref: Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
 ) {
   const style = getInputStyle(hasError);
@@ -39,7 +40,7 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
         ref={ref as Ref<HTMLInputElement>}
         style={style}
         type="text"
-        placeholder="テキストを入力"
+        placeholder={field.placeholder ?? "テキストを入力"}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(field.id, event.target.value)}
       />
@@ -51,7 +52,7 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
       <textarea
         ref={ref as Ref<HTMLTextAreaElement>}
         style={{ ...style, minHeight: "100px", resize: "vertical" }}
-        placeholder="テキストを入力"
+        placeholder={field.placeholder ?? "テキストを入力"}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(field.id, event.target.value)}
       />
@@ -111,6 +112,7 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
         cellErrors={cellErrors}
         cellWarnings={cellWarnings}
         onRowsChange={(newRows) => onValueChange(field.id, newRows)}
+        apiReferenceOptions={apiReferenceOptions}
       />
     );
   }

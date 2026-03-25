@@ -6,7 +6,7 @@ import type { Document } from "@specforge/document-schema";
 import type { DocumentEditorState } from "../lib/document-editor/create-document-state";
 import type { ValidationItem } from "../types/validation";
 import { calculateQualityScore, type QualityScoreResult } from "../utils/qualityScore";
-import { guideContent } from "../data/guide";
+import { getGuideContent } from "../data/guide";
 import { GuidePanel } from "./guide/GuidePanel";
 import { ValidationPanel } from "./validation/ValidationPanel";
 
@@ -189,7 +189,7 @@ export function RightPanel({ document, state, validationItems, onNavigateToField
         <ValidationPanel items={validationItems} onNavigate={onNavigateToField} />
       )}
       {activeTab === "json" && <JsonContent document={document} state={state} />}
-      {activeTab === "guide" && <GuidePanel content={guideContent} />}
+      {activeTab === "guide" && <GuidePanel content={getGuideContent(document.kind)} />}
     </aside>
   );
 }
