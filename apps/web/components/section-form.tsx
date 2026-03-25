@@ -1,6 +1,7 @@
 import type { Section } from "@specforge/document-schema";
 
 import type { FieldValue } from "../lib/document-editor/create-document-state";
+import { FieldDescription } from "./field/FieldDescription";
 import { FieldRenderer } from "./field-renderer";
 
 interface SectionFormProps {
@@ -30,26 +31,39 @@ export function SectionForm({ section, fieldValues, onValueChange }: SectionForm
                 fontWeight: 600,
                 fontSize: "0.875rem",
                 color: "#334155",
-                marginBottom: "6px"
+                marginBottom: field.description ? "2px" : "6px"
               }}
             >
               {field.label}
               {field.required && (
-                <span
-                  style={{
-                    fontSize: "0.65rem",
-                    fontWeight: 600,
-                    color: "#EF4444",
-                    border: "1px solid #FCA5A5",
-                    borderRadius: "4px",
-                    padding: "0 4px",
-                    lineHeight: "1.6"
-                  }}
-                >
-                  必須
-                </span>
+                <>
+                  <span
+                    style={{
+                      color: "#EF4444",
+                      fontSize: "0.875rem",
+                      lineHeight: 1,
+                    }}
+                    aria-hidden="true"
+                  >
+                    *
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "0.65rem",
+                      fontWeight: 600,
+                      color: "#EF4444",
+                      border: "1px solid #FCA5A5",
+                      borderRadius: "4px",
+                      padding: "0 4px",
+                      lineHeight: "1.6"
+                    }}
+                  >
+                    必須
+                  </span>
+                </>
               )}
             </label>
+            <FieldDescription description={field.description} />
             <FieldRenderer field={field} value={fieldValues[field.id]} onValueChange={onValueChange} />
           </div>
         ))}
