@@ -78,11 +78,44 @@ const DEFAULT_TITLES: Record<string, string> = {
   "api-spec": "新しいAPI仕様書",
 };
 
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function ensureUniqueTitle(baseTitle: string, existingDocs: Document[]): string {
+  const used = new Set(existingDocs.map((doc) => doc.title));
+  if (!used.has(baseTitle)) return baseTitle;
+
+  let suffix = 2;
+  while (used.has(`${baseTitle} ${suffix}`)) {
+    suffix += 1;
+  }
+  return `${baseTitle} ${suffix}`;
+}
+
+function ensureUniqueKey(baseKey: string, existingDocs: Document[]): string {
+  const used = new Set(existingDocs.map((doc) => doc.key));
+  if (!used.has(baseKey)) return baseKey;
+
+  let suffix = 2;
+  while (used.has(`${baseKey}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${baseKey}-${suffix}`;
+}
+
 /**
  * Create a new Document from a preset template.
  * Returns a document with unique IDs and a default title.
  */
-export function createDocument(kind: DocumentKind, title?: string): Document {
+export function createDocument(
+  kind: DocumentKind,
+  existingDocs: Document[] = [],
+  title?: string
+): Document {
   const preset = PRESET_MAP[kind];
   if (!preset) {
     throw new Error(`Unknown document kind: ${kind}`);
@@ -90,7 +123,9 @@ export function createDocument(kind: DocumentKind, title?: string): Document {
 
   const docId = nextId("doc");
   const doc = cloneWithFreshIds(preset, docId);
-  doc.title = title ?? DEFAULT_TITLES[kind] ?? `新しい${kind}`;
+  const baseTitle = title?.trim() || DEFAULT_TITLES[kind] || `新しい${kind}`;
+  doc.title = ensureUniqueTitle(baseTitle, existingDocs);
+  doc.key = ensureUniqueKey(slugify(doc.title) || `${kind}-doc`, existingDocs);
   doc.version = "0.1.0";
   doc.required = true;
 

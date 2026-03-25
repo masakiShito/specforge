@@ -7,6 +7,8 @@ import type { DesignValidationIssue } from "../types";
  * Rules:
  * - endpoint empty → error
  * - httpMethod empty → error
+ * - authRequired unselected → warning
+ * - summary empty → warning
  * - response parameters table empty → warning
  * - error responses table empty → warning
  */
@@ -45,6 +47,32 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
             message: "HTTPメソッドが未選択です",
             reason: "HTTPメソッドはAPI定義の基本情報です。未選択だとリクエストの送信方法が不明になります。",
             fix: "「HTTPメソッド」で適切なメソッド（GET / POST / PUT / DELETE 等）を選択してください。",
+          });
+        }
+        if (field.key === "authRequired" && typeof value !== "boolean") {
+          issues.push({
+            id: `${section.id}:${field.id}:auth-required-empty`,
+            severity: "warning",
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "認証要否が未選択です",
+            reason: "認証の要否が曖昧だと、画面側・API側でセキュリティ前提が一致しないリスクがあります。",
+            fix: "「認証要否」で「はい」または「いいえ」を選択してください。",
+          });
+        }
+        if (field.key === "summary" && (!value || (typeof value === "string" && !value.trim()))) {
+          issues.push({
+            id: `${section.id}:${field.id}:summary-empty`,
+            severity: "warning",
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "概要が未入力です",
+            reason: "概要がないと、APIの責務が一目で把握できず、設計レビュー効率が下がります。",
+            fix: "「概要」にAPIの役割を1文で記載してください。",
           });
         }
       }

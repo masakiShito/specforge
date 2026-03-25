@@ -36,6 +36,30 @@ export function DocumentList({
 
   return (
     <nav aria-label="ドキュメント一覧">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "6px",
+        }}
+      >
+        <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", letterSpacing: "0.03em" }}>
+          Documents
+        </span>
+        <span
+          style={{
+            fontSize: "0.7rem",
+            color: "#475569",
+            backgroundColor: "#F1F5F9",
+            borderRadius: "9999px",
+            padding: "1px 7px",
+            fontWeight: 600,
+          }}
+        >
+          {documents.length}
+        </span>
+      </div>
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "4px" }}>
         {documents.map((doc) => {
           const isSelected = doc.id === selectedDocumentId;

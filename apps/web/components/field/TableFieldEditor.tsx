@@ -178,6 +178,15 @@ export function TableFieldEditor({
   ) => {
     const newRows = rows.map((row, index) => {
       if (index !== rowIndex) return row;
+      if (columnKey === "targetDocumentId") {
+        const selectedDocId = typeof value === "string" ? value : "";
+        const option = apiReferenceOptions?.find((opt) => opt.value === selectedDocId);
+        return {
+          ...row,
+          [columnKey]: value,
+          apiName: selectedDocId ? option?.label ?? row.apiName ?? "" : "",
+        };
+      }
       return { ...row, [columnKey]: value };
     });
     onRowsChange(newRows);

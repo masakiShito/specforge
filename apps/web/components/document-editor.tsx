@@ -36,6 +36,28 @@ function createProjectStates(project: Project): Record<string, DocumentEditorSta
   return states;
 }
 
+function ensureUniqueDocumentTitle(
+  documentId: string,
+  requestedTitle: string,
+  documents: Document[]
+): string {
+  const normalized = requestedTitle.trim();
+  if (!normalized) return "";
+
+  const used = new Set(
+    documents
+      .filter((doc) => doc.id !== documentId)
+      .map((doc) => doc.title)
+  );
+  if (!used.has(normalized)) return normalized;
+
+  let suffix = 2;
+  while (used.has(`${normalized} ${suffix}`)) {
+    suffix += 1;
+  }
+  return `${normalized} ${suffix}`;
+}
+
 interface DocumentEditorProps {
   project?: Project | Document;
 }
@@ -163,7 +185,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
 
   const handleAddDocument = useCallback(
     (kind: DocumentKind) => {
-      const newDoc = createDocument(kind);
+      const newDoc = createDocument(kind, projectState.documents);
 
       // Update project state
       setProjectState((prev) => ({
@@ -186,15 +208,18 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
       // Select the new document
       setSelectedDocumentId(newDoc.id);
     },
-    []
+    [projectState.documents]
   );
 
   const handleDocumentTitleChange = useCallback(
     (documentId: string, newTitle: string) => {
+      const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
+      if (!uniqueTitle) return;
+
       setProjectState((prev) => ({
         ...prev,
         documents: prev.documents.map((doc) =>
-          doc.id === documentId ? { ...doc, title: newTitle } : doc
+          doc.id === documentId ? { ...doc, title: uniqueTitle } : doc
         ),
       }));
 
@@ -206,12 +231,12 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           ...prev,
           [documentId]: {
             ...state,
-            document: { ...state.document, title: newTitle },
+            document: { ...state.document, title: uniqueTitle },
           },
         };
       });
     },
-    []
+    [projectState.documents]
   );
 
   const handleNavigateToField = useCallback(
@@ -283,7 +308,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
               letterSpacing: "0.05em",
             }}
           >
-            {projectState.title}
+            Project · {projectState.title}
           </h2>
 
           {/* Document list */}
@@ -359,6 +384,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           )}
           <p style={{ margin: "0 0 12px", color: "#94A3B8", fontSize: "0.75rem" }}>
             種別: {currentDocument.kind}　／　バージョン: {currentDocument.version}
+            <br />
+            key: {currentDocument.key}
           </p>
 
           {/* Section list */}
