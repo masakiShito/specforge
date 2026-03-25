@@ -50,6 +50,7 @@ export function validateApiConnections(
         fieldId: ctx.fieldId,
         fieldLabel: ctx.fieldLabel,
         rowIndex,
+        columnKey: "inputSummary",
         message: `行 ${rowIndex + 1}: 主な入力・主な出力がどちらも未記載です`,
         reason: "APIの入出力が不明だと、実装者が画面とAPI間のデータフローを把握できません。",
         fix: "「主な入力」「主な出力」の少なくとも一方にデータの概要を記載してください。",
