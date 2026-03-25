@@ -72,7 +72,7 @@ export const screenSpecPreset: Document = {
                 label: "項目キー",
                 required: true,
                 valueType: "text",
-                description: "プログラム上の識別キー"
+                description: "プログラム上の識別キー。画面内で一意にします"
               },
               {
                 id: "col-sf-input-type",
@@ -80,6 +80,7 @@ export const screenSpecPreset: Document = {
                 label: "入力形式",
                 required: true,
                 valueType: "enum",
+                description: "入力ウィジェットの種類",
                 options: [
                   { id: "opt-input-text", value: "text", label: "text" },
                   { id: "opt-input-textarea", value: "textarea", label: "textarea" },
@@ -97,14 +98,16 @@ export const screenSpecPreset: Document = {
                 key: "required",
                 label: "必須",
                 required: true,
-                valueType: "boolean"
+                valueType: "boolean",
+                description: "ユーザー入力が必須かどうか"
               },
               {
                 id: "col-sf-editable",
                 key: "editable",
                 label: "編集可",
                 required: false,
-                valueType: "boolean"
+                valueType: "boolean",
+                description: "ユーザーが値を変更できるか"
               },
               {
                 id: "col-sf-visible-condition",
@@ -168,6 +171,7 @@ export const screenSpecPreset: Document = {
                 label: "契機",
                 required: true,
                 valueType: "enum",
+                description: "イベントが発火するタイミング",
                 options: [
                   { id: "opt-trigger-onload", value: "onLoad", label: "onLoad" },
                   { id: "opt-trigger-onclick", value: "onClick", label: "onClick" },
@@ -237,6 +241,7 @@ export const screenSpecPreset: Document = {
                 label: "種別",
                 required: true,
                 valueType: "enum",
+                description: "メッセージの分類（info/warning/error/confirm）",
                 options: [
                   { id: "opt-msg-info", value: "info", label: "info" },
                   { id: "opt-msg-warning", value: "warning", label: "warning" },

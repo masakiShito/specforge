@@ -9,6 +9,7 @@ interface FieldRendererProps {
   value: FieldValue;
   hasError?: boolean;
   cellErrors?: Set<string>;
+  cellWarnings?: Set<string>;
   onValueChange: (fieldId: string, value: FieldValue) => void;
 }
 
@@ -27,7 +28,7 @@ function getInputStyle(hasError: boolean): CSSProperties {
 }
 
 export const FieldRenderer = forwardRef(function FieldRenderer(
-  { field, value, hasError = false, cellErrors, onValueChange }: FieldRendererProps,
+  { field, value, hasError = false, cellErrors, cellWarnings, onValueChange }: FieldRendererProps,
   ref: Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
 ) {
   const style = getInputStyle(hasError);
@@ -108,6 +109,7 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
         rows={rows}
         hasError={hasError}
         cellErrors={cellErrors}
+        cellWarnings={cellWarnings}
         onRowsChange={(newRows) => onValueChange(field.id, newRows)}
       />
     );

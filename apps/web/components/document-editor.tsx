@@ -10,7 +10,8 @@ import {
 } from "../lib/document-editor/create-document-state";
 import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
-import { enrichValidation } from "../utils/enrichValidation";
+import { validateDesignQuality } from "../lib/validation/validate-design-quality";
+import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { RightPanel } from "./right-panel";
@@ -29,7 +30,17 @@ export function DocumentEditor() {
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const validation = useMemo(() => validateDocument(state), [state]);
-  const validationItems = useMemo(() => enrichValidation(validation.warnings), [validation.warnings]);
+  const designQuality = useMemo(() => validateDesignQuality(state), [state]);
+  const validationItems = useMemo(() => {
+    // Non-table warnings from the existing validator (required field checks for text/textarea/enum)
+    const nonTableWarnings = validation.warnings.filter(
+      (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
+    );
+    const basicItems = enrichValidation(nonTableWarnings);
+    // Table-level design quality issues replace the old table warnings
+    const designItems = convertDesignIssues(designQuality.issues);
+    return [...basicItems, ...designItems];
+  }, [validation.warnings, designQuality.issues]);
 
   const errorFieldIds = useMemo(() => {
     const ids = new Set<string>();
@@ -43,13 +54,23 @@ export function DocumentEditor() {
 
   const cellErrors = useMemo(() => {
     const keys = new Set<string>();
-    for (const w of validation.warnings) {
-      if (w.cellKey) {
-        keys.add(w.cellKey);
+    for (const issue of designQuality.issues) {
+      if (issue.severity === "error" && issue.rowIndex !== undefined && issue.columnKey) {
+        keys.add(`${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`);
       }
     }
     return keys;
-  }, [validation.warnings]);
+  }, [designQuality.issues]);
+
+  const cellWarnings = useMemo(() => {
+    const keys = new Set<string>();
+    for (const issue of designQuality.issues) {
+      if (issue.severity === "warning" && issue.rowIndex !== undefined && issue.columnKey) {
+        keys.add(`${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`);
+      }
+    }
+    return keys;
+  }, [designQuality.issues]);
 
   const selectedSection =
     state.document.sections.find((section) => section.id === selectedSectionId) ?? state.document.sections[0];
@@ -124,6 +145,7 @@ export function DocumentEditor() {
             sections={state.document.sections}
             selectedSectionId={selectedSectionId}
             missingRequiredBySection={validation.missingRequiredBySection}
+            issueCountBySection={designQuality.issueCountBySection}
             fieldValues={state.fieldValues}
             onSelectSection={setSelectedSectionId}
           />
@@ -144,6 +166,7 @@ export function DocumentEditor() {
               fieldValues={state.fieldValues}
               errorFieldIds={errorFieldIds}
               cellErrors={cellErrors}
+              cellWarnings={cellWarnings}
               focusFieldId={focusFieldId}
               fieldRefs={fieldRefs}
               onValueChange={handleFieldValueChange}

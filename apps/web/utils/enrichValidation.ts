@@ -1,4 +1,5 @@
 import type { ValidationWarning } from "../lib/document-editor/validate-document";
+import type { DesignValidationIssue } from "../lib/validation/types";
 import type { ValidationItem } from "../types/validation";
 
 /**
@@ -28,6 +29,28 @@ export function enrichValidation(warnings: ValidationWarning[]): ValidationItem[
       fix: buildFix(warning),
     };
   });
+}
+
+/**
+ * Convert DesignValidationIssue[] → ValidationItem[] for unified display.
+ * These already contain severity, reason, and fix from the domain validators.
+ */
+export function convertDesignIssues(issues: DesignValidationIssue[]): ValidationItem[] {
+  return issues.map((issue) => ({
+    id: issue.id,
+    sectionId: issue.sectionId,
+    sectionTitle: issue.sectionTitle,
+    fieldId: issue.fieldId,
+    fieldLabel: issue.fieldLabel,
+    message: issue.message,
+    cellKey: issue.rowIndex !== undefined && issue.columnKey
+      ? `${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`
+      : undefined,
+    severity: issue.severity,
+    label: issue.message,
+    reason: issue.reason,
+    fix: issue.fix,
+  }));
 }
 
 function buildFix(warning: ValidationWarning): string {
