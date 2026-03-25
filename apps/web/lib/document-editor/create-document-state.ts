@@ -11,7 +11,7 @@ export interface DocumentEditorState {
 function collectFieldDefaults(fields: Field[]): Record<string, FieldValue> {
   return fields.reduce<Record<string, FieldValue>>((accumulator, field) => {
     if (field.valueType === "table") {
-      accumulator[field.id] = [];
+      accumulator[field.id] = field.table?.defaultRows ?? [];
     } else {
       accumulator[field.id] = field.defaultValue;
     }
