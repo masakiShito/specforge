@@ -16,3 +16,5 @@ export { screenSpecPreset } from "./presets/screen-spec";
 export { apiSpecPreset } from "./presets/api-spec";
 
 export { sampleScreenSpecProject } from "./samples/sample-screen-spec";
+
+export { isProject, isDocument, normalizeProjectData } from "./utils/normalize";

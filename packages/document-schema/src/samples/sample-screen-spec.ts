@@ -1,11 +1,90 @@
+import type { Document } from "../core/document";
 import type { Project } from "../core/project";
+
+/**
+ * Dummy API spec document for multi-document switching demo.
+ * This is intentionally minimal — full api-spec implementation is a future phase.
+ */
+const dummySubmitOrderApiDoc: Document = {
+  id: "doc-submit-order-api",
+  key: "submit-order-api",
+  title: "Submit Order API",
+  required: true,
+  kind: "api-spec",
+  version: "0.1.0",
+  tags: ["order", "api"],
+  sections: [
+    {
+      id: "section-api-overview",
+      key: "overview",
+      title: "Overview",
+      required: true,
+      fields: [
+        {
+          id: "field-api-summary",
+          key: "summary",
+          label: "Summary",
+          required: true,
+          valueType: "textarea",
+          defaultValue: "注文確定APIは、カート内の商品を確定し決済処理を実行するエンドポイントです。",
+        },
+      ],
+    },
+    {
+      id: "section-api-request",
+      key: "request",
+      title: "Request",
+      required: true,
+      fields: [
+        {
+          id: "field-api-method",
+          key: "method",
+          label: "HTTP Method",
+          required: true,
+          valueType: "enum",
+          defaultValue: "POST",
+          options: [
+            { id: "method-get", value: "GET", label: "GET" },
+            { id: "method-post", value: "POST", label: "POST" },
+            { id: "method-put", value: "PUT", label: "PUT" },
+            { id: "method-delete", value: "DELETE", label: "DELETE" },
+          ],
+        },
+        {
+          id: "field-api-path",
+          key: "path",
+          label: "Path",
+          required: true,
+          valueType: "text",
+          defaultValue: "/api/v1/orders",
+        },
+      ],
+    },
+    {
+      id: "section-api-response",
+      key: "response",
+      title: "Response",
+      required: true,
+      fields: [
+        {
+          id: "field-api-response-body",
+          key: "response-body",
+          label: "Response Body",
+          required: true,
+          valueType: "textarea",
+          defaultValue: '{ "orderId": "string", "status": "confirmed | failed", "totalAmount": "number" }',
+        },
+      ],
+    },
+  ],
+};
 
 export const sampleScreenSpecProject: Project = {
   id: "project-payment",
   key: "payment-platform",
   title: "Payment Platform",
   required: true,
-  description: "Sample project that includes one screen spec document.",
+  description: "Sample project that includes screen spec and API spec documents.",
   documents: [
     {
       id: "doc-checkout-screen",
@@ -461,6 +540,7 @@ export const sampleScreenSpecProject: Project = {
           ]
         }
       ]
-    }
+    },
+    dummySubmitOrderApiDoc,
   ]
 };
