@@ -56,6 +56,7 @@ export function validateMessages(
         issues.push({
           id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:confirm-text-mismatch`,
           severity: "info",
+          documentId: ctx.documentId,
           sectionId: ctx.sectionId,
           sectionTitle: ctx.sectionTitle,
           fieldId: ctx.fieldId,
@@ -80,6 +81,7 @@ export function validateMessages(
     issues.push({
       id: `${ctx.sectionId}:${ctx.fieldId}:error-msgs-no-condition`,
       severity: "warning",
+      documentId: ctx.documentId,
       sectionId: ctx.sectionId,
       sectionTitle: ctx.sectionTitle,
       fieldId: ctx.fieldId,
