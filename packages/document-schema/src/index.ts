@@ -2,7 +2,7 @@ export type { Project } from "./core/project";
 export type { Document } from "./core/document";
 export type { Section } from "./core/section";
 export type { Field, FieldOption } from "./core/field";
-export type { Table } from "./core/table";
+export type { Table, TableRowValue } from "./core/table";
 export type { Reference } from "./core/reference";
 
 export { documentKinds } from "./enums/document-kind";

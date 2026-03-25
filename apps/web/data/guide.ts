@@ -46,9 +46,74 @@ SpecForge は以下の設計書種別に対応しています：
 - **er-spec** — ER設計書
 - **business-rule** — ビジネスルール定義書
 
+## 画面仕様書のテーブル
+
+画面仕様書（screen-spec）では、以下の4つの構造化テーブルが用意されています。
+各テーブルは設計書としての一貫性を保つため、列構成が固定されています。
+
+### 画面項目一覧（Screen Fields）
+
+画面に表示されるすべての入力項目・表示項目を定義するテーブルです。
+
+| 列名 | キー | 型 | 必須 | 説明 |
+|------|------|-----|------|------|
+| 項目名 | name | text | ○ | 画面上の表示名 |
+| 項目キー | fieldKey | text | ○ | プログラム上の識別キー |
+| 入力形式 | inputType | select | ○ | text / textarea / select / checkbox / radio / date / number / label / button |
+| 必須 | required | boolean | ○ | 入力が必須かどうか |
+| 編集可 | editable | boolean | — | ユーザーが編集可能かどうか |
+| 表示条件 | visibleCondition | text | — | 項目が表示される条件 |
+| 入力制御 | validationRule | text | — | バリデーションルール |
+| 備考 | note | text | — | 補足事項 |
+
+### イベント一覧（Events）
+
+画面上で発生するイベントとその処理内容を定義するテーブルです。
+
+| 列名 | キー | 型 | 必須 | 説明 |
+|------|------|-----|------|------|
+| イベント名 | eventName | text | ○ | イベントの名称 |
+| 契機 | triggerType | select | ○ | onLoad / onClick / onChange / onSubmit |
+| 処理種別 | actionType | text | ○ | 実行される処理の種類 |
+| 対象 | target | text | — | 処理の対象となる要素やAPI |
+| 備考 | note | text | — | 補足事項 |
+
+### メッセージ一覧（Messages）
+
+画面に表示されるメッセージを定義するテーブルです。
+
+| 列名 | キー | 型 | 必須 | 説明 |
+|------|------|-----|------|------|
+| メッセージID | messageId | text | ○ | メッセージの識別子 |
+| 種別 | messageType | select | ○ | info / warning / error / confirm |
+| 表示条件 | condition | text | — | メッセージが表示される条件 |
+| 文言 | messageText | text | ○ | 実際に表示されるメッセージ文言 |
+| 備考 | note | text | — | 補足事項 |
+
+### API連携一覧（API Connections）
+
+画面から呼び出すAPIとその目的を定義するテーブルです。
+
+| 列名 | キー | 型 | 必須 | 説明 |
+|------|------|-----|------|------|
+| API名 | apiName | text | ○ | 呼び出すAPIの名称 |
+| 呼出タイミング | timing | text | ○ | APIを呼び出す契機 |
+| 目的 | purpose | text | ○ | APIを呼び出す目的 |
+| 主な入力 | inputSummary | text | — | APIに渡す主なパラメータ |
+| 主な出力 | outputSummary | text | — | APIから返される主なデータ |
+| 備考 | note | text | — | 補足事項 |
+
+## テーブルの操作
+
+- 「+ 行を追加」ボタンで新しい行を追加します
+- 各行の「削除」ボタンで行を削除します
+- 必須列が未入力の場合、赤枠で警告が表示されます
+- すべての列が空の行は黄色でハイライトされます
+
 ## Tips
 
 - セクション名の横にある赤いバッジは、そのセクション内の未入力必須項目数です
 - フィールドの \`placeholder\` はヒントとして表示されます
 - \`description\` フィールドがある場合、入力のガイダンスとして活用できます
+- テーブルの列構成は設計書種別ごとに固定されており、一貫した品質を保ちます
 `;
