@@ -38,33 +38,36 @@ interface DocumentEditorProps {
 }
 
 export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
-  const project = useMemo(
-    () => normalizeProjectData(projectInput ?? sampleScreenSpecProject),
-    [projectInput]
+  const [projectState] = useState<Project>(() =>
+    normalizeProjectData(projectInput ?? sampleScreenSpecProject)
   );
 
   // Per-document editor states keyed by document id
   const [documentStates, setDocumentStates] = useState<Record<string, DocumentEditorState>>(
-    () => createProjectStates(project)
+    () => createProjectStates(projectState)
   );
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
-    project.documents[0]?.id ?? ""
+    projectState.documents[0]?.id ?? ""
   );
-  const [selectedSectionId, setSelectedSectionId] = useState<string>(
-    project.documents[0]?.sections[0]?.id ?? ""
+  const [selectedSectionIdByDocument, setSelectedSectionIdByDocument] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        projectState.documents.map((document) => [document.id, document.sections[0]?.id ?? ""])
+      )
   );
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  // Track last selected section per document for restoration
-  const lastSectionByDocument = useRef<Record<string, string>>({});
+  const currentDocument =
+    projectState.documents.find((d) => d.id === selectedDocumentId) ?? projectState.documents[0];
+  const currentDocumentState =
+    documentStates[currentDocument.id] ?? createDocumentState(currentDocument);
 
-  const currentDocument = project.documents.find((d) => d.id === selectedDocumentId) ?? project.documents[0];
-  const state = documentStates[currentDocument.id] ?? createDocumentState(currentDocument);
+  const selectedSectionId = selectedSectionIdByDocument[currentDocument.id] ?? currentDocument.sections[0]?.id ?? "";
 
-  const validation = useMemo(() => validateDocument(state), [state]);
-  const designQuality = useMemo(() => validateDesignQuality(state), [state]);
+  const validation = useMemo(() => validateDocument(currentDocumentState), [currentDocumentState]);
+  const designQuality = useMemo(() => validateDesignQuality(currentDocumentState), [currentDocumentState]);
   const validationItems = useMemo(() => {
     const nonTableWarnings = validation.warnings.filter(
       (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
@@ -105,43 +108,39 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   }, [designQuality.issues]);
 
   const selectedSection =
-    state.document.sections.find((section) => section.id === selectedSectionId) ?? state.document.sections[0];
+    currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0];
 
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
     setDocumentStates((prev) => ({
       ...prev,
-      [currentDocument.id]: updateFieldValue(prev[currentDocument.id], fieldId, value),
+      [currentDocument.id]: updateFieldValue(
+        prev[currentDocument.id] ?? createDocumentState(currentDocument),
+        fieldId,
+        value
+      ),
     }));
   };
 
   const handleDocumentSelect = useCallback(
     (documentId: string) => {
-      // Save current section for the current document
-      lastSectionByDocument.current[selectedDocumentId] = selectedSectionId;
-
       setSelectedDocumentId(documentId);
-
-      // Restore last selected section, or default to the first section
-      const targetDoc = project.documents.find((d) => d.id === documentId);
-      if (targetDoc) {
-        const lastSection = lastSectionByDocument.current[documentId];
-        const validSection = lastSection && targetDoc.sections.some((s) => s.id === lastSection);
-        setSelectedSectionId(validSection ? lastSection : targetDoc.sections[0]?.id ?? "");
-      }
     },
-    [selectedDocumentId, selectedSectionId, project.documents]
+    []
   );
 
   const handleNavigateToField = useCallback(
     (sectionId: string, fieldId: string) => {
       if (sectionId !== selectedSectionId) {
-        setSelectedSectionId(sectionId);
+        setSelectedSectionIdByDocument((prev) => ({
+          ...prev,
+          [currentDocument.id]: sectionId,
+        }));
       }
       setTimeout(() => {
         setFocusFieldId(fieldId);
       }, 50);
     },
-    [selectedSectionId]
+    [selectedSectionId, currentDocument.id]
   );
 
   const handleFocusHandled = useCallback(() => {
@@ -198,12 +197,12 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
               letterSpacing: "0.05em",
             }}
           >
-            {project.title}
+            {projectState.title}
           </h2>
 
           {/* Document list */}
           <DocumentList
-            documents={project.documents}
+            documents={projectState.documents}
             selectedDocumentId={selectedDocumentId}
             onSelectDocument={handleDocumentSelect}
           />
@@ -227,12 +226,17 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
 
           {/* Section list */}
           <SectionList
-            sections={state.document.sections}
+            sections={currentDocument.sections}
             selectedSectionId={selectedSectionId}
             missingRequiredBySection={validation.missingRequiredBySection}
             issueCountBySection={designQuality.issueCountBySection}
-            fieldValues={state.fieldValues}
-            onSelectSection={setSelectedSectionId}
+            fieldValues={currentDocumentState.fieldValues}
+            onSelectSection={(sectionId) =>
+              setSelectedSectionIdByDocument((prev) => ({
+                ...prev,
+                [currentDocument.id]: sectionId,
+              }))
+            }
           />
         </aside>
 
@@ -248,7 +252,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           {selectedSection ? (
             <SectionForm
               section={selectedSection}
-              fieldValues={state.fieldValues}
+              fieldValues={currentDocumentState.fieldValues}
               errorFieldIds={errorFieldIds}
               cellErrors={cellErrors}
               cellWarnings={cellWarnings}
@@ -263,8 +267,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         </section>
 
         <RightPanel
-          document={state.document}
-          state={state}
+          document={currentDocument}
+          state={currentDocumentState}
           validationItems={validationItems}
           onNavigateToField={handleNavigateToField}
         />
