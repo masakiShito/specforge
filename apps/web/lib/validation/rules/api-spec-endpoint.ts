@@ -27,6 +27,7 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
           issues.push({
             id: `${section.id}:${field.id}:endpoint-empty`,
             severity: "error",
+            documentId: state.document.id,
             sectionId: section.id,
             sectionTitle: section.title,
             fieldId: field.id,
@@ -40,6 +41,7 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
           issues.push({
             id: `${section.id}:${field.id}:http-method-empty`,
             severity: "error",
+            documentId: state.document.id,
             sectionId: section.id,
             sectionTitle: section.title,
             fieldId: field.id,
@@ -53,6 +55,7 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
           issues.push({
             id: `${section.id}:${field.id}:auth-required-empty`,
             severity: "warning",
+            documentId: state.document.id,
             sectionId: section.id,
             sectionTitle: section.title,
             fieldId: field.id,
@@ -66,6 +69,7 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
           issues.push({
             id: `${section.id}:${field.id}:summary-empty`,
             severity: "warning",
+            documentId: state.document.id,
             sectionId: section.id,
             sectionTitle: section.title,
             fieldId: field.id,
@@ -84,6 +88,7 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
           issues.push({
             id: `${section.id}:${field.id}:response-empty`,
             severity: "warning",
+            documentId: state.document.id,
             sectionId: section.id,
             sectionTitle: section.title,
             fieldId: field.id,
@@ -97,6 +102,7 @@ export function validateApiSpecFields(state: DocumentEditorState): DesignValidat
           issues.push({
             id: `${section.id}:${field.id}:errors-empty`,
             severity: "warning",
+            documentId: state.document.id,
             sectionId: section.id,
             sectionTitle: section.title,
             fieldId: field.id,

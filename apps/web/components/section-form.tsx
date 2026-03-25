@@ -1,7 +1,7 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
-import type { Section } from "@specforge/document-schema";
+import type { Project, Section } from "@specforge/document-schema";
 
-import type { FieldValue } from "../lib/document-editor/create-document-state";
+import type { DocumentEditorState, FieldValue } from "../lib/document-editor/create-document-state";
 import { FieldDescription } from "./field/FieldDescription";
 import { FieldRenderer } from "./field-renderer";
 
@@ -15,7 +15,9 @@ interface SectionFormProps {
   fieldRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   onValueChange: (fieldId: string, value: FieldValue) => void;
   onFocusHandled?: () => void;
-  apiReferenceOptions?: { id: string; value: string; label: string }[];
+  project: Project;
+  documentStates: Record<string, DocumentEditorState>;
+  onNavigateToReference?: (referenceId: string) => void;
 }
 
 export function SectionForm({
@@ -28,7 +30,9 @@ export function SectionForm({
   fieldRefs,
   onValueChange,
   onFocusHandled,
-  apiReferenceOptions,
+  project,
+  documentStates,
+  onNavigateToReference,
 }: SectionFormProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +115,9 @@ export function SectionForm({
                 cellErrors={cellErrors}
                 cellWarnings={cellWarnings}
                 onValueChange={onValueChange}
-                apiReferenceOptions={apiReferenceOptions}
+                project={project}
+                documentStates={documentStates}
+                onNavigateToReference={onNavigateToReference}
               />
               {hasError && field.valueType !== "table" && (
                 <div

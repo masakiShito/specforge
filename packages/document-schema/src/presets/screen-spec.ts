@@ -302,9 +302,16 @@ export const screenSpecPreset: Document = {
                 key: "targetDocumentId",
                 label: "API参照",
                 required: false,
-                valueType: "enum",
+                valueType: "reference",
                 description: "Project内のAPI仕様書を選択します。選択肢はProject内のapi-specから自動生成されます。",
-                options: []
+                reference: {
+                  id: "ref-api-document",
+                  key: "api-document",
+                  label: "API仕様書",
+                  required: false,
+                  kind: "document",
+                  constraint: { documentKinds: ["api-spec"] },
+                }
               },
               {
                 id: "col-api-name",

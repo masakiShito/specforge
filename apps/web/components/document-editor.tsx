@@ -17,9 +17,10 @@ import {
 import { createDocument } from "../lib/document-editor/create-document";
 import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
-import { validateDesignQuality } from "../lib/validation/validate-design-quality";
+import { validateDesignQuality, validateProjectQuality } from "../lib/validation/validate-design-quality";
 import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
-import { getApiReferenceOptions } from "../lib/reference/helpers";
+import { resolveReferenceTarget } from "../lib/reference/helpers";
+import type { ReferenceValue } from "../lib/reference/model";
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { DocumentList } from "./document-list";
@@ -101,12 +102,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     }
   }, [currentDocument, selectedDocumentId]);
 
-  // Compute API reference options for the whole project
-  const apiReferenceOptions = useMemo(
-    () => getApiReferenceOptions(projectState),
-    [projectState]
-  );
-
+  
   if (!currentDocument) {
     return <main>ドキュメントが存在しません。</main>;
   }
@@ -122,14 +118,19 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     () => validateDesignQuality(currentDocumentState, projectState),
     [currentDocumentState, projectState]
   );
+  const projectQuality = useMemo(
+    () => validateProjectQuality(projectState, documentStates),
+    [projectState, documentStates]
+  );
+
   const validationItems = useMemo(() => {
     const nonTableWarnings = validation.warnings.filter(
       (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
     );
-    const basicItems = enrichValidation(nonTableWarnings);
+    const basicItems = enrichValidation(nonTableWarnings).map((item) => ({ ...item, documentId: currentDocument.id }));
     const designItems = convertDesignIssues(designQuality.issues);
     return [...basicItems, ...designItems];
-  }, [validation.warnings, designQuality.issues]);
+  }, [validation.warnings, designQuality.issues, currentDocument.id]);
 
   const errorFieldIds = useMemo(() => {
     const ids = new Set<string>();
@@ -248,7 +249,11 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
 
           let changed = false;
           const updatedRows = rows.map((row) => {
-            const targetDocumentId = typeof row.targetDocumentId === "string" ? row.targetDocumentId : "";
+            const targetRef = row.targetDocumentId;
+            const targetDocumentId =
+              typeof targetRef === "object" && targetRef !== null && "documentId" in targetRef
+                ? String((targetRef as { documentId: string }).documentId)
+                : "";
             const apiName = typeof row.apiName === "string" ? row.apiName : "";
             const shouldSyncName =
               targetDocumentId === documentId &&
@@ -280,11 +285,14 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   );
 
   const handleNavigateToField = useCallback(
-    (sectionId: string, fieldId: string) => {
-      if (sectionId !== selectedSectionId) {
+    (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => {
+      if (documentId !== currentDocument.id) {
+        setSelectedDocumentId(documentId);
+      }
+      if (sectionId !== selectedSectionId || documentId !== currentDocument.id) {
         setSelectedSectionIdByDocument((prev) => ({
           ...prev,
-          [currentDocument.id]: sectionId,
+          [documentId]: sectionId,
         }));
       }
       setTimeout(() => {
@@ -297,6 +305,32 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const handleFocusHandled = useCallback(() => {
     setFocusFieldId(null);
   }, []);
+
+  const handleNavigateToReference = useCallback((referenceId: string) => {
+    const currentState = documentStates[currentDocument.id];
+    if (!currentState) return;
+
+    const rows = currentDocument.sections
+      .find((section) => section.key === "api-connections")
+      ?.fields.find((field) => field.key === "api-connections");
+    if (!rows) return;
+
+    const tableRows = currentState.fieldValues[rows.id];
+    if (!Array.isArray(tableRows)) return;
+
+    const row = tableRows.find((item) => {
+      const cell = item.targetDocumentId;
+      return typeof cell === "object" && cell !== null && "refId" in cell && (cell as ReferenceValue).refId === referenceId;
+    });
+
+    const reference = row?.targetDocumentId;
+    if (typeof reference !== "object" || reference === null || !("refId" in reference)) return;
+
+    const resolved = resolveReferenceTarget(projectState, documentStates, reference as ReferenceValue);
+    if (!resolved) return;
+
+    handleNavigateToField(resolved.documentId, resolved.sectionId ?? "", resolved.fieldId ?? "");
+  }, [currentDocument.id, currentDocument.sections, documentStates, handleNavigateToField, projectState]);
 
   return (
     <main
@@ -465,7 +499,9 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
               fieldRefs={fieldRefs}
               onValueChange={handleFieldValueChange}
               onFocusHandled={handleFocusHandled}
-              apiReferenceOptions={apiReferenceOptions}
+              project={projectState}
+              documentStates={documentStates}
+              onNavigateToReference={handleNavigateToReference}
             />
           ) : (
             <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
@@ -477,6 +513,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           document={currentDocument}
           state={currentDocumentState}
           validationItems={validationItems}
+          projectValidation={projectQuality}
           onNavigateToField={handleNavigateToField}
         />
       </div>

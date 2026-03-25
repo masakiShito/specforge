@@ -1,7 +1,10 @@
 import type { Document, Field } from "@specforge/document-schema";
 
-export type TableRowValue = Record<string, string | number | boolean | undefined>;
-export type FieldValue = string | number | boolean | TableRowValue[] | undefined;
+import type { ReferenceValue } from "../reference/model";
+
+export type TableRowCellValue = string | number | boolean | ReferenceValue | undefined;
+export type TableRowValue = Record<string, TableRowCellValue>;
+export type FieldValue = string | number | boolean | ReferenceValue | TableRowValue[] | undefined;
 
 export interface DocumentEditorState {
   document: Document;

@@ -45,6 +45,7 @@ export function validateApiConnections(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:no-io-summary`,
         severity: "warning",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,

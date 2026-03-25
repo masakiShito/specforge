@@ -1,28 +1,46 @@
-import type { Document, Project } from "@specforge/document-schema";
+import type { Project } from "@specforge/document-schema";
 
-/**
- * Get all api-spec documents from a project.
- */
-export function getApiDocuments(project: Project): Document[] {
-  return project.documents.filter((doc) => doc.kind === "api-spec");
+import type { DocumentEditorState } from "../document-editor/create-document-state";
+import {
+  getReferenceCandidates,
+  getReferenceLabel,
+  resolveReference,
+  toReferenceValue,
+  type ReferenceValue,
+} from "./model";
+
+export function getApiReferenceCandidates(
+  project: Project,
+  states: Record<string, DocumentEditorState>
+) {
+  return getReferenceCandidates(project, states, {
+    kind: "document",
+    documentKinds: ["api-spec"],
+  });
 }
 
-/**
- * Get a document by ID from a project.
- */
-export function getDocumentById(project: Project, documentId: string): Document | undefined {
-  return project.documents.find((doc) => doc.id === documentId);
+export function toApiReferenceValue(
+  project: Project,
+  states: Record<string, DocumentEditorState>,
+  documentId: string
+): ReferenceValue | undefined {
+  const candidate = getApiReferenceCandidates(project, states).find((item) => item.documentId === documentId);
+  return candidate ? toReferenceValue(candidate) : undefined;
 }
 
-/**
- * Build a list of selectable API reference options for use in table dropdowns.
- */
-export function getApiReferenceOptions(
-  project: Project
-): { id: string; value: string; label: string }[] {
-  return getApiDocuments(project).map((doc) => ({
-    id: `ref-${doc.id}`,
-    value: doc.id,
-    label: doc.title,
-  }));
+export function resolveReferenceLabel(
+  project: Project,
+  states: Record<string, DocumentEditorState>,
+  reference: ReferenceValue | undefined,
+  fallback = ""
+): string {
+  return getReferenceLabel(project, states, reference, fallback);
+}
+
+export function resolveReferenceTarget(
+  project: Project,
+  states: Record<string, DocumentEditorState>,
+  reference: ReferenceValue
+) {
+  return resolveReference(project, states, reference);
 }
