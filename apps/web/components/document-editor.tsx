@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { sampleScreenSpecProject, type Document } from "@specforge/document-schema";
 
 import {
@@ -10,6 +10,7 @@ import {
 } from "../lib/document-editor/create-document-state";
 import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
+import { enrichValidation } from "../utils/enrichValidation";
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { RightPanel } from "./right-panel";
@@ -23,8 +24,22 @@ export function DocumentEditor() {
 
   const [state, setState] = useState<DocumentEditorState>(() => createDocumentState(initialDocument));
   const [selectedSectionId, setSelectedSectionId] = useState<string>(initialDocument.sections[0]?.id ?? "");
+  const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
+
+  const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const validation = useMemo(() => validateDocument(state), [state]);
+  const validationItems = useMemo(() => enrichValidation(validation.warnings), [validation.warnings]);
+
+  const errorFieldIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of validationItems) {
+      if (item.severity === "error") {
+        ids.add(item.fieldId);
+      }
+    }
+    return ids;
+  }, [validationItems]);
 
   const selectedSection =
     state.document.sections.find((section) => section.id === selectedSectionId) ?? state.document.sections[0];
@@ -32,6 +47,23 @@ export function DocumentEditor() {
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
     setState((current) => updateFieldValue(current, fieldId, value));
   };
+
+  const handleNavigateToField = useCallback(
+    (sectionId: string, fieldId: string) => {
+      if (sectionId !== selectedSectionId) {
+        setSelectedSectionId(sectionId);
+      }
+      // Use setTimeout to allow section switch to render before focusing
+      setTimeout(() => {
+        setFocusFieldId(fieldId);
+      }, 50);
+    },
+    [selectedSectionId]
+  );
+
+  const handleFocusHandled = useCallback(() => {
+    setFocusFieldId(null);
+  }, []);
 
   return (
     <main
@@ -82,6 +114,7 @@ export function DocumentEditor() {
             sections={state.document.sections}
             selectedSectionId={selectedSectionId}
             missingRequiredBySection={validation.missingRequiredBySection}
+            fieldValues={state.fieldValues}
             onSelectSection={setSelectedSectionId}
           />
         </aside>
@@ -96,13 +129,26 @@ export function DocumentEditor() {
           }}
         >
           {selectedSection ? (
-            <SectionForm section={selectedSection} fieldValues={state.fieldValues} onValueChange={handleFieldValueChange} />
+            <SectionForm
+              section={selectedSection}
+              fieldValues={state.fieldValues}
+              errorFieldIds={errorFieldIds}
+              focusFieldId={focusFieldId}
+              fieldRefs={fieldRefs}
+              onValueChange={handleFieldValueChange}
+              onFocusHandled={handleFocusHandled}
+            />
           ) : (
             <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
           )}
         </section>
 
-        <RightPanel document={state.document} state={state} warnings={validation.warnings} />
+        <RightPanel
+          document={state.document}
+          state={state}
+          validationItems={validationItems}
+          onNavigateToField={handleNavigateToField}
+        />
       </div>
     </main>
   );
