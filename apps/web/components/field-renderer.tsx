@@ -1,12 +1,14 @@
 import { forwardRef, type CSSProperties, type Ref } from "react";
 import type { Field } from "@specforge/document-schema";
 
-import type { FieldValue } from "../lib/document-editor/create-document-state";
+import type { FieldValue, TableRowValue } from "../lib/document-editor/create-document-state";
+import { TableFieldEditor } from "./field/TableFieldEditor";
 
 interface FieldRendererProps {
   field: Field;
   value: FieldValue;
   hasError?: boolean;
+  cellErrors?: Set<string>;
   onValueChange: (fieldId: string, value: FieldValue) => void;
 }
 
@@ -25,7 +27,7 @@ function getInputStyle(hasError: boolean): CSSProperties {
 }
 
 export const FieldRenderer = forwardRef(function FieldRenderer(
-  { field, value, hasError = false, onValueChange }: FieldRendererProps,
+  { field, value, hasError = false, cellErrors, onValueChange }: FieldRendererProps,
   ref: Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
 ) {
   const style = getInputStyle(hasError);
@@ -97,7 +99,21 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
     );
   }
 
-  if (field.valueType === "table" || field.valueType === "reference" || field.valueType === "number") {
+  if (field.valueType === "table" && field.table) {
+    const rows = Array.isArray(value) ? (value as TableRowValue[]) : [];
+    return (
+      <TableFieldEditor
+        field={field}
+        table={field.table}
+        rows={rows}
+        hasError={hasError}
+        cellErrors={cellErrors}
+        onRowsChange={(newRows) => onValueChange(field.id, newRows)}
+      />
+    );
+  }
+
+  if (field.valueType === "reference" || field.valueType === "number" || (field.valueType === "table" && !field.table)) {
     return (
       <div
         style={{

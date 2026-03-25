@@ -41,6 +41,16 @@ export function DocumentEditor() {
     return ids;
   }, [validationItems]);
 
+  const cellErrors = useMemo(() => {
+    const keys = new Set<string>();
+    for (const w of validation.warnings) {
+      if (w.cellKey) {
+        keys.add(w.cellKey);
+      }
+    }
+    return keys;
+  }, [validation.warnings]);
+
   const selectedSection =
     state.document.sections.find((section) => section.id === selectedSectionId) ?? state.document.sections[0];
 
@@ -133,6 +143,7 @@ export function DocumentEditor() {
               section={selectedSection}
               fieldValues={state.fieldValues}
               errorFieldIds={errorFieldIds}
+              cellErrors={cellErrors}
               focusFieldId={focusFieldId}
               fieldRefs={fieldRefs}
               onValueChange={handleFieldValueChange}

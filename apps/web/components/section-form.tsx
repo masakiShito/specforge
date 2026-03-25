@@ -9,6 +9,7 @@ interface SectionFormProps {
   section: Section;
   fieldValues: Record<string, FieldValue>;
   errorFieldIds: Set<string>;
+  cellErrors?: Set<string>;
   focusFieldId?: string | null;
   fieldRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   onValueChange: (fieldId: string, value: FieldValue) => void;
@@ -19,6 +20,7 @@ export function SectionForm({
   section,
   fieldValues,
   errorFieldIds,
+  cellErrors,
   focusFieldId,
   fieldRefs,
   onValueChange,
@@ -102,9 +104,10 @@ export function SectionForm({
                 field={field}
                 value={fieldValues[field.id]}
                 hasError={hasError}
+                cellErrors={cellErrors}
                 onValueChange={onValueChange}
               />
-              {hasError && (
+              {hasError && field.valueType !== "table" && (
                 <div
                   style={{
                     marginTop: "4px",
