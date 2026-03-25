@@ -12,7 +12,7 @@ import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
-import { ValidationPanel } from "./validation-panel";
+import { RightPanel } from "./right-panel";
 
 function resolveInitialDocument(): Document {
   return sampleScreenSpecProject.documents[0];
@@ -102,7 +102,7 @@ export function DocumentEditor() {
           )}
         </section>
 
-        <ValidationPanel document={state.document} state={state} warnings={validation.warnings} />
+        <RightPanel document={state.document} state={state} warnings={validation.warnings} />
       </div>
     </main>
   );
