@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   sampleScreenSpecProject,
   normalizeProjectData,
@@ -42,6 +42,11 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     normalizeProjectData(projectInput ?? sampleScreenSpecProject)
   );
 
+  const documentById = useMemo(
+    () => Object.fromEntries(projectState.documents.map((document) => [document.id, document])),
+    [projectState.documents]
+  );
+
   // Per-document editor states keyed by document id
   const [documentStates, setDocumentStates] = useState<Record<string, DocumentEditorState>>(
     () => createProjectStates(projectState)
@@ -58,13 +63,27 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   );
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
-
+  const fallbackDocumentId = projectState.documents[0]?.id ?? "";
   const currentDocument =
-    projectState.documents.find((d) => d.id === selectedDocumentId) ?? projectState.documents[0];
-  const currentDocumentState =
-    documentStates[currentDocument.id] ?? createDocumentState(currentDocument);
+    (selectedDocumentId ? documentById[selectedDocumentId] : undefined) ??
+    (fallbackDocumentId ? documentById[fallbackDocumentId] : undefined);
 
-  const selectedSectionId = selectedSectionIdByDocument[currentDocument.id] ?? currentDocument.sections[0]?.id ?? "";
+  useEffect(() => {
+    if (!currentDocument) return;
+    if (selectedDocumentId !== currentDocument.id) {
+      setSelectedDocumentId(currentDocument.id);
+    }
+  }, [currentDocument, selectedDocumentId]);
+
+  if (!currentDocument) {
+    return <main>ドキュメントが存在しません。</main>;
+  }
+
+  const currentDocumentState = documentStates[currentDocument.id] ?? createDocumentState(currentDocument);
+  const selectedSectionId =
+    selectedSectionIdByDocument[currentDocument.id] ??
+    currentDocument.sections[0]?.id ??
+    "";
 
   const validation = useMemo(() => validateDocument(currentDocumentState), [currentDocumentState]);
   const designQuality = useMemo(() => validateDesignQuality(currentDocumentState), [currentDocumentState]);
@@ -110,6 +129,16 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const selectedSection =
     currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0];
 
+  useEffect(() => {
+    if (!selectedSection) return;
+    console.debug("[DocumentEditor] selection", {
+      selectedDocumentId,
+      currentDocumentId: currentDocument.id,
+      currentDocumentTitle: currentDocument.title,
+      currentSectionId: selectedSection.id,
+    });
+  }, [selectedDocumentId, currentDocument.id, currentDocument.title, selectedSection]);
+
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
     setDocumentStates((prev) => ({
       ...prev,
@@ -123,9 +152,10 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
 
   const handleDocumentSelect = useCallback(
     (documentId: string) => {
+      if (!documentById[documentId]) return;
       setSelectedDocumentId(documentId);
     },
-    []
+    [documentById]
   );
 
   const handleNavigateToField = useCallback(
@@ -241,6 +271,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         </aside>
 
         <section
+          key={`center:${currentDocument.id}`}
           style={{
             border: "1px solid #E2E8F0",
             borderRadius: "8px",
@@ -267,6 +298,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         </section>
 
         <RightPanel
+          key={`right:${currentDocument.id}`}
           document={currentDocument}
           state={currentDocumentState}
           validationItems={validationItems}
