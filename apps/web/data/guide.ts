@@ -52,7 +52,7 @@ export const screenSpecGuide = `# 画面仕様書ガイド
 - 項目キーの重複 → エラー
 - label + 編集可=true → 警告
 - button + 必須=true → 警告
-- API呼出なのに対象未指定 → エラー
+- API呼出なのに対象未指定 → 警告
 - API参照先が存在しない → エラー
 
 ## Tips

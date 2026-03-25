@@ -215,6 +215,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     (documentId: string, newTitle: string) => {
       const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
       if (!uniqueTitle) return;
+      const previousTitle = projectState.documents.find((doc) => doc.id === documentId)?.title ?? "";
 
       setProjectState((prev) => ({
         ...prev,
@@ -225,15 +226,54 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
 
       // Also update the document reference in editor state
       setDocumentStates((prev) => {
-        const state = prev[documentId];
-        if (!state) return prev;
-        return {
-          ...prev,
-          [documentId]: {
+        const nextStates = { ...prev };
+        const renamedState = nextStates[documentId];
+        if (renamedState) {
+          nextStates[documentId] = {
+            ...renamedState,
+            document: { ...renamedState.document, title: uniqueTitle },
+          };
+        }
+
+        for (const [stateId, state] of Object.entries(nextStates)) {
+          if (state.document.kind !== "screen-spec") continue;
+
+          const apiConnectionsField = state.document.sections
+            .find((section) => section.key === "api-connections")
+            ?.fields.find((field) => field.key === "api-connections");
+          if (!apiConnectionsField) continue;
+
+          const rows = state.fieldValues[apiConnectionsField.id];
+          if (!Array.isArray(rows)) continue;
+
+          let changed = false;
+          const updatedRows = rows.map((row) => {
+            const targetDocumentId = typeof row.targetDocumentId === "string" ? row.targetDocumentId : "";
+            const apiName = typeof row.apiName === "string" ? row.apiName : "";
+            const shouldSyncName =
+              targetDocumentId === documentId &&
+              (apiName === "" || (previousTitle !== "" && apiName === previousTitle));
+
+            if (!shouldSyncName) return row;
+            changed = true;
+            return {
+              ...row,
+              apiName: uniqueTitle,
+            };
+          });
+
+          if (!changed) continue;
+
+          nextStates[stateId] = {
             ...state,
-            document: { ...state.document, title: uniqueTitle },
-          },
-        };
+            fieldValues: {
+              ...state.fieldValues,
+              [apiConnectionsField.id]: updatedRows,
+            },
+          };
+        }
+
+        return nextStates;
       });
     },
     [projectState.documents]
