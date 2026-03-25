@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import type { Document } from "@specforge/document-schema";
 
 import type { DocumentEditorState } from "../lib/document-editor/create-document-state";
-import type { ValidationWarning } from "../lib/document-editor/validate-document";
+import type { ValidationItem } from "../types/validation";
+import { calculateQualityScore, type QualityScoreResult } from "../utils/qualityScore";
 import { guideContent } from "../data/guide";
 import { GuidePanel } from "./guide/GuidePanel";
+import { ValidationPanel } from "./validation/ValidationPanel";
 
 interface RightPanelProps {
   document: Document;
   state: DocumentEditorState;
-  warnings: ValidationWarning[];
+  validationItems: ValidationItem[];
+  onNavigateToField?: (sectionId: string, fieldId: string) => void;
 }
 
 type TabId = "validation" | "json" | "guide";
@@ -68,25 +71,50 @@ function getTabStyle(isActive: boolean): CSSProperties {
   };
 }
 
-function ValidationContent({ warnings }: { warnings: ValidationWarning[] }) {
-  if (warnings.length === 0) {
-    return (
-      <p style={{ margin: 0, color: "#22C55E", fontSize: "0.8rem", fontWeight: 500 }}>
-        未入力の必須項目はありません
-      </p>
-    );
-  }
+const SCORE_COLORS: Record<QualityScoreResult["status"], { color: string; bg: string; border: string }> = {
+  good: { color: "#22C55E", bg: "#F0FDF4", border: "#BBF7D0" },
+  caution: { color: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+  "needs-improvement": { color: "#EF4444", bg: "#FEF2F2", border: "#FECACA" },
+};
+
+function QualityScoreDisplay({ items }: { items: ValidationItem[] }) {
+  const result = useMemo(() => calculateQualityScore(items), [items]);
+  const colors = SCORE_COLORS[result.status];
 
   return (
-    <ul style={{ margin: 0, paddingLeft: "16px", display: "grid", gap: "4px" }}>
-      {warnings.map((warning) => (
-        <li key={warning.id} style={{ fontSize: "0.8rem", color: "#EF4444" }}>
-          <span style={{ fontWeight: 500 }}>{warning.sectionTitle}</span>
-          {" — "}
-          {warning.fieldLabel}: {warning.message}
-        </li>
-      ))}
-    </ul>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "10px 12px",
+        backgroundColor: colors.bg,
+        border: `1px solid ${colors.border}`,
+        borderRadius: "6px",
+        marginBottom: "12px",
+      }}
+    >
+      <div>
+        <div style={{ fontSize: "0.7rem", color: "#64748B", marginBottom: "2px" }}>Quality Score</div>
+        <div style={{ fontSize: "1.1rem", fontWeight: 700, color: colors.color }}>
+          {result.score}
+          <span style={{ fontSize: "0.75rem", fontWeight: 400, color: "#94A3B8" }}> / 100</span>
+        </div>
+      </div>
+      <div
+        style={{
+          fontSize: "0.72rem",
+          fontWeight: 600,
+          color: colors.color,
+          backgroundColor: "rgba(255,255,255,0.7)",
+          border: `1px solid ${colors.border}`,
+          borderRadius: "4px",
+          padding: "2px 8px",
+        }}
+      >
+        {result.statusLabel}
+      </div>
+    </div>
   );
 }
 
@@ -114,7 +142,7 @@ function JsonContent({ document, state }: { document: Document; state: DocumentE
   );
 }
 
-export function RightPanel({ document, state, warnings }: RightPanelProps) {
+export function RightPanel({ document, state, validationItems, onNavigateToField }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("validation");
 
   return (
@@ -127,6 +155,8 @@ export function RightPanel({ document, state, warnings }: RightPanelProps) {
         minWidth: 0,
       }}
     >
+      <QualityScoreDisplay items={validationItems} />
+
       <nav style={tabBarStyle}>
         {tabs.map((tab) => (
           <button
@@ -136,11 +166,28 @@ export function RightPanel({ document, state, warnings }: RightPanelProps) {
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
+            {tab.id === "validation" && validationItems.length > 0 && (
+              <span
+                style={{
+                  marginLeft: "4px",
+                  fontSize: "0.65rem",
+                  fontWeight: 600,
+                  color: "#FFFFFF",
+                  backgroundColor: "#EF4444",
+                  borderRadius: "9999px",
+                  padding: "0 5px",
+                }}
+              >
+                {validationItems.length}
+              </span>
+            )}
           </button>
         ))}
       </nav>
 
-      {activeTab === "validation" && <ValidationContent warnings={warnings} />}
+      {activeTab === "validation" && (
+        <ValidationPanel items={validationItems} onNavigate={onNavigateToField} />
+      )}
       {activeTab === "json" && <JsonContent document={document} state={state} />}
       {activeTab === "guide" && <GuidePanel content={guideContent} />}
     </aside>

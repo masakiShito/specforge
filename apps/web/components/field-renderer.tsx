@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { forwardRef, type CSSProperties, type Ref } from "react";
 import type { Field } from "@specforge/document-schema";
 
 import type { FieldValue } from "../lib/document-editor/create-document-state";
@@ -6,26 +6,35 @@ import type { FieldValue } from "../lib/document-editor/create-document-state";
 interface FieldRendererProps {
   field: Field;
   value: FieldValue;
+  hasError?: boolean;
   onValueChange: (fieldId: string, value: FieldValue) => void;
 }
 
-const inputStyle: CSSProperties = {
-  width: "100%",
-  border: "1px solid #E2E8F0",
-  borderRadius: "6px",
-  padding: "8px 10px",
-  fontSize: "0.875rem",
-  color: "#0F172A",
-  backgroundColor: "#FFFFFF",
-  boxSizing: "border-box",
-  outline: "none"
-};
+function getInputStyle(hasError: boolean): CSSProperties {
+  return {
+    width: "100%",
+    border: hasError ? "1.5px solid #EF4444" : "1px solid #E2E8F0",
+    borderRadius: "6px",
+    padding: "8px 10px",
+    fontSize: "0.875rem",
+    color: "#0F172A",
+    backgroundColor: hasError ? "#FFFBFB" : "#FFFFFF",
+    boxSizing: "border-box",
+    outline: "none",
+  };
+}
 
-export function FieldRenderer({ field, value, onValueChange }: FieldRendererProps) {
+export const FieldRenderer = forwardRef(function FieldRenderer(
+  { field, value, hasError = false, onValueChange }: FieldRendererProps,
+  ref: Ref<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) {
+  const style = getInputStyle(hasError);
+
   if (field.valueType === "text") {
     return (
       <input
-        style={inputStyle}
+        ref={ref as Ref<HTMLInputElement>}
+        style={style}
         type="text"
         placeholder="テキストを入力"
         value={typeof value === "string" ? value : ""}
@@ -37,7 +46,8 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
   if (field.valueType === "textarea") {
     return (
       <textarea
-        style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
+        ref={ref as Ref<HTMLTextAreaElement>}
+        style={{ ...style, minHeight: "100px", resize: "vertical" }}
         placeholder="テキストを入力"
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(field.id, event.target.value)}
@@ -50,7 +60,8 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
 
     return (
       <select
-        style={inputStyle}
+        ref={ref as Ref<HTMLSelectElement>}
+        style={style}
         value={normalizedValue}
         onChange={(event) => {
           if (event.target.value === "") {
@@ -71,7 +82,8 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
   if (field.valueType === "enum") {
     return (
       <select
-        style={inputStyle}
+        ref={ref as Ref<HTMLSelectElement>}
+        style={style}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onValueChange(field.id, event.target.value)}
       >
@@ -116,4 +128,4 @@ export function FieldRenderer({ field, value, onValueChange }: FieldRendererProp
       不明なフィールド型です
     </div>
   );
-}
+});
