@@ -298,6 +298,15 @@ export const screenSpecPreset: Document = {
             required: false,
             columns: [
               {
+                id: "col-api-ref",
+                key: "targetDocumentId",
+                label: "API参照",
+                required: false,
+                valueType: "enum",
+                description: "Project内のAPI仕様書を選択します。選択肢はProject内のapi-specから自動生成されます。",
+                options: []
+              },
+              {
                 id: "col-api-name",
                 key: "apiName",
                 label: "API名",

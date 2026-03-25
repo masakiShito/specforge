@@ -6,6 +6,7 @@ import {
   normalizeProjectData,
   type Project,
   type Document,
+  type DocumentKind,
 } from "@specforge/document-schema";
 
 import {
@@ -13,10 +14,12 @@ import {
   type DocumentEditorState,
   type FieldValue,
 } from "../lib/document-editor/create-document-state";
+import { createDocument } from "../lib/document-editor/create-document";
 import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
 import { validateDesignQuality } from "../lib/validation/validate-design-quality";
 import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
+import { getApiReferenceOptions } from "../lib/reference/helpers";
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { DocumentList } from "./document-list";
@@ -38,7 +41,7 @@ interface DocumentEditorProps {
 }
 
 export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
-  const [projectState] = useState<Project>(() =>
+  const [projectState, setProjectState] = useState<Project>(() =>
     normalizeProjectData(projectInput ?? sampleScreenSpecProject)
   );
 
@@ -62,6 +65,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
       )
   );
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
+  const [editingTitleDocId, setEditingTitleDocId] = useState<string | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const fallbackDocumentId = projectState.documents[0]?.id ?? "";
   const currentDocument =
@@ -75,6 +79,12 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     }
   }, [currentDocument, selectedDocumentId]);
 
+  // Compute API reference options for the whole project
+  const apiReferenceOptions = useMemo(
+    () => getApiReferenceOptions(projectState),
+    [projectState]
+  );
+
   if (!currentDocument) {
     return <main>ドキュメントが存在しません。</main>;
   }
@@ -86,7 +96,10 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     "";
 
   const validation = useMemo(() => validateDocument(currentDocumentState), [currentDocumentState]);
-  const designQuality = useMemo(() => validateDesignQuality(currentDocumentState), [currentDocumentState]);
+  const designQuality = useMemo(
+    () => validateDesignQuality(currentDocumentState, projectState),
+    [currentDocumentState, projectState]
+  );
   const validationItems = useMemo(() => {
     const nonTableWarnings = validation.warnings.filter(
       (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
@@ -129,16 +142,6 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const selectedSection =
     currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0];
 
-  useEffect(() => {
-    if (!selectedSection) return;
-    console.debug("[DocumentEditor] selection", {
-      selectedDocumentId,
-      currentDocumentId: currentDocument.id,
-      currentDocumentTitle: currentDocument.title,
-      currentSectionId: selectedSection.id,
-    });
-  }, [selectedDocumentId, currentDocument.id, currentDocument.title, selectedSection]);
-
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
     setDocumentStates((prev) => ({
       ...prev,
@@ -156,6 +159,59 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
       setSelectedDocumentId(documentId);
     },
     [documentById]
+  );
+
+  const handleAddDocument = useCallback(
+    (kind: DocumentKind) => {
+      const newDoc = createDocument(kind);
+
+      // Update project state
+      setProjectState((prev) => ({
+        ...prev,
+        documents: [...prev.documents, newDoc],
+      }));
+
+      // Create editor state for new document
+      setDocumentStates((prev) => ({
+        ...prev,
+        [newDoc.id]: createDocumentState(newDoc),
+      }));
+
+      // Initialize section selection for new document
+      setSelectedSectionIdByDocument((prev) => ({
+        ...prev,
+        [newDoc.id]: newDoc.sections[0]?.id ?? "",
+      }));
+
+      // Select the new document
+      setSelectedDocumentId(newDoc.id);
+    },
+    []
+  );
+
+  const handleDocumentTitleChange = useCallback(
+    (documentId: string, newTitle: string) => {
+      setProjectState((prev) => ({
+        ...prev,
+        documents: prev.documents.map((doc) =>
+          doc.id === documentId ? { ...doc, title: newTitle } : doc
+        ),
+      }));
+
+      // Also update the document reference in editor state
+      setDocumentStates((prev) => {
+        const state = prev[documentId];
+        if (!state) return prev;
+        return {
+          ...prev,
+          [documentId]: {
+            ...state,
+            document: { ...state.document, title: newTitle },
+          },
+        };
+      });
+    },
+    []
   );
 
   const handleNavigateToField = useCallback(
@@ -235,6 +291,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             documents={projectState.documents}
             selectedDocumentId={selectedDocumentId}
             onSelectDocument={handleDocumentSelect}
+            onAddDocument={handleAddDocument}
           />
 
           {/* Divider */}
@@ -246,10 +303,60 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             }}
           />
 
-          {/* Current document info */}
-          <h3 style={{ margin: "0 0 4px", fontSize: "0.875rem", fontWeight: 600, color: "#0F172A" }}>
-            {currentDocument.title}
-          </h3>
+          {/* Current document info with editable title */}
+          {editingTitleDocId === currentDocument.id ? (
+            <input
+              type="text"
+              autoFocus
+              defaultValue={currentDocument.title}
+              onBlur={(e) => {
+                const newTitle = e.target.value.trim();
+                if (newTitle && newTitle !== currentDocument.title) {
+                  handleDocumentTitleChange(currentDocument.id, newTitle);
+                }
+                setEditingTitleDocId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Escape") {
+                  setEditingTitleDocId(null);
+                }
+              }}
+              style={{
+                margin: "0 0 4px",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: "#0F172A",
+                border: "1px solid #3B82F6",
+                borderRadius: "4px",
+                padding: "2px 6px",
+                width: "100%",
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+          ) : (
+            <h3
+              style={{
+                margin: "0 0 4px",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: "#0F172A",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title="クリックしてタイトルを編集"
+              onClick={() => setEditingTitleDocId(currentDocument.id)}
+            >
+              {currentDocument.title}
+              <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
+                (編集)
+              </span>
+            </h3>
+          )}
           <p style={{ margin: "0 0 12px", color: "#94A3B8", fontSize: "0.75rem" }}>
             種別: {currentDocument.kind}　／　バージョン: {currentDocument.version}
           </p>
@@ -291,6 +398,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
               fieldRefs={fieldRefs}
               onValueChange={handleFieldValueChange}
               onFocusHandled={handleFocusHandled}
+              apiReferenceOptions={apiReferenceOptions}
             />
           ) : (
             <p style={{ color: "#64748B" }}>セクションが存在しません。</p>

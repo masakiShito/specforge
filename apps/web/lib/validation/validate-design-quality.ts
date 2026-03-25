@@ -1,4 +1,4 @@
-import type { Field } from "@specforge/document-schema";
+import type { Field, Project } from "@specforge/document-schema";
 
 import type { DocumentEditorState, TableRowValue } from "../document-editor/create-document-state";
 import type { DesignValidationIssue, TableValidationContext } from "./types";
@@ -6,12 +6,12 @@ import { validateScreenFields } from "./rules/screen-fields";
 import { validateEvents } from "./rules/events";
 import { validateMessages } from "./rules/messages";
 import { validateApiConnections } from "./rules/api-connections";
+import { validateRequestParameters, validateResponseParameters, validateErrorResponses } from "./rules/api-spec-tables";
+import { validateApiSpecFields } from "./rules/api-spec-endpoint";
+import { validateReferenceIntegrity } from "./rules/reference-integrity";
 
 /**
  * Map of table key → section-specific validator.
- *
- * To add cross-section validation in the future, add a post-processing step
- * that receives the full DocumentEditorState and all per-section issues.
  */
 const TABLE_VALIDATORS: Record<
   string,
@@ -21,6 +21,9 @@ const TABLE_VALIDATORS: Record<
   events: validateEvents,
   messages: validateMessages,
   "api-connections": validateApiConnections,
+  "request-parameters": validateRequestParameters,
+  "response-parameters": validateResponseParameters,
+  "error-responses": validateErrorResponses,
 };
 
 export interface DesignQualityResult {
@@ -32,17 +35,13 @@ export interface DesignQualityResult {
 /**
  * Run all design-quality validators against the current editor state.
  *
- * This function is intentionally separate from the existing `validateDocument`
- * so that the two systems can coexist and be merged gradually.
- *
- * ### Extension points for future cross-section validation:
- * 1. After collecting per-table issues, add a `validateCrossSection(state, allIssues)` call.
- * 2. Cross-section validators can check references between tables, e.g.:
- *    - Event targets referencing fieldKeys from Screen Fields
- *    - Message conditions referencing event names
- *    - API connections referenced from Events
+ * @param state - The current document editor state
+ * @param project - Optional project for cross-document reference validation
  */
-export function validateDesignQuality(state: DocumentEditorState): DesignQualityResult {
+export function validateDesignQuality(
+  state: DocumentEditorState,
+  project?: Project
+): DesignQualityResult {
   const issues: DesignValidationIssue[] = [];
   const issueCountBySection: Record<string, { error: number; warning: number; info: number }> = {};
 
@@ -79,8 +78,25 @@ export function validateDesignQuality(state: DocumentEditorState): DesignQuality
     issueCountBySection[section.id] = sectionCounts;
   }
 
-  // Future: cross-section validation hook
-  // issues.push(...validateCrossSection(state, issues));
+  // API-spec field-level validation
+  const apiSpecIssues = validateApiSpecFields(state);
+  for (const issue of apiSpecIssues) {
+    issues.push(issue);
+    const counts = issueCountBySection[issue.sectionId] ?? { error: 0, warning: 0, info: 0 };
+    counts[issue.severity]++;
+    issueCountBySection[issue.sectionId] = counts;
+  }
+
+  // Cross-document reference integrity validation
+  if (project) {
+    const refIssues = validateReferenceIntegrity(state, project);
+    for (const issue of refIssues) {
+      issues.push(issue);
+      const counts = issueCountBySection[issue.sectionId] ?? { error: 0, warning: 0, info: 0 };
+      counts[issue.severity]++;
+      issueCountBySection[issue.sectionId] = counts;
+    }
+  }
 
   return { issues, issueCountBySection };
 }

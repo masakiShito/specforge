@@ -15,6 +15,7 @@ interface SectionFormProps {
   fieldRefs: MutableRefObject<Record<string, HTMLElement | null>>;
   onValueChange: (fieldId: string, value: FieldValue) => void;
   onFocusHandled?: () => void;
+  apiReferenceOptions?: { id: string; value: string; label: string }[];
 }
 
 export function SectionForm({
@@ -27,6 +28,7 @@ export function SectionForm({
   fieldRefs,
   onValueChange,
   onFocusHandled,
+  apiReferenceOptions,
 }: SectionFormProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -109,6 +111,7 @@ export function SectionForm({
                 cellErrors={cellErrors}
                 cellWarnings={cellWarnings}
                 onValueChange={onValueChange}
+                apiReferenceOptions={apiReferenceOptions}
               />
               {hasError && field.valueType !== "table" && (
                 <div

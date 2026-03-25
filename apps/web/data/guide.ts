@@ -1,119 +1,150 @@
 /**
- * アプリ内ガイドコンテンツ
+ * kind 別ガイドコンテンツ
  *
- * Markdown文字列として管理する。
- * 将来的にドキュメント種別ごとのガイドや、
- * Claude Codeによる自動更新に対応できる構造とする。
+ * ドキュメント種別に応じて適切なガイドを表示する。
  */
 
-export const guideContent = `# SpecForge ガイド
+import type { DocumentKind } from "@specforge/document-schema";
 
-SpecForge はスキーマ駆動の構造化設計書エディタです。
-このガイドでは基本的な使い方を説明します。
+export const screenSpecGuide = `# 画面仕様書ガイド
 
-## 基本操作
+画面仕様書（screen-spec）は、1画面 = 1ドキュメントとして定義します。
+このガイドでは画面仕様書の書き方を説明します。
 
-### セクションの選択
+## セクション構成
 
-左サイドバーからセクションを選択すると、中央のフォームに対応するフィールドが表示されます。
+### Overview
+画面の目的・概要を記載します。
+この画面が「何のために」「誰のために」あるかを1〜2文で表現してください。
 
-### フィールドの入力
+### Usage Scenario
+ユーザーがこの画面をどのように使うかのシナリオを記載します。
 
-各フィールドには以下の種別があります：
+### Screen Fields（画面項目一覧）
+画面に表示されるすべての入力項目・表示項目を定義します。
 
-- **text** — 1行のテキスト入力
-- **textarea** — 複数行のテキスト入力
-- **boolean** — はい／いいえの選択
-- **enum** — 選択肢からの選択
+| 列名 | 説明 |
+|------|------|
+| 項目名 | 画面上の表示名 |
+| 項目キー | プログラム上の識別キー（画面内で一意） |
+| 入力形式 | text / textarea / select / checkbox 等 |
+| 必須 | 入力が必須かどうか |
+| 編集可 | ユーザーが値を変更できるか |
+| 表示条件 | 項目が表示される条件 |
+| 入力制御 | バリデーションルール |
+| 備考 | 補足事項 |
 
-> 必須項目には赤いアスタリスク（*）が表示されます。
+### Events（イベント一覧）
+画面上で発生するイベントとその処理内容を定義します。
 
-### バリデーション
+> API呼出系の処理では「対象」に呼び出すAPI名を必ず記載してください。
 
-右ペインの「バリデーション」タブで、未入力の必須項目を確認できます。
-すべての必須項目が入力されると、緑色の完了メッセージが表示されます。
+### Messages（メッセージ一覧）
+画面に表示されるメッセージを定義します。
 
-### JSON プレビュー
+### API Connections（API連携一覧）
+画面から呼び出すAPIの一覧です。
 
-「JSON」タブでは、入力内容をリアルタイムに JSON 形式で確認できます。
+> **Phase2 新機能**: 「API参照」列からProject内のAPI仕様書を直接選択できます。
+> 選択すると参照関係が構築され、整合性チェックが自動で行われます。
 
-## ドキュメント種別
-
-SpecForge は以下の設計書種別に対応しています：
-
-- **screen-spec** — 画面仕様書
-- **api-spec** — API仕様書
-- **er-spec** — ER設計書
-- **business-rule** — ビジネスルール定義書
-
-## 画面仕様書のテーブル
-
-画面仕様書（screen-spec）では、以下の4つの構造化テーブルが用意されています。
-各テーブルは設計書としての一貫性を保つため、列構成が固定されています。
-
-### 画面項目一覧（Screen Fields）
-
-画面に表示されるすべての入力項目・表示項目を定義するテーブルです。
-
-| 列名 | キー | 型 | 必須 | 説明 |
-|------|------|-----|------|------|
-| 項目名 | name | text | ○ | 画面上の表示名 |
-| 項目キー | fieldKey | text | ○ | プログラム上の識別キー |
-| 入力形式 | inputType | select | ○ | text / textarea / select / checkbox / radio / date / number / label / button |
-| 必須 | required | boolean | ○ | 入力が必須かどうか |
-| 編集可 | editable | boolean | — | ユーザーが編集可能かどうか |
-| 表示条件 | visibleCondition | text | — | 項目が表示される条件 |
-| 入力制御 | validationRule | text | — | バリデーションルール |
-| 備考 | note | text | — | 補足事項 |
-
-### イベント一覧（Events）
-
-画面上で発生するイベントとその処理内容を定義するテーブルです。
-
-| 列名 | キー | 型 | 必須 | 説明 |
-|------|------|-----|------|------|
-| イベント名 | eventName | text | ○ | イベントの名称 |
-| 契機 | triggerType | select | ○ | onLoad / onClick / onChange / onSubmit |
-| 処理種別 | actionType | text | ○ | 実行される処理の種類 |
-| 対象 | target | text | — | 処理の対象となる要素やAPI |
-| 備考 | note | text | — | 補足事項 |
-
-### メッセージ一覧（Messages）
-
-画面に表示されるメッセージを定義するテーブルです。
-
-| 列名 | キー | 型 | 必須 | 説明 |
-|------|------|-----|------|------|
-| メッセージID | messageId | text | ○ | メッセージの識別子 |
-| 種別 | messageType | select | ○ | info / warning / error / confirm |
-| 表示条件 | condition | text | — | メッセージが表示される条件 |
-| 文言 | messageText | text | ○ | 実際に表示されるメッセージ文言 |
-| 備考 | note | text | — | 補足事項 |
-
-### API連携一覧（API Connections）
-
-画面から呼び出すAPIとその目的を定義するテーブルです。
-
-| 列名 | キー | 型 | 必須 | 説明 |
-|------|------|-----|------|------|
-| API名 | apiName | text | ○ | 呼び出すAPIの名称 |
-| 呼出タイミング | timing | text | ○ | APIを呼び出す契機 |
-| 目的 | purpose | text | ○ | APIを呼び出す目的 |
-| 主な入力 | inputSummary | text | — | APIに渡す主なパラメータ |
-| 主な出力 | outputSummary | text | — | APIから返される主なデータ |
-| 備考 | note | text | — | 補足事項 |
-
-## テーブルの操作
-
-- 「+ 行を追加」ボタンで新しい行を追加します
-- 各行の「削除」ボタンで行を削除します
-- 必須列が未入力の場合、赤枠で警告が表示されます
-- すべての列が空の行は黄色でハイライトされます
+## バリデーションルール
+- 項目キーの重複 → エラー
+- label + 編集可=true → 警告
+- button + 必須=true → 警告
+- API呼出なのに対象未指定 → エラー
+- API参照先が存在しない → エラー
 
 ## Tips
-
-- セクション名の横にある赤いバッジは、そのセクション内の未入力必須項目数です
-- フィールドの \`placeholder\` はヒントとして表示されます
-- \`description\` フィールドがある場合、入力のガイダンスとして活用できます
-- テーブルの列構成は設計書種別ごとに固定されており、一貫した品質を保ちます
+- セクション名の横のバッジで入力状態を確認できます
+- 必須項目を先に埋めるとQuality Scoreが上がります
 `;
+
+export const apiSpecGuide = `# API仕様書ガイド
+
+API仕様書（api-spec）は、1 API = 1ドキュメントとして定義します。
+このガイドではAPI仕様書の書き方を説明します。
+
+## セクション構成
+
+### Overview
+APIの概要・目的を記載します。
+このAPIが「何をする」ためのものかを簡潔に記載してください。
+
+### Endpoint Basic Info
+APIの基本情報を定義します。
+
+| 項目 | 説明 |
+|------|------|
+| エンドポイント | APIのURLパス（例: /api/v1/orders） |
+| HTTPメソッド | GET / POST / PUT / PATCH / DELETE |
+| 認証要否 | 認証が必要かどうか |
+| 概要 | APIの1行要約 |
+
+> エンドポイントとHTTPメソッドは必須です。未入力だとエラーになります。
+
+### Request Parameters（リクエストパラメータ一覧）
+APIに送信するパラメータを定義します。
+
+| 列名 | 説明 |
+|------|------|
+| 項目名 | パラメータの表示名 |
+| パラメータキー | JSON/クエリパラメータのキー名 |
+| 型 | string / number / boolean / object / array |
+| 必須 | 必須パラメータかどうか |
+| 説明 | パラメータの説明 |
+| 備考 | 制約事項、フォーマットなど |
+
+### Response Parameters（レスポンスパラメータ一覧）
+APIから返却されるパラメータを定義します。
+
+> レスポンスパラメータが空だと警告が表示されます。
+
+### Error Responses（エラーレスポンス一覧）
+発生しうるエラーとそのレスポンスを定義します。
+
+| 列名 | 説明 |
+|------|------|
+| エラーコード | HTTPステータスコードまたはアプリケーションエラーコード |
+| エラー名 | エラーの名称 |
+| 発生条件 | このエラーが発生する条件 |
+| メッセージ | レスポンスに含まれるエラーメッセージ |
+| 備考 | 補足事項 |
+
+> エラーレスポンスが空だと警告が表示されます。
+
+### Processing Flow（処理フロー）
+リクエスト受信からレスポンス返却までの処理概要を記載します。
+箇条書きで処理ステップを順に記載するのが効果的です。
+
+## バリデーションルール
+- エンドポイント未入力 → エラー
+- HTTPメソッド未選択 → エラー
+- パラメータキーの重複 → エラー
+- レスポンスパラメータ空 → 警告
+- エラーレスポンス未定義 → 警告
+
+## Tips
+- 画面仕様書のAPI Connectionsから参照される仕様書です
+- ドキュメントタイトルはAPI名として利用されます
+- タイトルは後から編集可能です
+`;
+
+const GUIDE_MAP: Record<string, string> = {
+  "screen-spec": screenSpecGuide,
+  "api-spec": apiSpecGuide,
+};
+
+/**
+ * Get guide content for a specific document kind.
+ * Falls back to the default guide if no kind-specific guide exists.
+ */
+export function getGuideContent(kind?: DocumentKind | string): string {
+  if (kind && GUIDE_MAP[kind]) {
+    return GUIDE_MAP[kind];
+  }
+  return screenSpecGuide;
+}
+
+/** @deprecated Use getGuideContent(kind) instead */
+export const guideContent = screenSpecGuide;
