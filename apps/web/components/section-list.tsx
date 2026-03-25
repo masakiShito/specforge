@@ -3,10 +3,17 @@ import type { Section } from "@specforge/document-schema";
 import type { FieldValue } from "../lib/document-editor/create-document-state";
 import { getSectionStatus, type SectionStatusInfo } from "../utils/sectionStatus";
 
+interface SectionIssueCounts {
+  error: number;
+  warning: number;
+  info: number;
+}
+
 interface SectionListProps {
   sections: Section[];
   selectedSectionId: string;
   missingRequiredBySection: Record<string, number>;
+  issueCountBySection?: Record<string, SectionIssueCounts>;
   fieldValues: Record<string, FieldValue>;
   onSelectSection: (sectionId: string) => void;
 }
@@ -31,10 +38,30 @@ function StatusBadge({ info }: { info: SectionStatusInfo }) {
   );
 }
 
+function IssueBadge({ count, color, bg }: { count: number; color: string; bg: string }) {
+  if (count === 0) return null;
+  return (
+    <span
+      style={{
+        fontSize: "0.65rem",
+        fontWeight: 600,
+        color,
+        backgroundColor: bg,
+        borderRadius: "9999px",
+        padding: "0 6px",
+        lineHeight: "1.5",
+      }}
+    >
+      {count}
+    </span>
+  );
+}
+
 export function SectionList({
   sections,
   selectedSectionId,
   missingRequiredBySection,
+  issueCountBySection,
   fieldValues,
   onSelectSection
 }: SectionListProps) {
@@ -44,7 +71,15 @@ export function SectionList({
         {sections.map((section) => {
           const isSelected = section.id === selectedSectionId;
           const missingCount = missingRequiredBySection[section.id] ?? 0;
-          const statusInfo = getSectionStatus(section, fieldValues, missingCount);
+          const issueCounts = issueCountBySection?.[section.id];
+          const totalIssues = issueCounts
+            ? issueCounts.error + issueCounts.warning + issueCounts.info
+            : 0;
+          // Use design quality error count for status determination when available
+          const statusMissingCount = issueCounts
+            ? missingCount + issueCounts.error
+            : missingCount;
+          const statusInfo = getSectionStatus(section, fieldValues, statusMissingCount);
 
           return (
             <li key={section.id}>
@@ -64,22 +99,16 @@ export function SectionList({
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
                   <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#0F172A" }}>{section.title}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
                     <StatusBadge info={statusInfo} />
-                    {missingCount > 0 && (
-                      <span
-                        style={{
-                          fontSize: "0.7rem",
-                          fontWeight: 600,
-                          color: "#FFFFFF",
-                          backgroundColor: "#EF4444",
-                          borderRadius: "9999px",
-                          padding: "1px 7px",
-                          lineHeight: "1.4"
-                        }}
-                      >
-                        {missingCount}
-                      </span>
+                    {issueCounts && issueCounts.error > 0 && (
+                      <IssueBadge count={issueCounts.error} color="#FFFFFF" bg="#EF4444" />
+                    )}
+                    {issueCounts && issueCounts.warning > 0 && (
+                      <IssueBadge count={issueCounts.warning} color="#92400E" bg="#FDE68A" />
+                    )}
+                    {!issueCounts && missingCount > 0 && (
+                      <IssueBadge count={missingCount} color="#FFFFFF" bg="#EF4444" />
                     )}
                   </div>
                 </div>

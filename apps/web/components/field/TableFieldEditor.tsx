@@ -1,10 +1,9 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { Field, Table } from "@specforge/document-schema";
 
 import type { TableRowValue } from "../../lib/document-editor/create-document-state";
-import { FieldDescription } from "./FieldDescription";
 
 interface TableFieldEditorProps {
   field: Field;
@@ -12,6 +11,7 @@ interface TableFieldEditorProps {
   rows: TableRowValue[];
   hasError?: boolean;
   cellErrors?: Set<string>;
+  cellWarnings?: Set<string>;
   onRowsChange: (rows: TableRowValue[]) => void;
 }
 
@@ -44,8 +44,9 @@ const thStyle: CSSProperties = {
   fontSize: "0.8rem",
   color: "#334155",
   backgroundColor: "#F8FAFC",
-  whiteSpace: "nowrap",
 };
+
+const DESCRIPTION_TRUNCATE = 50;
 
 const tdStyle: CSSProperties = {
   padding: "4px 6px",
@@ -53,15 +54,24 @@ const tdStyle: CSSProperties = {
   verticalAlign: "top",
 };
 
-function getCellInputStyle(hasError: boolean): CSSProperties {
+function getCellInputStyle(hasError: boolean, hasWarning?: boolean): CSSProperties {
+  let border = "1px solid #E2E8F0";
+  let bg = "#FFFFFF";
+  if (hasError) {
+    border = "1.5px solid #EF4444";
+    bg = "#FFFBFB";
+  } else if (hasWarning) {
+    border = "1.5px solid #F59E0B";
+    bg = "#FFFEF5";
+  }
   return {
     width: "100%",
-    border: hasError ? "1.5px solid #EF4444" : "1px solid #E2E8F0",
+    border,
     borderRadius: "4px",
     padding: "5px 7px",
     fontSize: "0.825rem",
     color: "#0F172A",
-    backgroundColor: hasError ? "#FFFBFB" : "#FFFFFF",
+    backgroundColor: bg,
     boxSizing: "border-box" as const,
     outline: "none",
   };
@@ -89,12 +99,72 @@ const addButtonStyle: CSSProperties = {
   fontWeight: 500,
 };
 
+function ColumnHeader({ column }: { column: Field }) {
+  const [expanded, setExpanded] = useState(false);
+  const desc = column.description ?? "";
+  const isLong = desc.length > DESCRIPTION_TRUNCATE;
+  const displayDesc = !isLong || expanded ? desc : desc.slice(0, DESCRIPTION_TRUNCATE) + "…";
+
+  return (
+    <th style={thStyle}>
+      <div style={{ display: "flex", alignItems: "center", gap: "3px", whiteSpace: "nowrap" }}>
+        <span>{column.label}</span>
+        {column.required && (
+          <span
+            style={{
+              color: "#EF4444",
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              marginLeft: "1px",
+            }}
+          >
+            *
+          </span>
+        )}
+      </div>
+      {desc && (
+        <div
+          style={{
+            fontWeight: 400,
+            fontSize: "0.68rem",
+            color: "#64748B",
+            marginTop: "2px",
+            lineHeight: "1.4",
+            whiteSpace: "normal",
+            maxWidth: "180px",
+          }}
+        >
+          {displayDesc}
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setExpanded((p) => !p)}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                marginLeft: "3px",
+                fontSize: "0.65rem",
+                color: "#3B82F6",
+                cursor: "pointer",
+              }}
+            >
+              {expanded ? "閉じる" : "…"}
+            </button>
+          )}
+        </div>
+      )}
+    </th>
+  );
+}
+
 export function TableFieldEditor({
   field,
   table,
   rows,
   hasError,
   cellErrors,
+  cellWarnings,
   onRowsChange,
 }: TableFieldEditorProps) {
   const columns = table.columns;
@@ -161,32 +231,7 @@ export function TableFieldEditor({
           <thead>
             <tr>
               {columns.map((col) => (
-                <th key={col.id} style={thStyle}>
-                  <span>{col.label}</span>
-                  {col.required && (
-                    <span
-                      style={{
-                        color: "#EF4444",
-                        fontSize: "0.75rem",
-                        marginLeft: "2px",
-                      }}
-                    >
-                      *
-                    </span>
-                  )}
-                  {col.description && (
-                    <div
-                      style={{
-                        fontWeight: 400,
-                        fontSize: "0.68rem",
-                        color: "#94A3B8",
-                        marginTop: "1px",
-                      }}
-                    >
-                      {col.description}
-                    </div>
-                  )}
-                </th>
+                <ColumnHeader key={col.id} column={col} />
               ))}
               <th
                 style={{
@@ -212,6 +257,7 @@ export function TableFieldEditor({
                   {columns.map((col) => {
                     const cellKey = `${field.id}:row${rowIndex}:${col.key}`;
                     const cellHasError = cellErrors?.has(cellKey) ?? false;
+                    const cellHasWarning = cellWarnings?.has(cellKey) ?? false;
 
                     return (
                       <td key={col.id} style={tdStyle}>
@@ -219,6 +265,7 @@ export function TableFieldEditor({
                           col,
                           row[col.key],
                           cellHasError,
+                          cellHasWarning,
                           (value) =>
                             handleCellChange(rowIndex, col.key, value)
                         )}
@@ -270,9 +317,10 @@ function renderCellInput(
   column: Field,
   value: string | number | boolean | undefined,
   hasError: boolean,
+  hasWarning: boolean,
   onChange: (value: string | number | boolean | undefined) => void
 ) {
-  const inputStyle = getCellInputStyle(hasError);
+  const inputStyle = getCellInputStyle(hasError, hasWarning);
 
   if (column.valueType === "boolean") {
     const normalizedValue =
