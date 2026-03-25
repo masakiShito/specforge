@@ -25,6 +25,7 @@ import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { DocumentList } from "./document-list";
 import { RightPanel } from "./right-panel";
+import { DocumentPreview } from "./document-preview";
 
 /**
  * Build initial per-document editor states for all documents in a project.
@@ -89,6 +90,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   );
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const [editingTitleDocId, setEditingTitleDocId] = useState<string | null>(null);
+  const [editingProjectTitle, setEditingProjectTitle] = useState(false);
+  const [centerMode, setCenterMode] = useState<"edit" | "preview">("edit");
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const fallbackDocumentId = projectState.documents[0]?.id ?? "";
   const currentDocument =
@@ -372,18 +375,63 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           }}
         >
           {/* Project title */}
-          <h2
-            style={{
-              margin: "0 0 12px",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              color: "#64748B",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            Project · {projectState.title}
-          </h2>
+          {editingProjectTitle ? (
+            <input
+              type="text"
+              autoFocus
+              maxLength={100}
+              defaultValue={projectState.title}
+              onBlur={(e) => {
+                const newTitle = e.target.value.trim();
+                if (newTitle) {
+                  setProjectState((prev) => ({ ...prev, title: newTitle }));
+                }
+                setEditingProjectTitle(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Escape") {
+                  setEditingProjectTitle(false);
+                }
+              }}
+              style={{
+                margin: "0 0 12px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: "#0F172A",
+                border: "1px solid #3B82F6",
+                borderRadius: "4px",
+                padding: "2px 6px",
+                width: "100%",
+                boxSizing: "border-box",
+                outline: "none",
+                letterSpacing: "0.05em",
+              }}
+            />
+          ) : (
+            <h2
+              style={{
+                margin: "0 0 12px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: "#64748B",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title="クリックしてプロジェクト名を編集"
+              onClick={() => setEditingProjectTitle(true)}
+            >
+              Project · {projectState.title}
+              <span style={{ fontSize: "0.65rem", color: "#94A3B8", textTransform: "none" }}>
+                (編集)
+              </span>
+            </h2>
+          )}
 
           {/* Document list */}
           <DocumentList
@@ -488,23 +536,54 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             minWidth: 0,
           }}
         >
-          {selectedSection ? (
-            <SectionForm
-              section={selectedSection}
-              fieldValues={currentDocumentState.fieldValues}
-              errorFieldIds={errorFieldIds}
-              cellErrors={cellErrors}
-              cellWarnings={cellWarnings}
-              focusFieldId={focusFieldId}
-              fieldRefs={fieldRefs}
-              onValueChange={handleFieldValueChange}
-              onFocusHandled={handleFocusHandled}
-              project={projectState}
-              documentStates={documentStates}
-              onNavigateToReference={handleNavigateToReference}
-            />
+          {/* Edit / Preview toggle */}
+          <div style={{ display: "flex", gap: "0", borderBottom: "1px solid #E2E8F0", marginBottom: "16px" }}>
+            {(["edit", "preview"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setCenterMode(mode)}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "0.8rem",
+                  fontWeight: centerMode === mode ? 600 : 400,
+                  color: centerMode === mode ? "#3B82F6" : "#64748B",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderBottom: centerMode === mode ? "2px solid #3B82F6" : "2px solid transparent",
+                  cursor: "pointer",
+                  transition: "color 0.15s, border-color 0.15s",
+                }}
+              >
+                {mode === "edit" ? "編集" : "プレビュー"}
+              </button>
+            ))}
+          </div>
+
+          {centerMode === "edit" ? (
+            selectedSection ? (
+              <SectionForm
+                section={selectedSection}
+                fieldValues={currentDocumentState.fieldValues}
+                errorFieldIds={errorFieldIds}
+                cellErrors={cellErrors}
+                cellWarnings={cellWarnings}
+                focusFieldId={focusFieldId}
+                fieldRefs={fieldRefs}
+                onValueChange={handleFieldValueChange}
+                onFocusHandled={handleFocusHandled}
+                project={projectState}
+                documentStates={documentStates}
+                onNavigateToReference={handleNavigateToReference}
+              />
+            ) : (
+              <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
+            )
           ) : (
-            <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
+            <DocumentPreview
+              document={currentDocument}
+              state={currentDocumentState}
+            />
           )}
         </section>
 
