@@ -52,6 +52,7 @@ export function validateEvents(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:api-no-target`,
         severity: "error",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
@@ -69,6 +70,7 @@ export function validateEvents(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:onchange-no-target`,
         severity: "warning",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,

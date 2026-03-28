@@ -6,6 +6,7 @@ import {
   normalizeProjectData,
   type Project,
   type Document,
+  type DocumentKind,
 } from "@specforge/document-schema";
 
 import {
@@ -13,14 +14,17 @@ import {
   type DocumentEditorState,
   type FieldValue,
 } from "../lib/document-editor/create-document-state";
+import { createDocument } from "../lib/document-editor/create-document";
 import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
-import { validateDesignQuality } from "../lib/validation/validate-design-quality";
+import { validateDesignQuality, validateProjectQuality } from "../lib/validation/validate-design-quality";
 import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
+
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { DocumentList } from "./document-list";
 import { RightPanel } from "./right-panel";
+import { DocumentPreview } from "./document-preview";
 
 /**
  * Build initial per-document editor states for all documents in a project.
@@ -33,12 +37,34 @@ function createProjectStates(project: Project): Record<string, DocumentEditorSta
   return states;
 }
 
+function ensureUniqueDocumentTitle(
+  documentId: string,
+  requestedTitle: string,
+  documents: Document[]
+): string {
+  const normalized = requestedTitle.trim();
+  if (!normalized) return "";
+
+  const used = new Set(
+    documents
+      .filter((doc) => doc.id !== documentId)
+      .map((doc) => doc.title)
+  );
+  if (!used.has(normalized)) return normalized;
+
+  let suffix = 2;
+  while (used.has(`${normalized} ${suffix}`)) {
+    suffix += 1;
+  }
+  return `${normalized} ${suffix}`;
+}
+
 interface DocumentEditorProps {
   project?: Project | Document;
 }
 
 export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
-  const [projectState] = useState<Project>(() =>
+  const [projectState, setProjectState] = useState<Project>(() =>
     normalizeProjectData(projectInput ?? sampleScreenSpecProject)
   );
 
@@ -62,6 +88,9 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
       )
   );
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
+  const [editingTitleDocId, setEditingTitleDocId] = useState<string | null>(null);
+  const [editingProjectTitle, setEditingProjectTitle] = useState(false);
+  const [centerMode, setCenterMode] = useState<"edit" | "preview">("edit");
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const fallbackDocumentId = projectState.documents[0]?.id ?? "";
   const currentDocument =
@@ -75,6 +104,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     }
   }, [currentDocument, selectedDocumentId]);
 
+  
   if (!currentDocument) {
     return <main>ドキュメントが存在しません。</main>;
   }
@@ -86,15 +116,23 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     "";
 
   const validation = useMemo(() => validateDocument(currentDocumentState), [currentDocumentState]);
-  const designQuality = useMemo(() => validateDesignQuality(currentDocumentState), [currentDocumentState]);
+  const designQuality = useMemo(
+    () => validateDesignQuality(currentDocumentState, projectState),
+    [currentDocumentState, projectState]
+  );
+  const projectQuality = useMemo(
+    () => validateProjectQuality(projectState, documentStates),
+    [projectState, documentStates]
+  );
+
   const validationItems = useMemo(() => {
     const nonTableWarnings = validation.warnings.filter(
       (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
     );
-    const basicItems = enrichValidation(nonTableWarnings);
+    const basicItems = enrichValidation(nonTableWarnings).map((item) => ({ ...item, documentId: currentDocument.id }));
     const designItems = convertDesignIssues(designQuality.issues);
     return [...basicItems, ...designItems];
-  }, [validation.warnings, designQuality.issues]);
+  }, [validation.warnings, designQuality.issues, currentDocument.id]);
 
   const errorFieldIds = useMemo(() => {
     const ids = new Set<string>();
@@ -129,16 +167,6 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const selectedSection =
     currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0];
 
-  useEffect(() => {
-    if (!selectedSection) return;
-    console.debug("[DocumentEditor] selection", {
-      selectedDocumentId,
-      currentDocumentId: currentDocument.id,
-      currentDocumentTitle: currentDocument.title,
-      currentSectionId: selectedSection.id,
-    });
-  }, [selectedDocumentId, currentDocument.id, currentDocument.title, selectedSection]);
-
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
     setDocumentStates((prev) => ({
       ...prev,
@@ -158,12 +186,73 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     [documentById]
   );
 
+  const handleAddDocument = useCallback(
+    (kind: DocumentKind) => {
+      const newDoc = createDocument(kind, projectState.documents);
+
+      // Update project state
+      setProjectState((prev) => ({
+        ...prev,
+        documents: [...prev.documents, newDoc],
+      }));
+
+      // Create editor state for new document
+      setDocumentStates((prev) => ({
+        ...prev,
+        [newDoc.id]: createDocumentState(newDoc),
+      }));
+
+      // Initialize section selection for new document
+      setSelectedSectionIdByDocument((prev) => ({
+        ...prev,
+        [newDoc.id]: newDoc.sections[0]?.id ?? "",
+      }));
+
+      // Select the new document
+      setSelectedDocumentId(newDoc.id);
+    },
+    [projectState.documents]
+  );
+
+  const handleDocumentTitleChange = useCallback(
+    (documentId: string, newTitle: string) => {
+      const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
+      if (!uniqueTitle) return;
+
+      setProjectState((prev) => ({
+        ...prev,
+        documents: prev.documents.map((doc) =>
+          doc.id === documentId ? { ...doc, title: uniqueTitle } : doc
+        ),
+      }));
+
+      // Update the document reference in editor state.
+      // Since API connections now use ID-based references (apiRef),
+      // label changes are resolved dynamically - no sync needed.
+      setDocumentStates((prev) => {
+        const renamedState = prev[documentId];
+        if (!renamedState) return prev;
+        return {
+          ...prev,
+          [documentId]: {
+            ...renamedState,
+            document: { ...renamedState.document, title: uniqueTitle },
+          },
+        };
+      });
+    },
+    [projectState.documents]
+  );
+
   const handleNavigateToField = useCallback(
-    (sectionId: string, fieldId: string) => {
-      if (sectionId !== selectedSectionId) {
+    (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => {
+      if (documentId !== currentDocument.id) {
+        setSelectedDocumentId(documentId);
+      }
+      if (sectionId !== selectedSectionId || documentId !== currentDocument.id) {
         setSelectedSectionIdByDocument((prev) => ({
           ...prev,
-          [currentDocument.id]: sectionId,
+          [documentId]: sectionId,
         }));
       }
       setTimeout(() => {
@@ -176,6 +265,15 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const handleFocusHandled = useCallback(() => {
     setFocusFieldId(null);
   }, []);
+
+  const handleNavigateToReference = useCallback((documentId: string, sectionId?: string, fieldId?: string) => {
+    // Navigate directly to the referenced document
+    const targetDoc = projectState.documents.find((doc) => doc.id === documentId);
+    if (!targetDoc) return;
+
+    const targetSectionId = sectionId || targetDoc.sections[0]?.id || "";
+    handleNavigateToField(documentId, targetSectionId, fieldId ?? "");
+  }, [projectState.documents, handleNavigateToField]);
 
   return (
     <main
@@ -217,24 +315,70 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           }}
         >
           {/* Project title */}
-          <h2
-            style={{
-              margin: "0 0 12px",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              color: "#64748B",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            {projectState.title}
-          </h2>
+          {editingProjectTitle ? (
+            <input
+              type="text"
+              autoFocus
+              maxLength={100}
+              defaultValue={projectState.title}
+              onBlur={(e) => {
+                const newTitle = e.target.value.trim();
+                if (newTitle) {
+                  setProjectState((prev) => ({ ...prev, title: newTitle }));
+                }
+                setEditingProjectTitle(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Escape") {
+                  setEditingProjectTitle(false);
+                }
+              }}
+              style={{
+                margin: "0 0 12px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: "#0F172A",
+                border: "1px solid #3B82F6",
+                borderRadius: "4px",
+                padding: "2px 6px",
+                width: "100%",
+                boxSizing: "border-box",
+                outline: "none",
+                letterSpacing: "0.05em",
+              }}
+            />
+          ) : (
+            <h2
+              style={{
+                margin: "0 0 12px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: "#64748B",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title="クリックしてプロジェクト名を編集"
+              onClick={() => setEditingProjectTitle(true)}
+            >
+              Project · {projectState.title}
+              <span style={{ fontSize: "0.65rem", color: "#94A3B8", textTransform: "none" }}>
+                (編集)
+              </span>
+            </h2>
+          )}
 
           {/* Document list */}
           <DocumentList
             documents={projectState.documents}
             selectedDocumentId={selectedDocumentId}
             onSelectDocument={handleDocumentSelect}
+            onAddDocument={handleAddDocument}
           />
 
           {/* Divider */}
@@ -246,12 +390,64 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             }}
           />
 
-          {/* Current document info */}
-          <h3 style={{ margin: "0 0 4px", fontSize: "0.875rem", fontWeight: 600, color: "#0F172A" }}>
-            {currentDocument.title}
-          </h3>
+          {/* Current document info with editable title */}
+          {editingTitleDocId === currentDocument.id ? (
+            <input
+              type="text"
+              autoFocus
+              defaultValue={currentDocument.title}
+              onBlur={(e) => {
+                const newTitle = e.target.value.trim();
+                if (newTitle && newTitle !== currentDocument.title) {
+                  handleDocumentTitleChange(currentDocument.id, newTitle);
+                }
+                setEditingTitleDocId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  (e.target as HTMLInputElement).blur();
+                } else if (e.key === "Escape") {
+                  setEditingTitleDocId(null);
+                }
+              }}
+              style={{
+                margin: "0 0 4px",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: "#0F172A",
+                border: "1px solid #3B82F6",
+                borderRadius: "4px",
+                padding: "2px 6px",
+                width: "100%",
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+          ) : (
+            <h3
+              style={{
+                margin: "0 0 4px",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: "#0F172A",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title="クリックしてタイトルを編集"
+              onClick={() => setEditingTitleDocId(currentDocument.id)}
+            >
+              {currentDocument.title}
+              <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
+                (編集)
+              </span>
+            </h3>
+          )}
           <p style={{ margin: "0 0 12px", color: "#94A3B8", fontSize: "0.75rem" }}>
             種別: {currentDocument.kind}　／　バージョン: {currentDocument.version}
+            <br />
+            key: {currentDocument.key}
           </p>
 
           {/* Section list */}
@@ -280,20 +476,54 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             minWidth: 0,
           }}
         >
-          {selectedSection ? (
-            <SectionForm
-              section={selectedSection}
-              fieldValues={currentDocumentState.fieldValues}
-              errorFieldIds={errorFieldIds}
-              cellErrors={cellErrors}
-              cellWarnings={cellWarnings}
-              focusFieldId={focusFieldId}
-              fieldRefs={fieldRefs}
-              onValueChange={handleFieldValueChange}
-              onFocusHandled={handleFocusHandled}
-            />
+          {/* Edit / Preview toggle */}
+          <div style={{ display: "flex", gap: "0", borderBottom: "1px solid #E2E8F0", marginBottom: "16px" }}>
+            {(["edit", "preview"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setCenterMode(mode)}
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "0.8rem",
+                  fontWeight: centerMode === mode ? 600 : 400,
+                  color: centerMode === mode ? "#3B82F6" : "#64748B",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderBottom: centerMode === mode ? "2px solid #3B82F6" : "2px solid transparent",
+                  cursor: "pointer",
+                  transition: "color 0.15s, border-color 0.15s",
+                }}
+              >
+                {mode === "edit" ? "編集" : "プレビュー"}
+              </button>
+            ))}
+          </div>
+
+          {centerMode === "edit" ? (
+            selectedSection ? (
+              <SectionForm
+                section={selectedSection}
+                fieldValues={currentDocumentState.fieldValues}
+                errorFieldIds={errorFieldIds}
+                cellErrors={cellErrors}
+                cellWarnings={cellWarnings}
+                focusFieldId={focusFieldId}
+                fieldRefs={fieldRefs}
+                onValueChange={handleFieldValueChange}
+                onFocusHandled={handleFocusHandled}
+                project={projectState}
+                documentStates={documentStates}
+                onNavigateToReference={handleNavigateToReference}
+              />
+            ) : (
+              <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
+            )
           ) : (
-            <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
+            <DocumentPreview
+              document={currentDocument}
+              state={currentDocumentState}
+            />
           )}
         </section>
 
@@ -302,6 +532,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           document={currentDocument}
           state={currentDocumentState}
           validationItems={validationItems}
+          projectValidation={projectQuality}
           onNavigateToField={handleNavigateToField}
         />
       </div>

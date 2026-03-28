@@ -31,10 +31,14 @@ function isRequiredFieldMissing(field: Field, value: FieldValue): boolean {
     return true;
   }
 
+  if (field.valueType === "reference" && typeof value === "object" && value !== null && !("refId" in value)) {
+    return true;
+  }
+
   return false;
 }
 
-function isCellEmpty(value: string | number | boolean | undefined): boolean {
+function isCellEmpty(value: FieldValue | TableRowValue[string]): boolean {
   return value === undefined || value === null || value === "";
 }
 

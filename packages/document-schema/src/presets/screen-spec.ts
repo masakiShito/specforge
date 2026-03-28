@@ -298,12 +298,20 @@ export const screenSpecPreset: Document = {
             required: false,
             columns: [
               {
-                id: "col-api-name",
-                key: "apiName",
-                label: "API名",
+                id: "col-api-ref",
+                key: "apiRef",
+                label: "API参照",
                 required: true,
-                valueType: "text",
-                description: "呼び出すAPIの名称"
+                valueType: "reference",
+                description: "Project内のAPI仕様書を選択します。選択肢はProject内のapi-specから自動生成されます。",
+                reference: {
+                  id: "ref-api-document",
+                  key: "api-document",
+                  label: "API仕様書",
+                  required: true,
+                  kind: "document",
+                  constraint: { documentKinds: ["api-spec"] },
+                }
               },
               {
                 id: "col-api-timing",

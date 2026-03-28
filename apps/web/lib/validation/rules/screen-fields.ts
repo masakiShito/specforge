@@ -51,6 +51,7 @@ export function validateScreenFields(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:name:missing-with-key`,
         severity: "error",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
@@ -68,6 +69,7 @@ export function validateScreenFields(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:label-editable`,
         severity: "warning",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
@@ -85,6 +87,7 @@ export function validateScreenFields(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:button-required`,
         severity: "warning",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
@@ -102,6 +105,7 @@ export function validateScreenFields(
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:visible-condition-long`,
         severity: "info",
+        documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,

@@ -5,7 +5,7 @@ import type { ValidationItem, ValidationSeverity } from "../../types/validation"
 
 interface ValidationPanelProps {
   items: ValidationItem[];
-  onNavigate?: (sectionId: string, fieldId: string) => void;
+  onNavigate?: (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => void;
 }
 
 const SEVERITY_CONFIG: Record<
@@ -75,7 +75,7 @@ function ValidationItemCard({
   onNavigate,
 }: {
   item: ValidationItem;
-  onNavigate?: (sectionId: string, fieldId: string) => void;
+  onNavigate?: (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => void;
 }) {
   const config = SEVERITY_CONFIG[item.severity];
 
@@ -83,11 +83,11 @@ function ValidationItemCard({
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onNavigate?.(item.sectionId, item.fieldId)}
+      onClick={() => onNavigate?.(item.documentId ?? "", item.sectionId, item.fieldId, item.rowIndex)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onNavigate?.(item.sectionId, item.fieldId);
+          onNavigate?.(item.documentId ?? "", item.sectionId, item.fieldId, item.rowIndex);
         }
       }}
       style={{
@@ -139,7 +139,7 @@ function SeveritySection({
 }: {
   severity: ValidationSeverity;
   items: ValidationItem[];
-  onNavigate?: (sectionId: string, fieldId: string) => void;
+  onNavigate?: (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => void;
 }) {
   if (items.length === 0) return null;
 

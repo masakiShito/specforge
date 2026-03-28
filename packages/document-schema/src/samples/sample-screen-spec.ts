@@ -2,13 +2,12 @@ import type { Document } from "../core/document";
 import type { Project } from "../core/project";
 
 /**
- * Dummy API spec document for multi-document switching demo.
- * This is intentionally minimal — full api-spec implementation is a future phase.
+ * Sample API spec document using the full Phase2 structure.
  */
 const dummySubmitOrderApiDoc: Document = {
   id: "doc-submit-order-api",
   key: "submit-order-api",
-  title: "Submit Order API",
+  title: "注文確定API",
   required: true,
   kind: "api-spec",
   version: "0.1.0",
@@ -19,60 +18,200 @@ const dummySubmitOrderApiDoc: Document = {
       key: "overview",
       title: "Overview",
       required: true,
+      description: "APIの概要・目的を記載します",
       fields: [
         {
-          id: "field-api-summary",
-          key: "summary",
-          label: "Summary",
+          id: "field-api-purpose",
+          key: "purpose",
+          label: "目的",
           required: true,
           valueType: "textarea",
-          defaultValue: "注文確定APIは、カート内の商品を確定し決済処理を実行するエンドポイントです。",
+          defaultValue: "カート内の商品を確定し決済処理を実行するAPIです。",
         },
       ],
     },
     {
-      id: "section-api-request",
-      key: "request",
-      title: "Request",
+      id: "section-api-endpoint",
+      key: "endpoint-basic",
+      title: "Endpoint Basic Info",
       required: true,
+      description: "エンドポイントの基本情報を定義します",
       fields: [
         {
-          id: "field-api-method",
-          key: "method",
-          label: "HTTP Method",
-          required: true,
-          valueType: "enum",
-          defaultValue: "POST",
-          options: [
-            { id: "method-get", value: "GET", label: "GET" },
-            { id: "method-post", value: "POST", label: "POST" },
-            { id: "method-put", value: "PUT", label: "PUT" },
-            { id: "method-delete", value: "DELETE", label: "DELETE" },
-          ],
-        },
-        {
-          id: "field-api-path",
-          key: "path",
-          label: "Path",
+          id: "field-api-endpoint",
+          key: "endpoint",
+          label: "エンドポイント",
           required: true,
           valueType: "text",
           defaultValue: "/api/v1/orders",
         },
+        {
+          id: "field-api-method",
+          key: "httpMethod",
+          label: "HTTPメソッド",
+          required: true,
+          valueType: "enum",
+          defaultValue: "POST",
+          options: [
+            { id: "opt-get", value: "GET", label: "GET" },
+            { id: "opt-post", value: "POST", label: "POST" },
+            { id: "opt-put", value: "PUT", label: "PUT" },
+            { id: "opt-patch", value: "PATCH", label: "PATCH" },
+            { id: "opt-delete", value: "DELETE", label: "DELETE" },
+          ],
+        },
+        {
+          id: "field-api-auth",
+          key: "authRequired",
+          label: "認証要否",
+          required: true,
+          valueType: "boolean",
+          defaultValue: true,
+        },
+        {
+          id: "field-api-summary",
+          key: "summary",
+          label: "概要",
+          required: true,
+          valueType: "text",
+          defaultValue: "注文確定・決済実行",
+        },
       ],
     },
     {
-      id: "section-api-response",
-      key: "response",
-      title: "Response",
+      id: "section-api-request-params",
+      key: "request-parameters",
+      title: "Request Parameters",
       required: true,
+      description: "リクエストパラメータの一覧を定義します",
       fields: [
         {
-          id: "field-api-response-body",
-          key: "response-body",
-          label: "Response Body",
+          id: "field-api-req-table",
+          key: "request-parameters",
+          label: "リクエストパラメータ一覧",
+          required: true,
+          valueType: "table",
+          table: {
+            id: "table-api-req",
+            key: "request-parameters",
+            title: "リクエストパラメータ一覧",
+            required: true,
+            columns: [
+              { id: "col-rp-name", key: "parameterName", label: "項目名", required: true, valueType: "text" },
+              { id: "col-rp-key", key: "parameterKey", label: "パラメータキー", required: true, valueType: "text" },
+              {
+                id: "col-rp-type", key: "dataType", label: "型", required: true, valueType: "enum",
+                options: [
+                  { id: "opt-s", value: "string", label: "string" },
+                  { id: "opt-n", value: "number", label: "number" },
+                  { id: "opt-b", value: "boolean", label: "boolean" },
+                  { id: "opt-o", value: "object", label: "object" },
+                  { id: "opt-a", value: "array", label: "array" },
+                ],
+              },
+              { id: "col-rp-req", key: "required", label: "必須", required: true, valueType: "boolean" },
+              { id: "col-rp-desc", key: "description", label: "説明", required: true, valueType: "text" },
+              { id: "col-rp-note", key: "note", label: "備考", required: false, valueType: "text" },
+            ],
+            defaultRows: [
+              { parameterName: "カートID", parameterKey: "cartId", dataType: "string", required: true, description: "カートの識別子", note: "" },
+              { parameterName: "支払い情報", parameterKey: "paymentInfo", dataType: "object", required: true, description: "決済に必要な支払い情報", note: "cardNumber, expiryDate 等を含む" },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: "section-api-response-params",
+      key: "response-parameters",
+      title: "Response Parameters",
+      required: true,
+      description: "レスポンスパラメータの一覧を定義します",
+      fields: [
+        {
+          id: "field-api-resp-table",
+          key: "response-parameters",
+          label: "レスポンスパラメータ一覧",
+          required: true,
+          valueType: "table",
+          table: {
+            id: "table-api-resp",
+            key: "response-parameters",
+            title: "レスポンスパラメータ一覧",
+            required: true,
+            columns: [
+              { id: "col-resp-name", key: "parameterName", label: "項目名", required: true, valueType: "text" },
+              { id: "col-resp-key", key: "parameterKey", label: "パラメータキー", required: true, valueType: "text" },
+              {
+                id: "col-resp-type", key: "dataType", label: "型", required: true, valueType: "enum",
+                options: [
+                  { id: "opt-rs", value: "string", label: "string" },
+                  { id: "opt-rn", value: "number", label: "number" },
+                  { id: "opt-rb", value: "boolean", label: "boolean" },
+                  { id: "opt-ro", value: "object", label: "object" },
+                  { id: "opt-ra", value: "array", label: "array" },
+                ],
+              },
+              { id: "col-resp-desc", key: "description", label: "説明", required: true, valueType: "text" },
+              { id: "col-resp-note", key: "note", label: "備考", required: false, valueType: "text" },
+            ],
+            defaultRows: [
+              { parameterName: "注文ID", parameterKey: "orderId", dataType: "string", description: "発行された注文の識別子", note: "" },
+              { parameterName: "ステータス", parameterKey: "status", dataType: "string", description: "注文の状態", note: "confirmed | failed" },
+              { parameterName: "合計金額", parameterKey: "totalAmount", dataType: "number", description: "税込み合計金額", note: "" },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: "section-api-errors",
+      key: "error-responses",
+      title: "Error Responses",
+      required: true,
+      description: "エラーレスポンスの一覧を定義します",
+      fields: [
+        {
+          id: "field-api-err-table",
+          key: "error-responses",
+          label: "エラーレスポンス一覧",
+          required: true,
+          valueType: "table",
+          table: {
+            id: "table-api-errors",
+            key: "error-responses",
+            title: "エラーレスポンス一覧",
+            required: true,
+            columns: [
+              { id: "col-err-code", key: "errorCode", label: "エラーコード", required: true, valueType: "text" },
+              { id: "col-err-name", key: "errorName", label: "エラー名", required: true, valueType: "text" },
+              { id: "col-err-cond", key: "condition", label: "発生条件", required: true, valueType: "text" },
+              { id: "col-err-msg", key: "message", label: "メッセージ", required: true, valueType: "text" },
+              { id: "col-err-note", key: "note", label: "備考", required: false, valueType: "text" },
+            ],
+            defaultRows: [
+              { errorCode: "400", errorName: "Bad Request", condition: "必須パラメータ不足", message: "必須パラメータが不足しています", note: "" },
+              { errorCode: "401", errorName: "Unauthorized", condition: "認証トークン無効", message: "認証に失敗しました", note: "" },
+              { errorCode: "402", errorName: "Payment Failed", condition: "決済処理失敗", message: "決済に失敗しました。支払い情報を確認してください", note: "リトライ可" },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: "section-api-flow",
+      key: "processing-flow",
+      title: "Processing Flow",
+      required: true,
+      description: "APIの処理フローを記載します",
+      fields: [
+        {
+          id: "field-api-flow",
+          key: "processingFlow",
+          label: "処理フロー",
           required: true,
           valueType: "textarea",
-          defaultValue: '{ "orderId": "string", "status": "confirmed | failed", "totalAmount": "number" }',
+          defaultValue: "1. リクエストバリデーション\n2. 認証チェック\n3. カート情報取得\n4. 在庫確認\n5. 決済処理実行\n6. 注文レコード作成\n7. レスポンス返却",
         },
       ],
     },
@@ -470,12 +609,20 @@ export const sampleScreenSpecProject: Project = {
                 required: false,
                 columns: [
                   {
-                    id: "col-api-name",
-                    key: "apiName",
-                    label: "API名",
+                    id: "col-api-ref",
+                    key: "apiRef",
+                    label: "API参照",
                     required: true,
-                    valueType: "text",
-                    description: "呼び出すAPIの名称"
+                    valueType: "reference",
+                    description: "Project内のAPI仕様書を選択します。選択肢はProject内のapi-specから自動生成されます。",
+                    reference: {
+                      id: "ref-api-document",
+                      key: "api-document",
+                      label: "API仕様書",
+                      required: true,
+                      kind: "document",
+                      constraint: { documentKinds: ["api-spec"] },
+                    }
                   },
                   {
                     id: "col-api-timing",
@@ -519,7 +666,7 @@ export const sampleScreenSpecProject: Project = {
                 ],
                 defaultRows: [
                   {
-                    apiName: "カート情報取得API",
+                    apiRef: "",
                     timing: "画面初期表示時",
                     purpose: "カート内の商品と合計金額を取得",
                     inputSummary: "sessionId",
@@ -527,7 +674,7 @@ export const sampleScreenSpecProject: Project = {
                     note: ""
                   },
                   {
-                    apiName: "注文確定API",
+                    apiRef: "",
                     timing: "注文確定ボタン押下時",
                     purpose: "注文を確定し決済処理を実行",
                     inputSummary: "cartId, paymentInfo",

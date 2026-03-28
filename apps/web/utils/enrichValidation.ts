@@ -38,11 +38,14 @@ export function enrichValidation(warnings: ValidationWarning[]): ValidationItem[
 export function convertDesignIssues(issues: DesignValidationIssue[]): ValidationItem[] {
   return issues.map((issue) => ({
     id: issue.id,
+    documentId: issue.documentId,
     sectionId: issue.sectionId,
     sectionTitle: issue.sectionTitle,
     fieldId: issue.fieldId,
     fieldLabel: issue.fieldLabel,
     message: issue.message,
+    rowIndex: issue.rowIndex,
+    columnKey: issue.columnKey,
     cellKey: issue.rowIndex !== undefined && issue.columnKey
       ? `${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`
       : undefined,
