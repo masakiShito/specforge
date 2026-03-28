@@ -33,7 +33,7 @@ function formatFieldValue(field: Field, value: FieldValue): string {
   }
 
   if (isReferenceValue(value)) {
-    return value.documentId ? `[参照: ${value.documentId}]` : "—";
+    return value.refId ? `[参照: ${value.refId}]` : "—";
   }
 
   return String(value);

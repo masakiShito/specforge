@@ -6,6 +6,7 @@ import {
   findDuplicateKeys,
   findEmptyRows,
   findMissingRequiredCells,
+  getCellReferenceId,
   getCellString,
   isRowEmpty,
 } from "./common";
@@ -14,9 +15,10 @@ import {
  * API Connections section – design quality rules.
  *
  * Rules:
- * - apiName duplicate → error
+ * - apiRef duplicate → error
  * - purpose empty → error (covered by required check)
  * - timing empty → error (covered by required check)
+ * - apiRef not set → error (required reference)
  * - inputSummary and outputSummary both empty → warning
  * - empty rows → warning
  * - required cells missing → error
@@ -31,7 +33,34 @@ export function validateApiConnections(
   // Common rules
   issues.push(...findEmptyRows(rows, columns, ctx));
   issues.push(...findMissingRequiredCells(rows, columns, ctx));
-  issues.push(...findDuplicateKeys(rows, "apiName", "API名", ctx));
+
+  // Check duplicate API references (by refId)
+  const seenRefIds = new Map<string, number>();
+  rows.forEach((row, rowIndex) => {
+    if (isRowEmpty(row, columns)) return;
+
+    const refId = getCellReferenceId(row, "apiRef");
+    if (refId) {
+      if (seenRefIds.has(refId)) {
+        issues.push({
+          id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:apiRef:duplicate`,
+          severity: "error",
+          documentId: ctx.documentId,
+          sectionId: ctx.sectionId,
+          sectionTitle: ctx.sectionTitle,
+          fieldId: ctx.fieldId,
+          fieldLabel: ctx.fieldLabel,
+          rowIndex,
+          columnKey: "apiRef",
+          message: `API参照が重複しています`,
+          reason: `同じAPI仕様書への参照が行 ${seenRefIds.get(refId)! + 1} と重複しています。`,
+          fix: `行 ${rowIndex + 1} のAPI参照を別のAPI仕様書に変更するか、重複する行を削除してください。`,
+        });
+      } else {
+        seenRefIds.set(refId, rowIndex);
+      }
+    }
+  });
 
   // Domain rules per row
   rows.forEach((row, rowIndex) => {

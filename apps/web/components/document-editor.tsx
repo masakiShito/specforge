@@ -19,8 +19,7 @@ import { updateFieldValue } from "../lib/document-editor/update-field-value";
 import { validateDocument } from "../lib/document-editor/validate-document";
 import { validateDesignQuality, validateProjectQuality } from "../lib/validation/validate-design-quality";
 import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
-import { resolveReferenceTarget } from "../lib/reference/helpers";
-import type { ReferenceValue } from "../lib/reference/model";
+
 import { SectionForm } from "./section-form";
 import { SectionList } from "./section-list";
 import { DocumentList } from "./document-list";
@@ -219,7 +218,6 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     (documentId: string, newTitle: string) => {
       const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
       if (!uniqueTitle) return;
-      const previousTitle = projectState.documents.find((doc) => doc.id === documentId)?.title ?? "";
 
       setProjectState((prev) => ({
         ...prev,
@@ -228,60 +226,19 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         ),
       }));
 
-      // Also update the document reference in editor state
+      // Update the document reference in editor state.
+      // Since API connections now use ID-based references (apiRef),
+      // label changes are resolved dynamically - no sync needed.
       setDocumentStates((prev) => {
-        const nextStates = { ...prev };
-        const renamedState = nextStates[documentId];
-        if (renamedState) {
-          nextStates[documentId] = {
+        const renamedState = prev[documentId];
+        if (!renamedState) return prev;
+        return {
+          ...prev,
+          [documentId]: {
             ...renamedState,
             document: { ...renamedState.document, title: uniqueTitle },
-          };
-        }
-
-        for (const [stateId, state] of Object.entries(nextStates)) {
-          if (state.document.kind !== "screen-spec") continue;
-
-          const apiConnectionsField = state.document.sections
-            .find((section) => section.key === "api-connections")
-            ?.fields.find((field) => field.key === "api-connections");
-          if (!apiConnectionsField) continue;
-
-          const rows = state.fieldValues[apiConnectionsField.id];
-          if (!Array.isArray(rows)) continue;
-
-          let changed = false;
-          const updatedRows = rows.map((row) => {
-            const targetRef = row.targetDocumentId;
-            const targetDocumentId =
-              typeof targetRef === "object" && targetRef !== null && "documentId" in targetRef
-                ? String((targetRef as { documentId: string }).documentId)
-                : "";
-            const apiName = typeof row.apiName === "string" ? row.apiName : "";
-            const shouldSyncName =
-              targetDocumentId === documentId &&
-              (apiName === "" || (previousTitle !== "" && apiName === previousTitle));
-
-            if (!shouldSyncName) return row;
-            changed = true;
-            return {
-              ...row,
-              apiName: uniqueTitle,
-            };
-          });
-
-          if (!changed) continue;
-
-          nextStates[stateId] = {
-            ...state,
-            fieldValues: {
-              ...state.fieldValues,
-              [apiConnectionsField.id]: updatedRows,
-            },
-          };
-        }
-
-        return nextStates;
+          },
+        };
       });
     },
     [projectState.documents]
@@ -309,31 +266,14 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     setFocusFieldId(null);
   }, []);
 
-  const handleNavigateToReference = useCallback((referenceId: string) => {
-    const currentState = documentStates[currentDocument.id];
-    if (!currentState) return;
+  const handleNavigateToReference = useCallback((documentId: string, sectionId?: string, fieldId?: string) => {
+    // Navigate directly to the referenced document
+    const targetDoc = projectState.documents.find((doc) => doc.id === documentId);
+    if (!targetDoc) return;
 
-    const rows = currentDocument.sections
-      .find((section) => section.key === "api-connections")
-      ?.fields.find((field) => field.key === "api-connections");
-    if (!rows) return;
-
-    const tableRows = currentState.fieldValues[rows.id];
-    if (!Array.isArray(tableRows)) return;
-
-    const row = tableRows.find((item) => {
-      const cell = item.targetDocumentId;
-      return typeof cell === "object" && cell !== null && "refId" in cell && (cell as ReferenceValue).refId === referenceId;
-    });
-
-    const reference = row?.targetDocumentId;
-    if (typeof reference !== "object" || reference === null || !("refId" in reference)) return;
-
-    const resolved = resolveReferenceTarget(projectState, documentStates, reference as ReferenceValue);
-    if (!resolved) return;
-
-    handleNavigateToField(resolved.documentId, resolved.sectionId ?? "", resolved.fieldId ?? "");
-  }, [currentDocument.id, currentDocument.sections, documentStates, handleNavigateToField, projectState]);
+    const targetSectionId = sectionId || targetDoc.sections[0]?.id || "";
+    handleNavigateToField(documentId, targetSectionId, fieldId ?? "");
+  }, [projectState.documents, handleNavigateToField]);
 
   return (
     <main

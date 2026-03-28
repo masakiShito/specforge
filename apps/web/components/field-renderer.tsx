@@ -2,7 +2,7 @@ import { forwardRef, type CSSProperties, type Ref } from "react";
 import type { Field, Project } from "@specforge/document-schema";
 
 import type { DocumentEditorState, FieldValue, TableRowValue } from "../lib/document-editor/create-document-state";
-import { getApiReferenceCandidates } from "../lib/reference/helpers";
+import { getCandidatesForReference } from "../lib/reference/helpers";
 import { isReferenceValue, toReferenceValue } from "../lib/reference/model";
 import { TableFieldEditor } from "./field/TableFieldEditor";
 
@@ -15,7 +15,7 @@ interface FieldRendererProps {
   onValueChange: (fieldId: string, value: FieldValue) => void;
   project: Project;
   documentStates: Record<string, DocumentEditorState>;
-  onNavigateToReference?: (referenceId: string) => void;
+  onNavigateToReference?: (documentId: string, sectionId?: string, fieldId?: string) => void;
 }
 
 function getInputStyle(hasError: boolean): CSSProperties {
@@ -32,24 +32,22 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
   if (field.valueType === "textarea") return <textarea ref={ref as Ref<HTMLTextAreaElement>} style={{ ...style, minHeight: "100px", resize: "vertical" }} placeholder={field.placeholder ?? "テキストを入力"} value={typeof value === "string" ? value : ""} onChange={(event) => onValueChange(field.id, event.target.value)} />;
   if (field.valueType === "number") return <input ref={ref as Ref<HTMLInputElement>} style={style} type="number" value={typeof value === "number" ? value : ""} onChange={(event) => onValueChange(field.id, event.target.value === "" ? undefined : Number(event.target.value))} />;
 
-  if (field.valueType === "reference") {
-    const candidates = field.reference?.kind === "document"
-      ? getApiReferenceCandidates(project, documentStates)
-      : [];
+  if (field.valueType === "reference" && field.reference) {
+    const candidates = getCandidatesForReference(project, documentStates, field.reference);
     const current = isReferenceValue(value) ? value : undefined;
 
     return (
       <select
         ref={ref as Ref<HTMLSelectElement>}
         style={style}
-        value={current?.documentId ?? ""}
+        value={current?.refId ?? ""}
         onChange={(event) => {
-          const selected = candidates.find((item) => item.documentId === event.target.value);
+          const selected = candidates.find((item) => item.id === event.target.value);
           onValueChange(field.id, selected ? toReferenceValue(selected) : undefined);
         }}
       >
         <option value="">選択してください</option>
-        {candidates.map((option) => <option key={option.id} value={option.documentId}>{option.label}</option>)}
+        {candidates.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
       </select>
     );
   }

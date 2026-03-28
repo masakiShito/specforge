@@ -5,7 +5,7 @@ import type { Field, Project, Table } from "@specforge/document-schema";
 
 import type { DocumentEditorState, TableRowValue } from "../../lib/document-editor/create-document-state";
 import { isReferenceValue, toReferenceValue } from "../../lib/reference/model";
-import { getApiReferenceCandidates, resolveReferenceLabel } from "../../lib/reference/helpers";
+import { getCandidatesForReference, resolveReferenceLabel } from "../../lib/reference/helpers";
 
 interface TableFieldEditorProps {
   field: Field;
@@ -17,7 +17,7 @@ interface TableFieldEditorProps {
   onRowsChange: (rows: TableRowValue[]) => void;
   project: Project;
   documentStates: Record<string, DocumentEditorState>;
-  onNavigateToReference?: (referenceId: string) => void;
+  onNavigateToReference?: (documentId: string, sectionId?: string, fieldId?: string) => void;
 }
 
 function createEmptyRow(columns: Field[]): TableRowValue {
@@ -80,7 +80,6 @@ function ColumnHeader({ column }: { column: Field }) {
 
 export function TableFieldEditor({ field, table, rows, hasError, cellErrors, cellWarnings, onRowsChange, project, documentStates, onNavigateToReference }: TableFieldEditorProps) {
   const columns = table.columns;
-  const apiReferenceCandidates = getApiReferenceCandidates(project, documentStates);
 
   const handleCellChange = (rowIndex: number, columnKey: string, value: TableRowValue[string]) => {
     const nextRows = rows.map((row, index) => (index === rowIndex ? { ...row, [columnKey]: value } : row));
@@ -105,7 +104,6 @@ export function TableFieldEditor({ field, table, rows, hasError, cellErrors, cel
                         cellErrors?.has(cellKey) ?? false,
                         cellWarnings?.has(cellKey) ?? false,
                         (value) => handleCellChange(rowIndex, col.key, value),
-                        apiReferenceCandidates,
                         project,
                         documentStates,
                         onNavigateToReference,
@@ -132,35 +130,35 @@ function renderCellInput(
   hasError: boolean,
   hasWarning: boolean,
   onChange: (value: TableRowValue[string]) => void,
-  apiReferenceCandidates: ReturnType<typeof getApiReferenceCandidates>,
   project: Project,
   documentStates: Record<string, DocumentEditorState>,
-  onNavigateToReference?: (referenceId: string) => void,
+  onNavigateToReference?: (documentId: string, sectionId?: string, fieldId?: string) => void,
 ) {
   const inputStyle = getCellInputStyle(hasError, hasWarning);
 
-  if (column.valueType === "reference" && column.reference?.kind === "document") {
+  if (column.valueType === "reference" && column.reference) {
+    const candidates = getCandidatesForReference(project, documentStates, column.reference);
     const currentRef = isReferenceValue(value) ? value : undefined;
 
     return (
       <div>
         <select
           style={inputStyle}
-          value={currentRef?.documentId ?? ""}
+          value={currentRef?.refId ?? ""}
           onChange={(event) => {
-            const selected = apiReferenceCandidates.find((item) => item.documentId === event.target.value);
+            const selected = candidates.find((item) => item.id === event.target.value);
             onChange(selected ? toReferenceValue(selected) : undefined);
           }}
         >
           <option value="">選択してください</option>
-          {apiReferenceCandidates.map((option) => (
-            <option key={option.id} value={option.documentId}>{option.label}</option>
+          {candidates.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
           ))}
         </select>
         {currentRef && (
           <button
             type="button"
-            onClick={() => onNavigateToReference?.(currentRef.refId)}
+            onClick={() => onNavigateToReference?.(currentRef.documentId, currentRef.sectionId, currentRef.fieldId)}
             style={{ marginTop: "4px", border: "none", background: "none", color: "#2563EB", fontSize: "0.7rem", cursor: "pointer", padding: 0 }}
           >
             {resolveReferenceLabel(project, documentStates, currentRef, "参照先へ移動")}
