@@ -610,20 +610,19 @@ export const sampleScreenSpecProject: Project = {
                 columns: [
                   {
                     id: "col-api-ref",
-                    key: "targetDocumentId",
+                    key: "apiRef",
                     label: "API参照",
-                    required: false,
-                    valueType: "enum",
-                    description: "Project内のAPI仕様書を選択します",
-                    options: []
-                  },
-                  {
-                    id: "col-api-name",
-                    key: "apiName",
-                    label: "API名",
                     required: true,
-                    valueType: "text",
-                    description: "呼び出すAPIの名称"
+                    valueType: "reference",
+                    description: "Project内のAPI仕様書を選択します。選択肢はProject内のapi-specから自動生成されます。",
+                    reference: {
+                      id: "ref-api-document",
+                      key: "api-document",
+                      label: "API仕様書",
+                      required: true,
+                      kind: "document",
+                      constraint: { documentKinds: ["api-spec"] },
+                    }
                   },
                   {
                     id: "col-api-timing",
@@ -667,8 +666,7 @@ export const sampleScreenSpecProject: Project = {
                 ],
                 defaultRows: [
                   {
-                    targetDocumentId: "",
-                    apiName: "カート情報取得API",
+                    apiRef: "",
                     timing: "画面初期表示時",
                     purpose: "カート内の商品と合計金額を取得",
                     inputSummary: "sessionId",
@@ -676,8 +674,7 @@ export const sampleScreenSpecProject: Project = {
                     note: ""
                   },
                   {
-                    targetDocumentId: "doc-submit-order-api",
-                    apiName: "注文確定API",
+                    apiRef: "",
                     timing: "注文確定ボタン押下時",
                     purpose: "注文を確定し決済処理を実行",
                     inputSummary: "cartId, paymentInfo",

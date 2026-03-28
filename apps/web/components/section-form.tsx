@@ -17,7 +17,7 @@ interface SectionFormProps {
   onFocusHandled?: () => void;
   project: Project;
   documentStates: Record<string, DocumentEditorState>;
-  onNavigateToReference?: (referenceId: string) => void;
+  onNavigateToReference?: (documentId: string, sectionId?: string, fieldId?: string) => void;
 }
 
 export function SectionForm({

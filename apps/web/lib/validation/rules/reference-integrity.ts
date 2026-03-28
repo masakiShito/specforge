@@ -12,8 +12,6 @@ export function validateReferenceIntegrity(state: DocumentEditorState, project: 
 
   if (state.document.kind !== "screen-spec") return [];
 
-  const apiDocTitles = project.documents.filter((doc) => doc.kind === "api-spec").map((doc) => doc.title);
-
   const screenFieldKeys = new Set<string>();
   const eventNames = new Set<string>();
 
@@ -24,8 +22,7 @@ export function validateReferenceIntegrity(state: DocumentEditorState, project: 
     if (fieldKey) screenFieldKeys.add(fieldKey);
   });
 
-  const duplicateTitles = new Set(apiDocTitles.filter((t, i) => apiDocTitles.indexOf(t) !== i));
-
+  // Validate API Connections references
   for (const section of state.document.sections) {
     if (section.key !== "api-connections") continue;
 
@@ -36,29 +33,21 @@ export function validateReferenceIntegrity(state: DocumentEditorState, project: 
       rows.forEach((row, rowIndex) => {
         if (isRowEmpty(row, field.table!.columns)) return;
 
-        const targetDocId = getCellReferenceDocumentId(row, "targetDocumentId");
-        const apiName = getCellString(row, "apiName");
-
-        if (!targetDocId && apiName) {
-          issues.push({ id: `${section.id}:${field.id}:row${rowIndex}:ref-missing`, documentId: state.document.id, severity: "warning", sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, rowIndex, columnKey: "targetDocumentId", message: `行 ${rowIndex + 1}: API名は入力されていますが、API参照が未設定です`, reason: "表示名だけでは参照関係を厳密に解決できません。Project内のapi-specをIDで関連付ける必要があります。", fix: "「API参照」列から対応するAPI仕様書を選択してください。" });
-        }
+        const targetDocId = getCellReferenceDocumentId(row, "apiRef");
 
         if (targetDocId) {
           const targetDoc = documentById.get(targetDocId);
           if (!targetDoc) {
-            issues.push({ id: `${section.id}:${field.id}:row${rowIndex}:ref-not-found`, documentId: state.document.id, severity: "error", sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, rowIndex, columnKey: "targetDocumentId", message: `行 ${rowIndex + 1}: 参照先のAPI仕様書が見つかりません`, reason: "参照先のドキュメントがProject内に存在しません。削除された可能性があります。", fix: "「API参照」から有効なAPI仕様書を再選択してください。" });
+            issues.push({ id: `${section.id}:${field.id}:row${rowIndex}:ref-not-found`, documentId: state.document.id, severity: "error", sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, rowIndex, columnKey: "apiRef", message: `行 ${rowIndex + 1}: 参照先のAPI仕様書が見つかりません`, reason: "参照先のドキュメントがProject内に存在しません。削除された可能性があります。", fix: "「API参照」から有効なAPI仕様書を再選択してください。" });
           } else if (targetDoc.kind !== "api-spec") {
-            issues.push({ id: `${section.id}:${field.id}:row${rowIndex}:ref-wrong-kind`, documentId: state.document.id, severity: "error", sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, rowIndex, columnKey: "targetDocumentId", message: `行 ${rowIndex + 1}: 参照先がAPI仕様書ではありません`, reason: `参照先「${targetDoc.title}」は ${targetDoc.kind} であり、api-spec ではありません。`, fix: "「API参照」からAPI仕様書のみを選択してください。" });
-          }
-
-          if (targetDoc && duplicateTitles.has(targetDoc.title)) {
-            issues.push({ id: `${section.id}:${field.id}:row${rowIndex}:ref-duplicate-name`, documentId: state.document.id, severity: "warning", sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, rowIndex, columnKey: "targetDocumentId", message: `行 ${rowIndex + 1}: 同名のAPI仕様書がProject内に複数存在します`, reason: "同名のAPI仕様書が複数あると、どのAPIを指しているか不明確になります。", fix: "API仕様書のタイトルを一意にするか、API名や備考で区別できる情報を追加してください。" });
+            issues.push({ id: `${section.id}:${field.id}:row${rowIndex}:ref-wrong-kind`, documentId: state.document.id, severity: "error", sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, rowIndex, columnKey: "apiRef", message: `行 ${rowIndex + 1}: 参照先がAPI仕様書ではありません`, reason: `参照先「${targetDoc.title}」は ${targetDoc.kind} であり、api-spec ではありません。`, fix: "「API参照」からAPI仕様書のみを選択してください。" });
           }
         }
       });
     }
   }
 
+  // Validate Events references
   for (const section of state.document.sections) {
     if (section.key !== "events") continue;
 
@@ -67,7 +56,7 @@ export function validateReferenceIntegrity(state: DocumentEditorState, project: 
       const rows = Array.isArray(state.fieldValues[field.id]) ? (state.fieldValues[field.id] as TableRowValue[]) : [];
       const apiConnectionsField = state.document.sections.find((s) => s.key === "api-connections")?.fields.find((f) => f.key === "api-connections");
       const apiConnectionRows = apiConnectionsField && Array.isArray(state.fieldValues[apiConnectionsField.id]) ? (state.fieldValues[apiConnectionsField.id] as TableRowValue[]) : [];
-      const hasAnyApiRef = apiConnectionRows.some((r) => getCellReferenceDocumentId(r, "targetDocumentId") !== "");
+      const hasAnyApiRef = apiConnectionRows.some((r) => getCellReferenceDocumentId(r, "apiRef") !== "");
 
       rows.forEach((row, rowIndex) => {
         if (isRowEmpty(row, field.table!.columns)) return;
@@ -88,7 +77,7 @@ export function validateReferenceIntegrity(state: DocumentEditorState, project: 
     }
   }
 
-
+  // Validate Messages references
   for (const section of state.document.sections) {
     if (section.key !== "messages") continue;
     for (const field of section.fields) {

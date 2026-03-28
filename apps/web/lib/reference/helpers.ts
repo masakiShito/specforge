@@ -1,4 +1,4 @@
-import type { Project } from "@specforge/document-schema";
+import type { DocumentKind, Project, Reference } from "@specforge/document-schema";
 
 import type { DocumentEditorState } from "../document-editor/create-document-state";
 import {
@@ -6,6 +6,8 @@ import {
   getReferenceLabel,
   resolveReference,
   toReferenceValue,
+  type ReferenceCandidate,
+  type ReferenceCandidateFilter,
   type ReferenceValue,
 } from "./model";
 
@@ -17,6 +19,27 @@ export function getApiReferenceCandidates(
     kind: "document",
     documentKinds: ["api-spec"],
   });
+}
+
+/**
+ * Build a ReferenceCandidateFilter from a Field's reference metadata.
+ */
+export function buildFilterFromReference(ref: Reference): ReferenceCandidateFilter {
+  return {
+    kind: ref.kind,
+    documentKinds: ref.constraint?.documentKinds,
+  };
+}
+
+/**
+ * Get reference candidates based on a Field's reference metadata.
+ */
+export function getCandidatesForReference(
+  project: Project,
+  states: Record<string, DocumentEditorState>,
+  ref: Reference
+): ReferenceCandidate[] {
+  return getReferenceCandidates(project, states, buildFilterFromReference(ref));
 }
 
 export function toApiReferenceValue(
