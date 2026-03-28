@@ -2,8 +2,9 @@ import { forwardRef, type CSSProperties, type Ref } from "react";
 import type { Field, Project } from "@specforge/document-schema";
 
 import type { DocumentEditorState, FieldValue, TableRowValue } from "../lib/document-editor/create-document-state";
-import { getCandidatesForReference } from "../lib/reference/helpers";
+import { getCandidatesForReference, resolveReferenceLabel } from "../lib/reference/helpers";
 import { isReferenceValue, toReferenceValue } from "../lib/reference/model";
+import { ReferenceSelect } from "./field/ReferenceSelect";
 import { TableFieldEditor } from "./field/TableFieldEditor";
 
 interface FieldRendererProps {
@@ -35,20 +36,19 @@ export const FieldRenderer = forwardRef(function FieldRenderer(
   if (field.valueType === "reference" && field.reference) {
     const candidates = getCandidatesForReference(project, documentStates, field.reference);
     const current = isReferenceValue(value) ? value : undefined;
+    const isInvalid = !!current && !candidates.some((c) => c.id === current.refId);
+    const label = current ? resolveReferenceLabel(project, documentStates, current, "参照先へ移動") : undefined;
 
     return (
-      <select
-        ref={ref as Ref<HTMLSelectElement>}
-        style={style}
-        value={current?.refId ?? ""}
-        onChange={(event) => {
-          const selected = candidates.find((item) => item.id === event.target.value);
-          onValueChange(field.id, selected ? toReferenceValue(selected) : undefined);
-        }}
-      >
-        <option value="">選択してください</option>
-        {candidates.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-      </select>
+      <ReferenceSelect
+        candidates={candidates}
+        current={current}
+        hasError={hasError}
+        isInvalid={isInvalid}
+        onSelect={(candidate) => onValueChange(field.id, candidate ? toReferenceValue(candidate) : undefined)}
+        onNavigateToReference={onNavigateToReference}
+        resolvedLabel={label}
+      />
     );
   }
 
