@@ -1,8 +1,7 @@
 version: 1
 
 defaults:
-  labels:
-    - "specforge"
+  labels: []
   milestone: ""
   assignees: []
 
@@ -27,9 +26,6 @@ issues:
 
       ## スコープ外
       - AI 自動補完
-    labels:
-      - "type:ux"
-      - "priority:high"
 
   - id: "phase3-validation-jump"
     title: "validationから該当箇所へジャンプできるようにする"
@@ -47,10 +43,6 @@ issues:
 
       ## 完了条件
       - [ ] validation から修正箇所へ迷わず移動できる
-    labels:
-      - "type:ux"
-      - "type:validation"
-      - "priority:high"
 
   - id: "phase3-relation-view"
     title: "Document間の参照関係を可視化する"
@@ -68,10 +60,6 @@ issues:
 
       ## 完了条件
       - [ ] 関係性の把握が容易になる
-    labels:
-      - "type:feature"
-      - "type:visualization"
-      - "priority:medium"
 
   - id: "phase3-project-dashboard"
     title: "Project全体の状態を一覧できるダッシュボードを追加する"
@@ -89,10 +77,6 @@ issues:
 
       ## 完了条件
       - [ ] Project の健康状態を一目で把握できる
-    labels:
-      - "type:feature"
-      - "type:dashboard"
-      - "priority:medium"
 
   - id: "phase3-preview-polish"
     title: "Documentプレビューを読みやすい設計書ビューに改善する"
@@ -110,7 +94,3 @@ issues:
 
       ## 完了条件
       - [ ] Preview だけで Document 全体を通読できる
-    labels:
-      - "type:ux"
-      - "type:preview"
-      - "priority:high"
