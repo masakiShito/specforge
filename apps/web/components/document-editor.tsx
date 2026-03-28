@@ -134,6 +134,37 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     return [...basicItems, ...designItems];
   }, [validation.warnings, designQuality.issues, currentDocument.id]);
 
+  // All-document validation items for the panel (enables cross-document navigation)
+  const allValidationItems = useMemo(() => {
+    const items: import("../types/validation").ValidationItem[] = [];
+
+    for (const doc of projectState.documents) {
+      const state = documentStates[doc.id];
+      if (!state) continue;
+
+      // Basic required-field validation
+      const docValidation = validateDocument(state);
+      const nonTableWarnings = docValidation.warnings.filter(
+        (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
+      );
+      const basicItems = enrichValidation(nonTableWarnings).map((item) => ({
+        ...item,
+        documentId: doc.id,
+        documentTitle: doc.title,
+      }));
+      items.push(...basicItems);
+    }
+
+    // Project-level design quality issues (already cover all documents)
+    const designItems = convertDesignIssues(projectQuality.issues).map((item) => ({
+      ...item,
+      documentTitle: documentById[item.documentId ?? ""]?.title ?? "",
+    }));
+    items.push(...designItems);
+
+    return items;
+  }, [projectState.documents, documentStates, projectQuality.issues, documentById]);
+
   const errorFieldIds = useMemo(() => {
     const ids = new Set<string>();
     for (const item of validationItems) {
@@ -246,18 +277,20 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
 
   const handleNavigateToField = useCallback(
     (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => {
-      if (documentId !== currentDocument.id) {
+      const isCrossDocument = documentId !== currentDocument.id;
+      if (isCrossDocument) {
         setSelectedDocumentId(documentId);
       }
-      if (sectionId !== selectedSectionId || documentId !== currentDocument.id) {
+      if (sectionId !== selectedSectionId || isCrossDocument) {
         setSelectedSectionIdByDocument((prev) => ({
           ...prev,
           [documentId]: sectionId,
         }));
       }
+      // Use longer delay for cross-document navigation to allow re-render
       setTimeout(() => {
         setFocusFieldId(fieldId);
-      }, 50);
+      }, isCrossDocument ? 150 : 50);
     },
     [selectedSectionId, currentDocument.id]
   );
@@ -532,6 +565,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           document={currentDocument}
           state={currentDocumentState}
           validationItems={validationItems}
+          allValidationItems={allValidationItems}
           projectValidation={projectQuality}
           onNavigateToField={handleNavigateToField}
         />
