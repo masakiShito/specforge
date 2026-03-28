@@ -6,6 +6,7 @@ import type { Field, Project, Table } from "@specforge/document-schema";
 import type { DocumentEditorState, TableRowValue } from "../../lib/document-editor/create-document-state";
 import { isReferenceValue, toReferenceValue } from "../../lib/reference/model";
 import { getCandidatesForReference, resolveReferenceLabel } from "../../lib/reference/helpers";
+import { ReferenceSelect } from "./ReferenceSelect";
 
 interface TableFieldEditorProps {
   field: Field;
@@ -139,32 +140,21 @@ function renderCellInput(
   if (column.valueType === "reference" && column.reference) {
     const candidates = getCandidatesForReference(project, documentStates, column.reference);
     const currentRef = isReferenceValue(value) ? value : undefined;
+    const isInvalid = !!currentRef && !candidates.some((c) => c.id === currentRef.refId);
+    const label = currentRef ? resolveReferenceLabel(project, documentStates, currentRef, "参照先へ移動") : undefined;
 
     return (
-      <div>
-        <select
-          style={inputStyle}
-          value={currentRef?.refId ?? ""}
-          onChange={(event) => {
-            const selected = candidates.find((item) => item.id === event.target.value);
-            onChange(selected ? toReferenceValue(selected) : undefined);
-          }}
-        >
-          <option value="">選択してください</option>
-          {candidates.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
-          ))}
-        </select>
-        {currentRef && (
-          <button
-            type="button"
-            onClick={() => onNavigateToReference?.(currentRef.documentId, currentRef.sectionId, currentRef.fieldId)}
-            style={{ marginTop: "4px", border: "none", background: "none", color: "#2563EB", fontSize: "0.7rem", cursor: "pointer", padding: 0 }}
-          >
-            {resolveReferenceLabel(project, documentStates, currentRef, "参照先へ移動")}
-          </button>
-        )}
-      </div>
+      <ReferenceSelect
+        candidates={candidates}
+        current={currentRef}
+        hasError={hasError}
+        hasWarning={hasWarning}
+        isInvalid={isInvalid}
+        onSelect={(candidate) => onChange(candidate ? toReferenceValue(candidate) : undefined)}
+        onNavigateToReference={onNavigateToReference}
+        resolvedLabel={label}
+        compact
+      />
     );
   }
 
