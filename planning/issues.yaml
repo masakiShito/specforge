@@ -1,0 +1,116 @@
+version: 1
+
+defaults:
+  labels:
+    - "specforge"
+  milestone: ""
+  assignees: []
+
+issues:
+  - id: "phase3-reference-ux"
+    title: "reference入力のUXを改善する"
+    body: |
+      ## 概要
+      reference フィールドの候補選択体験を改善する。
+
+      ## 目的
+      参照先が増えても迷わず選べるようにする。
+
+      ## 要件
+      - [ ] 候補検索ができる
+      - [ ] 選択中の参照先が分かる
+      - [ ] 無効な参照は明示される
+
+      ## 完了条件
+      - [ ] 参照選択の操作回数が減る
+      - [ ] 既存 validation と整合する
+
+      ## スコープ外
+      - AI 自動補完
+    labels:
+      - "type:ux"
+      - "priority:high"
+
+  - id: "phase3-validation-jump"
+    title: "validationから該当箇所へジャンプできるようにする"
+    body: |
+      ## 概要
+      validation 項目クリックで該当 Document / Section / Field に移動できるようにする。
+
+      ## 目的
+      修正までの導線を短くする。
+
+      ## 要件
+      - [ ] Document へ切り替わる
+      - [ ] Section が選択される
+      - [ ] 可能なら該当箇所へスクロールする
+
+      ## 完了条件
+      - [ ] validation から修正箇所へ迷わず移動できる
+    labels:
+      - "type:ux"
+      - "type:validation"
+      - "priority:high"
+
+  - id: "phase3-relation-view"
+    title: "Document間の参照関係を可視化する"
+    body: |
+      ## 概要
+      screen-spec と api-spec の関係を一覧または簡易グラフで表示する。
+
+      ## 目的
+      設計のつながりを一目で把握できるようにする。
+
+      ## 要件
+      - [ ] screen → api の関係が分かる
+      - [ ] 参照切れが分かる
+      - [ ] 選択中 Document に関連する参照を見られる
+
+      ## 完了条件
+      - [ ] 関係性の把握が容易になる
+    labels:
+      - "type:feature"
+      - "type:visualization"
+      - "priority:medium"
+
+  - id: "phase3-project-dashboard"
+    title: "Project全体の状態を一覧できるダッシュボードを追加する"
+    body: |
+      ## 概要
+      Document 数、Error 数、Warning 数、未接続参照などを一覧表示する。
+
+      ## 目的
+      Project 全体の品質を俯瞰できるようにする。
+
+      ## 要件
+      - [ ] Document ごとの状態が見える
+      - [ ] Error / Warning 集計がある
+      - [ ] 未接続参照が分かる
+
+      ## 完了条件
+      - [ ] Project の健康状態を一目で把握できる
+    labels:
+      - "type:feature"
+      - "type:dashboard"
+      - "priority:medium"
+
+  - id: "phase3-preview-polish"
+    title: "Documentプレビューを読みやすい設計書ビューに改善する"
+    body: |
+      ## 概要
+      Preview を編集画面の延長ではなく、読むための設計書ビューとして改善する。
+
+      ## 目的
+      実際の設計書としての見え方を確認しやすくする。
+
+      ## 要件
+      - [ ] section ごとの見出しを整える
+      - [ ] table を閲覧向けに整形する
+      - [ ] 未入力や警告を控えめに見せる
+
+      ## 完了条件
+      - [ ] Preview だけで Document 全体を通読できる
+    labels:
+      - "type:ux"
+      - "type:preview"
+      - "priority:high"
