@@ -13,6 +13,7 @@ import { getGuideContent } from "../data/guide";
 import { GuidePanel } from "./guide/GuidePanel";
 import { ValidationPanel } from "./validation/ValidationPanel";
 import { RelationshipPanel } from "./relationship/RelationshipPanel";
+import { ProjectHealthDashboard } from "./health/ProjectHealthDashboard";
 
 interface RightPanelProps {
   document: Document;
@@ -25,8 +26,8 @@ interface RightPanelProps {
   onNavigateToField?: (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => void;
 }
 
-type TabId = "validation" | "relationship" | "json" | "guide";
-const tabs: { id: TabId; label: string }[] = [{ id: "validation", label: "バリデーション" }, { id: "relationship", label: "関係性" }, { id: "json", label: "JSON" }, { id: "guide", label: "ガイド" }];
+type TabId = "validation" | "health" | "relationship" | "json" | "guide";
+const tabs: { id: TabId; label: string }[] = [{ id: "validation", label: "バリデーション" }, { id: "health", label: "ヘルス" }, { id: "relationship", label: "関係性" }, { id: "json", label: "JSON" }, { id: "guide", label: "ガイド" }];
 
 const tabBarStyle: CSSProperties = { display: "flex", gap: "0", borderBottom: "1px solid #E2E8F0", marginBottom: "12px" };
 function getTabStyle(isActive: boolean): CSSProperties { return { flex: 1, padding: "8px 0", fontSize: "0.8rem", fontWeight: isActive ? 600 : 400, color: isActive ? "#3B82F6" : "#64748B", backgroundColor: "transparent", border: "none", borderBottom: isActive ? "2px solid #3B82F6" : "2px solid transparent", cursor: "pointer", textAlign: "center", transition: "color 0.15s, border-color 0.15s" }; }
@@ -62,6 +63,7 @@ export function RightPanel({ document, state, validationItems, allValidationItem
       <QualityScoreDisplay items={validationItems} projectValidation={projectValidation} />
       <nav style={tabBarStyle}>{tabs.map((tab) => <button key={tab.id} type="button" style={getTabStyle(activeTab === tab.id)} onClick={() => setActiveTab(tab.id)}>{tab.label}{tab.id === "validation" && allValidationItems.length > 0 && <span style={{ marginLeft: "4px", fontSize: "0.65rem", fontWeight: 600, color: "#FFFFFF", backgroundColor: "#EF4444", borderRadius: "9999px", padding: "0 5px" }}>{allValidationItems.length}</span>}</button>)}</nav>
       {activeTab === "validation" && <ValidationPanel items={allValidationItems} currentDocumentId={document.id} onNavigate={onNavigateToField} />}
+      {activeTab === "health" && <ProjectHealthDashboard project={project} documentStates={documentStates} projectValidation={projectValidation} allValidationItems={allValidationItems} currentDocumentId={document.id} onNavigateToDocument={onNavigateToField ? (docId, secId, fId) => onNavigateToField(docId, secId, fId) : undefined} />}
       {activeTab === "relationship" && <RelationshipPanel project={project} documentStates={documentStates} currentDocumentId={document.id} onNavigateToDocument={onNavigateToField ? (docId, secId, fId) => onNavigateToField(docId, secId, fId) : undefined} />}
       {activeTab === "json" && <JsonContent document={document} state={state} />}
       {activeTab === "guide" && <GuidePanel content={getGuideContent(document.kind)} />}
