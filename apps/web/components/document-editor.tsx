@@ -567,6 +567,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           validationItems={validationItems}
           allValidationItems={allValidationItems}
           projectValidation={projectQuality}
+          project={projectState}
+          documentStates={documentStates}
           onNavigateToField={handleNavigateToField}
         />
       </div>
