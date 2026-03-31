@@ -4,6 +4,7 @@ export type ValidationSeverity = "error" | "warning" | "info";
 
 export interface ValidationItem extends ValidationWarning {
   documentId?: string;
+  documentTitle?: string;
   rowIndex?: number;
   columnKey?: string;
   severity: ValidationSeverity;

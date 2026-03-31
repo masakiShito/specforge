@@ -15,6 +15,7 @@ interface RightPanelProps {
   document: Document;
   state: DocumentEditorState;
   validationItems: ValidationItem[];
+  allValidationItems: ValidationItem[];
   projectValidation: ProjectValidationResult;
   onNavigateToField?: (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => void;
 }
@@ -48,14 +49,14 @@ function JsonContent({ document, state }: { document: Document; state: DocumentE
   return <pre style={{ margin: 0, maxHeight: "calc(100vh - 260px)", overflow: "auto", fontSize: "0.72rem", lineHeight: "1.5", backgroundColor: "#1E293B", color: "#E2E8F0", padding: "12px", borderRadius: "6px", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{JSON.stringify({ id: document.id, key: document.key, title: document.title, kind: document.kind, version: document.version, fields: state.fieldValues }, null, 2)}</pre>;
 }
 
-export function RightPanel({ document, state, validationItems, projectValidation, onNavigateToField }: RightPanelProps) {
+export function RightPanel({ document, state, validationItems, allValidationItems, projectValidation, onNavigateToField }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("validation");
 
   return (
     <aside style={{ border: "1px solid #E2E8F0", borderRadius: "8px", padding: "16px", backgroundColor: "#FFFFFF", minWidth: 0 }}>
       <QualityScoreDisplay items={validationItems} projectValidation={projectValidation} />
-      <nav style={tabBarStyle}>{tabs.map((tab) => <button key={tab.id} type="button" style={getTabStyle(activeTab === tab.id)} onClick={() => setActiveTab(tab.id)}>{tab.label}{tab.id === "validation" && validationItems.length > 0 && <span style={{ marginLeft: "4px", fontSize: "0.65rem", fontWeight: 600, color: "#FFFFFF", backgroundColor: "#EF4444", borderRadius: "9999px", padding: "0 5px" }}>{validationItems.length}</span>}</button>)}</nav>
-      {activeTab === "validation" && <ValidationPanel items={validationItems} onNavigate={onNavigateToField} />}
+      <nav style={tabBarStyle}>{tabs.map((tab) => <button key={tab.id} type="button" style={getTabStyle(activeTab === tab.id)} onClick={() => setActiveTab(tab.id)}>{tab.label}{tab.id === "validation" && allValidationItems.length > 0 && <span style={{ marginLeft: "4px", fontSize: "0.65rem", fontWeight: 600, color: "#FFFFFF", backgroundColor: "#EF4444", borderRadius: "9999px", padding: "0 5px" }}>{allValidationItems.length}</span>}</button>)}</nav>
+      {activeTab === "validation" && <ValidationPanel items={allValidationItems} currentDocumentId={document.id} onNavigate={onNavigateToField} />}
       {activeTab === "json" && <JsonContent document={document} state={state} />}
       {activeTab === "guide" && <GuidePanel content={getGuideContent(document.kind)} />}
     </aside>
