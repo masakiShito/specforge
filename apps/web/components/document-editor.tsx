@@ -25,6 +25,7 @@ import { SectionList } from "./section-list";
 import { DocumentList } from "./document-list";
 import { RightPanel } from "./right-panel";
 import { DocumentPreview } from "./document-preview";
+import { ProjectHealthDashboard } from "./health/ProjectHealthDashboard";
 
 /**
  * Build initial per-document editor states for all documents in a project.
@@ -91,6 +92,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const [editingTitleDocId, setEditingTitleDocId] = useState<string | null>(null);
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
   const [centerMode, setCenterMode] = useState<"edit" | "preview">("edit");
+  const [viewMode, setViewMode] = useState<"editor" | "health">("editor");
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const fallbackDocumentId = projectState.documents[0]?.id ?? "";
   const currentDocument =
@@ -308,6 +310,11 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     handleNavigateToField(documentId, targetSectionId, fieldId ?? "");
   }, [projectState.documents, handleNavigateToField]);
 
+  const handleHealthNavigateToDocument = useCallback((documentId: string, sectionId: string, fieldId: string) => {
+    setViewMode("editor");
+    handleNavigateToField(documentId, sectionId, fieldId);
+  }, [handleNavigateToField]);
+
   return (
     <main
       style={{
@@ -320,15 +327,44 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         overflow: "hidden",
       }}
     >
-      <header style={{ marginBottom: "20px" }}>
-        <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "#0F172A" }}>
-          SpecForge
-        </h1>
-        <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.875rem" }}>
-          スキーマ駆動の構造化設計書エディタ
-        </p>
+      <header style={{ marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "#0F172A" }}>
+            SpecForge
+          </h1>
+          <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.875rem" }}>
+            スキーマ駆動の構造化設計書エディタ
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setViewMode(viewMode === "editor" ? "health" : "editor")}
+          style={{
+            padding: "6px 14px",
+            fontSize: "0.8rem",
+            fontWeight: 600,
+            color: viewMode === "health" ? "#FFFFFF" : "#475569",
+            backgroundColor: viewMode === "health" ? "#3B82F6" : "#FFFFFF",
+            border: `1px solid ${viewMode === "health" ? "#3B82F6" : "#CBD5E1"}`,
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "all 0.15s",
+          }}
+        >
+          {viewMode === "health" ? "エディタに戻る" : "プロジェクトヘルス"}
+        </button>
       </header>
 
+      {viewMode === "health" ? (
+        <ProjectHealthDashboard
+          project={projectState}
+          documentStates={documentStates}
+          projectValidation={projectQuality}
+          allValidationItems={allValidationItems}
+          onNavigateToDocument={handleHealthNavigateToDocument}
+          onBack={() => setViewMode("editor")}
+        />
+      ) : (
       <div
         style={{
           display: "grid",
@@ -572,6 +608,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           onNavigateToField={handleNavigateToField}
         />
       </div>
+      )}
     </main>
   );
 }
