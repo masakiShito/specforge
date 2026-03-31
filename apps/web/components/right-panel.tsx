@@ -3,6 +3,8 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import type { Document } from "@specforge/document-schema";
 
+import type { Project } from "@specforge/document-schema";
+
 import type { DocumentEditorState } from "../lib/document-editor/create-document-state";
 import type { ProjectValidationResult } from "../lib/validation/validate-design-quality";
 import type { ValidationItem } from "../types/validation";
@@ -10,6 +12,7 @@ import { calculateQualityScore, type QualityScoreResult } from "../utils/quality
 import { getGuideContent } from "../data/guide";
 import { GuidePanel } from "./guide/GuidePanel";
 import { ValidationPanel } from "./validation/ValidationPanel";
+import { RelationshipPanel } from "./relationship/RelationshipPanel";
 
 interface RightPanelProps {
   document: Document;
@@ -17,11 +20,13 @@ interface RightPanelProps {
   validationItems: ValidationItem[];
   allValidationItems: ValidationItem[];
   projectValidation: ProjectValidationResult;
+  project: Project;
+  documentStates: Record<string, DocumentEditorState>;
   onNavigateToField?: (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => void;
 }
 
-type TabId = "validation" | "json" | "guide";
-const tabs: { id: TabId; label: string }[] = [{ id: "validation", label: "バリデーション" }, { id: "json", label: "JSON" }, { id: "guide", label: "ガイド" }];
+type TabId = "validation" | "relationship" | "json" | "guide";
+const tabs: { id: TabId; label: string }[] = [{ id: "validation", label: "バリデーション" }, { id: "relationship", label: "関係性" }, { id: "json", label: "JSON" }, { id: "guide", label: "ガイド" }];
 
 const tabBarStyle: CSSProperties = { display: "flex", gap: "0", borderBottom: "1px solid #E2E8F0", marginBottom: "12px" };
 function getTabStyle(isActive: boolean): CSSProperties { return { flex: 1, padding: "8px 0", fontSize: "0.8rem", fontWeight: isActive ? 600 : 400, color: isActive ? "#3B82F6" : "#64748B", backgroundColor: "transparent", border: "none", borderBottom: isActive ? "2px solid #3B82F6" : "2px solid transparent", cursor: "pointer", textAlign: "center", transition: "color 0.15s, border-color 0.15s" }; }
@@ -49,7 +54,7 @@ function JsonContent({ document, state }: { document: Document; state: DocumentE
   return <pre style={{ margin: 0, maxHeight: "calc(100vh - 260px)", overflow: "auto", fontSize: "0.72rem", lineHeight: "1.5", backgroundColor: "#1E293B", color: "#E2E8F0", padding: "12px", borderRadius: "6px", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{JSON.stringify({ id: document.id, key: document.key, title: document.title, kind: document.kind, version: document.version, fields: state.fieldValues }, null, 2)}</pre>;
 }
 
-export function RightPanel({ document, state, validationItems, allValidationItems, projectValidation, onNavigateToField }: RightPanelProps) {
+export function RightPanel({ document, state, validationItems, allValidationItems, projectValidation, project, documentStates, onNavigateToField }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("validation");
 
   return (
@@ -57,6 +62,7 @@ export function RightPanel({ document, state, validationItems, allValidationItem
       <QualityScoreDisplay items={validationItems} projectValidation={projectValidation} />
       <nav style={tabBarStyle}>{tabs.map((tab) => <button key={tab.id} type="button" style={getTabStyle(activeTab === tab.id)} onClick={() => setActiveTab(tab.id)}>{tab.label}{tab.id === "validation" && allValidationItems.length > 0 && <span style={{ marginLeft: "4px", fontSize: "0.65rem", fontWeight: 600, color: "#FFFFFF", backgroundColor: "#EF4444", borderRadius: "9999px", padding: "0 5px" }}>{allValidationItems.length}</span>}</button>)}</nav>
       {activeTab === "validation" && <ValidationPanel items={allValidationItems} currentDocumentId={document.id} onNavigate={onNavigateToField} />}
+      {activeTab === "relationship" && <RelationshipPanel project={project} documentStates={documentStates} currentDocumentId={document.id} onNavigateToDocument={onNavigateToField ? (docId, secId, fId) => onNavigateToField(docId, secId, fId) : undefined} />}
       {activeTab === "json" && <JsonContent document={document} state={state} />}
       {activeTab === "guide" && <GuidePanel content={getGuideContent(document.kind)} />}
     </aside>
