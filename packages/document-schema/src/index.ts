@@ -17,4 +17,9 @@ export { apiSpecPreset } from "./presets/api-spec";
 
 export { sampleScreenSpecProject } from "./samples/sample-screen-spec";
 
-export { isProject, isDocument, normalizeProjectData } from "./utils/normalize";
+export { isProject, isDocument, normalizeProjectData, safeNormalizeProjectData } from "./utils/normalize";
+export type { NormalizeError } from "./utils/normalize";
+
+// Result type utilities
+export { ok, err, isOk, isErr, unwrap, unwrapOr, map, mapErr, andThen } from "./utils/result";
+export type { Result, Ok, Err } from "./utils/result";
