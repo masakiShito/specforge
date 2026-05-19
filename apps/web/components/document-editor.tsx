@@ -247,6 +247,102 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     [projectState.documents]
   );
 
+  const handleDeleteDocument = useCallback(
+    (documentId: string) => {
+      // Don't delete if it's the last document
+      if (projectState.documents.length <= 1) return;
+
+      // Find the index of the document to delete
+      const deletedIndex = projectState.documents.findIndex((doc) => doc.id === documentId);
+      if (deletedIndex === -1) return;
+
+      // Remove from project state
+      setProjectState((prev) => ({
+        ...prev,
+        documents: prev.documents.filter((doc) => doc.id !== documentId),
+      }));
+
+      // Remove editor state
+      setDocumentStates((prev) => {
+        const newStates = { ...prev };
+        delete newStates[documentId];
+        return newStates;
+      });
+
+      // Remove section selection
+      setSelectedSectionIdByDocument((prev) => {
+        const newSelections = { ...prev };
+        delete newSelections[documentId];
+        return newSelections;
+      });
+
+      // If the deleted document was selected, select another document
+      if (selectedDocumentId === documentId) {
+        const remainingDocs = projectState.documents.filter((doc) => doc.id !== documentId);
+        const newSelectedIndex = Math.min(deletedIndex, remainingDocs.length - 1);
+        const newSelectedDoc = remainingDocs[newSelectedIndex];
+        if (newSelectedDoc) {
+          setSelectedDocumentId(newSelectedDoc.id);
+        }
+      }
+    },
+    [projectState.documents, selectedDocumentId]
+  );
+
+  const handleReorderDocument = useCallback(
+    (documentId: string, direction: "up" | "down") => {
+      setProjectState((prev) => {
+        // Group documents by kind to reorder within the same kind group
+        const kindGroups = new Map<string, Document[]>();
+        for (const doc of prev.documents) {
+          const existing = kindGroups.get(doc.kind) ?? [];
+          existing.push(doc);
+          kindGroups.set(doc.kind, existing);
+        }
+
+        // Find the document and its group
+        const targetDoc = prev.documents.find((doc) => doc.id === documentId);
+        if (!targetDoc) return prev;
+
+        const group = kindGroups.get(targetDoc.kind);
+        if (!group) return prev;
+
+        const indexInGroup = group.findIndex((doc) => doc.id === documentId);
+        if (indexInGroup === -1) return prev;
+
+        // Check boundaries
+        if (direction === "up" && indexInGroup === 0) return prev;
+        if (direction === "down" && indexInGroup === group.length - 1) return prev;
+
+        // Swap within the group
+        const newIndex = direction === "up" ? indexInGroup - 1 : indexInGroup + 1;
+        const newGroup = [...group];
+        [newGroup[indexInGroup], newGroup[newIndex]] = [newGroup[newIndex]!, newGroup[indexInGroup]!];
+        kindGroups.set(targetDoc.kind, newGroup);
+
+        // Rebuild the documents array maintaining kind order
+        const kindOrder = ["screen-spec", "api-spec", "er-spec", "business-rule"];
+        const newDocuments: Document[] = [];
+
+        for (const kind of kindOrder) {
+          const docs = kindGroups.get(kind);
+          if (docs) {
+            newDocuments.push(...docs);
+            kindGroups.delete(kind);
+          }
+        }
+
+        // Add any remaining kinds
+        for (const docs of kindGroups.values()) {
+          newDocuments.push(...docs);
+        }
+
+        return { ...prev, documents: newDocuments };
+      });
+    },
+    []
+  );
+
   const handleDocumentTitleChange = useCallback(
     (documentId: string, newTitle: string) => {
       const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
@@ -448,6 +544,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             selectedDocumentId={selectedDocumentId}
             onSelectDocument={handleDocumentSelect}
             onAddDocument={handleAddDocument}
+            onDeleteDocument={projectState.documents.length > 1 ? handleDeleteDocument : undefined}
+            onReorderDocument={handleReorderDocument}
           />
 
           {/* Divider */}

@@ -2,11 +2,15 @@ import type { Field, Project } from "@specforge/document-schema";
 
 import type { DocumentEditorState, TableRowValue } from "../document-editor/create-document-state";
 import type { DesignValidationIssue, TableValidationContext } from "./types";
-import { validateScreenFields } from "./rules/screen-fields";
-import { validateEvents } from "./rules/events";
-import { validateMessages } from "./rules/messages";
-import { validateApiConnections } from "./rules/api-connections";
-import { validateRequestParameters, validateResponseParameters, validateErrorResponses } from "./rules/api-spec-tables";
+import {
+  validateScreenFields,
+  validateEvents,
+  validateMessages,
+  validateApiConnections,
+  validateRequestParameters,
+  validateResponseParameters,
+  validateErrorResponses,
+} from "./adapter";
 import { validateApiSpecFields } from "./rules/api-spec-endpoint";
 import { validateReferenceIntegrity } from "./rules/reference-integrity";
 

@@ -2,11 +2,24 @@
   "name": "@specforge/lint-rules",
   "version": "0.1.0",
   "private": true,
-  "main": "src/index.ts",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "build": "echo 'lint-rules build is not initialized yet'",
+    "build": "tsc --noEmit",
     "lint": "echo 'lint-rules lint is not initialized yet'",
-    "test": "echo 'lint-rules test is not initialized yet'",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "echo 'lint-rules format is not initialized yet'"
+  },
+  "dependencies": {
+    "@specforge/document-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "vitest": "^2.1.0"
   }
 }
