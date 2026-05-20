@@ -13,15 +13,39 @@ import {
 } from "./adapter";
 import { validateApiSpecFields } from "./rules/api-spec-endpoint";
 import { validateReferenceIntegrity } from "./rules/reference-integrity";
+import {
+  validateEntities,
+  validateAttributes,
+  validateRelationships,
+  validateIndexes,
+} from "./rules/er-spec-tables";
+import {
+  validateConditions,
+  validateRules,
+  validateExceptions,
+  validateValidations,
+} from "./rules/business-rule-tables";
 
 const TABLE_VALIDATORS: Record<string, (rows: TableRowValue[], columns: Field[], ctx: TableValidationContext) => DesignValidationIssue[]> = {
+  // screen-spec tables
   "screen-fields": validateScreenFields,
   events: validateEvents,
   messages: validateMessages,
   "api-connections": validateApiConnections,
+  // api-spec tables
   "request-parameters": validateRequestParameters,
   "response-parameters": validateResponseParameters,
   "error-responses": validateErrorResponses,
+  // er-spec tables
+  entities: validateEntities,
+  attributes: validateAttributes,
+  relationships: validateRelationships,
+  indexes: validateIndexes,
+  // business-rule tables
+  conditions: validateConditions,
+  rules: validateRules,
+  exceptions: validateExceptions,
+  validations: validateValidations,
 };
 
 export interface DesignQualityResult {

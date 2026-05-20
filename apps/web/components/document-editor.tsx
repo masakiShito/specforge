@@ -26,6 +26,7 @@ import { DocumentList } from "./document-list";
 import { RightPanel } from "./right-panel";
 import { DocumentPreview } from "./document-preview";
 import { ProjectHealthDashboard } from "./health/ProjectHealthDashboard";
+import { ExportModal, ImportModal } from "./export";
 
 /**
  * Build initial per-document editor states for all documents in a project.
@@ -93,6 +94,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
   const [centerMode, setCenterMode] = useState<"edit" | "preview">("edit");
   const [viewMode, setViewMode] = useState<"editor" | "health">("editor");
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const fallbackDocumentId = projectState.documents[0]?.id ?? "";
   const currentDocument =
@@ -411,6 +414,61 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
     handleNavigateToField(documentId, sectionId, fieldId);
   }, [handleNavigateToField]);
 
+  const handleImportProject = useCallback(
+    (importedProject: Project, importedDocumentStates: DocumentEditorState[]) => {
+      setProjectState(importedProject);
+
+      // Convert array of states to record keyed by document id
+      const statesRecord: Record<string, DocumentEditorState> = {};
+      for (const state of importedDocumentStates) {
+        statesRecord[state.document.id] = state;
+      }
+      setDocumentStates(statesRecord);
+
+      // Initialize section selections for all documents
+      const sectionSelections: Record<string, string> = {};
+      for (const doc of importedProject.documents) {
+        sectionSelections[doc.id] = doc.sections[0]?.id ?? "";
+      }
+      setSelectedSectionIdByDocument(sectionSelections);
+
+      // Select the first document
+      if (importedProject.documents[0]) {
+        setSelectedDocumentId(importedProject.documents[0].id);
+      }
+    },
+    []
+  );
+
+  const handleImportDocument = useCallback(
+    (importedDocument: Document, importedFieldValues: Record<string, FieldValue>) => {
+      // Add document to project
+      setProjectState((prev) => ({
+        ...prev,
+        documents: [...prev.documents, importedDocument],
+      }));
+
+      // Add editor state
+      setDocumentStates((prev) => ({
+        ...prev,
+        [importedDocument.id]: {
+          document: importedDocument,
+          fieldValues: importedFieldValues,
+        },
+      }));
+
+      // Initialize section selection
+      setSelectedSectionIdByDocument((prev) => ({
+        ...prev,
+        [importedDocument.id]: importedDocument.sections[0]?.id ?? "",
+      }));
+
+      // Select the imported document
+      setSelectedDocumentId(importedDocument.id);
+    },
+    []
+  );
+
   return (
     <main
       style={{
@@ -432,23 +490,59 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             スキーマ駆動の構造化設計書エディタ
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setViewMode(viewMode === "editor" ? "health" : "editor")}
-          style={{
-            padding: "6px 14px",
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            color: viewMode === "health" ? "#FFFFFF" : "#475569",
-            backgroundColor: viewMode === "health" ? "#3B82F6" : "#FFFFFF",
-            border: `1px solid ${viewMode === "health" ? "#3B82F6" : "#CBD5E1"}`,
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "all 0.15s",
-          }}
-        >
-          {viewMode === "health" ? "エディタに戻る" : "プロジェクトヘルス"}
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            style={{
+              padding: "6px 14px",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            インポート
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowExportModal(true)}
+            style={{
+              padding: "6px 14px",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            エクスポート
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode(viewMode === "editor" ? "health" : "editor")}
+            style={{
+              padding: "6px 14px",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              color: viewMode === "health" ? "#FFFFFF" : "#475569",
+              backgroundColor: viewMode === "health" ? "#3B82F6" : "#FFFFFF",
+              border: `1px solid ${viewMode === "health" ? "#3B82F6" : "#CBD5E1"}`,
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {viewMode === "health" ? "エディタに戻る" : "プロジェクトヘルス"}
+          </button>
+        </div>
       </header>
 
       {viewMode === "health" ? (
@@ -707,6 +801,23 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         />
       </div>
       )}
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        project={projectState}
+        documentStates={documentStates}
+        currentDocumentId={selectedDocumentId}
+      />
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportProject={handleImportProject}
+        onImportDocument={handleImportDocument}
+      />
     </main>
   );
 }

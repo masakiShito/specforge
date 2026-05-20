@@ -14,6 +14,8 @@ export type { ReferenceKind } from "./enums/reference-kind";
 
 export { screenSpecPreset } from "./presets/screen-spec";
 export { apiSpecPreset } from "./presets/api-spec";
+export { erSpecPreset } from "./presets/er-spec";
+export { businessRulePreset } from "./presets/business-rule";
 
 export { sampleScreenSpecProject } from "./samples/sample-screen-spec";
 

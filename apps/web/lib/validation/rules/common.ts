@@ -87,3 +87,66 @@ export function getCellBoolean(row: TableRowValue, key: string): boolean | undef
   const v = row[key];
   return typeof v === "boolean" ? v : undefined;
 }
+
+/**
+ * Create a standardized validation issue
+ */
+export function createIssue(params: {
+  documentId: string;
+  sectionId: string;
+  sectionTitle: string;
+  fieldId: string;
+  fieldLabel: string;
+  rowIndex: number;
+  columnKey: string;
+  severity: DesignValidationIssue["severity"];
+  message: string;
+  reason?: string;
+  fix?: string;
+}): DesignValidationIssue {
+  return {
+    id: `${params.sectionId}:${params.fieldId}:row${params.rowIndex}:${params.columnKey}:custom`,
+    documentId: params.documentId,
+    sectionId: params.sectionId,
+    sectionTitle: params.sectionTitle,
+    fieldId: params.fieldId,
+    fieldLabel: params.fieldLabel,
+    rowIndex: params.rowIndex,
+    columnKey: params.columnKey,
+    severity: params.severity,
+    message: params.message,
+    reason: params.reason ?? params.message,
+    fix: params.fix ?? "該当箇所を確認してください",
+  };
+}
+
+/**
+ * Validate uniqueness of a column value across all rows
+ */
+export function validateUniqueness(
+  rows: TableRowValue[],
+  columnKey: string,
+  columnLabel: string,
+  ctx: TableValidationContext
+): DesignValidationIssue[] {
+  return findDuplicateKeys(rows, columnKey, columnLabel, ctx);
+}
+
+/**
+ * Validate that required columns are filled in non-empty rows
+ */
+export function validateRequiredColumns(
+  rows: TableRowValue[],
+  columns: Field[],
+  ctx: TableValidationContext
+): DesignValidationIssue[] {
+  const issues: DesignValidationIssue[] = [];
+
+  // Check for empty rows
+  issues.push(...findEmptyRows(rows, columns, ctx));
+
+  // Check for missing required cells
+  issues.push(...findMissingRequiredCells(rows, columns, ctx));
+
+  return issues;
+}

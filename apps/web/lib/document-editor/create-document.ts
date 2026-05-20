@@ -1,5 +1,5 @@
 import type { Document, DocumentKind } from "@specforge/document-schema";
-import { screenSpecPreset, apiSpecPreset } from "@specforge/document-schema";
+import { screenSpecPreset, apiSpecPreset, erSpecPreset, businessRulePreset } from "@specforge/document-schema";
 
 /**
  * Preset map keyed by document kind.
@@ -8,12 +8,16 @@ import { screenSpecPreset, apiSpecPreset } from "@specforge/document-schema";
 const PRESET_MAP: Record<string, Document> = {
   "screen-spec": screenSpecPreset,
   "api-spec": apiSpecPreset,
+  "er-spec": erSpecPreset,
+  "business-rule": businessRulePreset,
 };
 
 /** Kinds available for document creation */
 export const creatableKinds: { kind: DocumentKind; label: string }[] = [
   { kind: "screen-spec", label: "画面仕様書" },
   { kind: "api-spec", label: "API仕様書" },
+  { kind: "er-spec", label: "ER設計書" },
+  { kind: "business-rule", label: "ビジネスルール" },
 ];
 
 let idCounter = 0;
@@ -76,6 +80,8 @@ function cloneWithFreshIds(preset: Document, docId: string): Document {
 const DEFAULT_TITLES: Record<string, string> = {
   "screen-spec": "新しい画面仕様書",
   "api-spec": "新しいAPI仕様書",
+  "er-spec": "新しいER設計書",
+  "business-rule": "新しいビジネスルール",
 };
 
 function slugify(input: string): string {

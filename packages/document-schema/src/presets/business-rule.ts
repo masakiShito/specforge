@@ -1,0 +1,374 @@
+import type { Document } from "../core/document";
+
+export const businessRulePreset: Document = {
+  id: "preset-business-rule",
+  key: "business-rule-template",
+  title: "Business Rule",
+  required: true,
+  kind: "business-rule",
+  version: "1.0.0",
+  sections: [
+    {
+      id: "section-br-overview",
+      key: "overview",
+      title: "Overview",
+      required: true,
+      description: "ビジネスルールの概要・目的を記載します",
+      fields: [
+        {
+          id: "field-br-purpose",
+          key: "purpose",
+          label: "目的",
+          required: true,
+          valueType: "textarea",
+          description: "このビジネスルール定義書の目的と対象業務を記載します",
+          placeholder: "例: ECサイトにおける注文処理に関するビジネスルールを定義します。"
+        },
+        {
+          id: "field-br-scope",
+          key: "scope",
+          label: "適用範囲",
+          required: false,
+          valueType: "textarea",
+          description: "このビジネスルールが適用される業務範囲・機能範囲を記載します",
+          placeholder: "例: カート処理、注文確定、在庫管理、配送処理"
+        },
+        {
+          id: "field-br-stakeholders",
+          key: "stakeholders",
+          label: "関係者",
+          required: false,
+          valueType: "textarea",
+          description: "このビジネスルールに関係するステークホルダーを記載します",
+          placeholder: "例: 営業部門、経理部門、物流部門、顧客サポート"
+        }
+      ]
+    },
+    {
+      id: "section-conditions",
+      key: "conditions",
+      title: "Preconditions",
+      required: true,
+      description: "ビジネスルールの前提条件を定義します",
+      fields: [
+        {
+          id: "field-conditions-table",
+          key: "conditions",
+          label: "前提条件一覧",
+          required: true,
+          valueType: "table",
+          description: "ビジネスルールが適用される前提条件を定義します",
+          table: {
+            id: "table-conditions",
+            key: "conditions",
+            title: "前提条件一覧",
+            required: true,
+            columns: [
+              {
+                id: "col-cond-id",
+                key: "conditionId",
+                label: "条件ID",
+                required: true,
+                valueType: "text",
+                description: "前提条件の識別子"
+              },
+              {
+                id: "col-cond-name",
+                key: "conditionName",
+                label: "条件名",
+                required: true,
+                valueType: "text",
+                description: "前提条件の名称"
+              },
+              {
+                id: "col-cond-description",
+                key: "description",
+                label: "説明",
+                required: true,
+                valueType: "text",
+                description: "前提条件の詳細説明"
+              },
+              {
+                id: "col-cond-check",
+                key: "checkMethod",
+                label: "確認方法",
+                required: false,
+                valueType: "text",
+                description: "前提条件の確認方法"
+              },
+              {
+                id: "col-cond-note",
+                key: "note",
+                label: "備考",
+                required: false,
+                valueType: "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      id: "section-rules",
+      key: "rules",
+      title: "Rules",
+      required: true,
+      description: "ビジネスルールを定義します",
+      fields: [
+        {
+          id: "field-rules-table",
+          key: "rules",
+          label: "ビジネスルール一覧",
+          required: true,
+          valueType: "table",
+          description: "適用するビジネスルールを定義します",
+          table: {
+            id: "table-rules",
+            key: "rules",
+            title: "ビジネスルール一覧",
+            required: true,
+            columns: [
+              {
+                id: "col-rule-id",
+                key: "ruleId",
+                label: "ルールID",
+                required: true,
+                valueType: "text",
+                description: "ビジネスルールの識別子"
+              },
+              {
+                id: "col-rule-name",
+                key: "ruleName",
+                label: "ルール名",
+                required: true,
+                valueType: "text",
+                description: "ビジネスルールの名称"
+              },
+              {
+                id: "col-rule-category",
+                key: "category",
+                label: "カテゴリ",
+                required: true,
+                valueType: "enum",
+                description: "ルールの分類",
+                options: [
+                  { id: "opt-cat-validation", value: "validation", label: "バリデーション" },
+                  { id: "opt-cat-calculation", value: "calculation", label: "計算" },
+                  { id: "opt-cat-constraint", value: "constraint", label: "制約" },
+                  { id: "opt-cat-workflow", value: "workflow", label: "ワークフロー" },
+                  { id: "opt-cat-authorization", value: "authorization", label: "認可" },
+                  { id: "opt-cat-notification", value: "notification", label: "通知" }
+                ]
+              },
+              {
+                id: "col-rule-priority",
+                key: "priority",
+                label: "優先度",
+                required: true,
+                valueType: "enum",
+                description: "ルールの優先度",
+                options: [
+                  { id: "opt-pri-critical", value: "critical", label: "クリティカル" },
+                  { id: "opt-pri-high", value: "high", label: "高" },
+                  { id: "opt-pri-medium", value: "medium", label: "中" },
+                  { id: "opt-pri-low", value: "low", label: "低" }
+                ]
+              },
+              {
+                id: "col-rule-condition",
+                key: "condition",
+                label: "適用条件",
+                required: true,
+                valueType: "text",
+                description: "ルールが適用される条件"
+              },
+              {
+                id: "col-rule-action",
+                key: "action",
+                label: "アクション",
+                required: true,
+                valueType: "text",
+                description: "条件を満たした場合に実行されるアクション"
+              },
+              {
+                id: "col-rule-result",
+                key: "expectedResult",
+                label: "期待結果",
+                required: false,
+                valueType: "text",
+                description: "ルール適用後の期待される結果"
+              },
+              {
+                id: "col-rule-note",
+                key: "note",
+                label: "備考",
+                required: false,
+                valueType: "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      id: "section-exceptions",
+      key: "exceptions",
+      title: "Exceptions",
+      required: false,
+      description: "例外事項を定義します",
+      fields: [
+        {
+          id: "field-exceptions-table",
+          key: "exceptions",
+          label: "例外事項一覧",
+          required: false,
+          valueType: "table",
+          description: "ビジネスルールの例外事項を定義します",
+          table: {
+            id: "table-exceptions",
+            key: "exceptions",
+            title: "例外事項一覧",
+            required: false,
+            columns: [
+              {
+                id: "col-exc-id",
+                key: "exceptionId",
+                label: "例外ID",
+                required: true,
+                valueType: "text",
+                description: "例外事項の識別子"
+              },
+              {
+                id: "col-exc-rule",
+                key: "relatedRuleId",
+                label: "関連ルールID",
+                required: true,
+                valueType: "text",
+                description: "例外が適用されるルールのID"
+              },
+              {
+                id: "col-exc-name",
+                key: "exceptionName",
+                label: "例外名",
+                required: true,
+                valueType: "text",
+                description: "例外事項の名称"
+              },
+              {
+                id: "col-exc-condition",
+                key: "condition",
+                label: "例外条件",
+                required: true,
+                valueType: "text",
+                description: "例外が適用される条件"
+              },
+              {
+                id: "col-exc-handling",
+                key: "handling",
+                label: "対応方法",
+                required: true,
+                valueType: "text",
+                description: "例外発生時の対応方法"
+              },
+              {
+                id: "col-exc-approver",
+                key: "approver",
+                label: "承認者",
+                required: false,
+                valueType: "text",
+                description: "例外適用の承認者"
+              },
+              {
+                id: "col-exc-note",
+                key: "note",
+                label: "備考",
+                required: false,
+                valueType: "text"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      id: "section-validations",
+      key: "validations",
+      title: "Validations",
+      required: false,
+      description: "バリデーションルールを定義します",
+      fields: [
+        {
+          id: "field-validations-table",
+          key: "validations",
+          label: "バリデーションルール一覧",
+          required: false,
+          valueType: "table",
+          description: "入力値や状態のバリデーションルールを定義します",
+          table: {
+            id: "table-validations",
+            key: "validations",
+            title: "バリデーションルール一覧",
+            required: false,
+            columns: [
+              {
+                id: "col-val-id",
+                key: "validationId",
+                label: "バリデーションID",
+                required: true,
+                valueType: "text",
+                description: "バリデーションルールの識別子"
+              },
+              {
+                id: "col-val-target",
+                key: "target",
+                label: "対象項目",
+                required: true,
+                valueType: "text",
+                description: "バリデーション対象の項目"
+              },
+              {
+                id: "col-val-type",
+                key: "validationType",
+                label: "検証種別",
+                required: true,
+                valueType: "enum",
+                description: "バリデーションの種類",
+                options: [
+                  { id: "opt-val-required", value: "required", label: "必須" },
+                  { id: "opt-val-format", value: "format", label: "形式" },
+                  { id: "opt-val-range", value: "range", label: "範囲" },
+                  { id: "opt-val-length", value: "length", label: "桁数" },
+                  { id: "opt-val-pattern", value: "pattern", label: "パターン" },
+                  { id: "opt-val-custom", value: "custom", label: "カスタム" }
+                ]
+              },
+              {
+                id: "col-val-rule",
+                key: "rule",
+                label: "検証ルール",
+                required: true,
+                valueType: "text",
+                description: "具体的な検証ルール"
+              },
+              {
+                id: "col-val-error",
+                key: "errorMessage",
+                label: "エラーメッセージ",
+                required: true,
+                valueType: "text",
+                description: "検証エラー時のメッセージ"
+              },
+              {
+                id: "col-val-note",
+                key: "note",
+                label: "備考",
+                required: false,
+                valueType: "text"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+};
