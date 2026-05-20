@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, useCallback, useMemo, type CSSProperties } from "react";
 import type { Field, Project, Table } from "@specforge/document-schema";
 
 import type { DocumentEditorState, TableRowValue } from "../../lib/document-editor/create-document-state";
 import { isReferenceValue, toReferenceValue } from "../../lib/reference/model";
 import { getCandidatesForReference, resolveReferenceLabel } from "../../lib/reference/helpers";
 import { ReferenceSelect } from "./ReferenceSelect";
+import { VirtualizedTableWrapper } from "./VirtualizedTableBody";
+import { VIRTUALIZATION_THRESHOLD, DEFAULT_ROW_HEIGHT } from "../../hooks/useVirtualization";
 
 interface TableFieldEditorProps {
   field: Field;
@@ -81,20 +83,49 @@ function ColumnHeader({ column }: { column: Field }) {
 
 export function TableFieldEditor({ field, table, rows, hasError, cellErrors, cellWarnings, onRowsChange, project, documentStates, onNavigateToReference }: TableFieldEditorProps) {
   const columns = table.columns;
+  const shouldVirtualize = rows.length > VIRTUALIZATION_THRESHOLD;
 
-  const handleCellChange = (rowIndex: number, columnKey: string, value: TableRowValue[string]) => {
-    const nextRows = rows.map((row, index) => (index === rowIndex ? { ...row, [columnKey]: value } : row));
+  const handleCellChange = useCallback((rowIndex: number, columnKey: string, value: TableRowValue[string]) => {
+    const nextRows = rows.map((row, index) =>
+      index === rowIndex ? { ...row, [columnKey]: value } : row
+    );
     onRowsChange(nextRows);
-  };
+  }, [rows, onRowsChange]);
+
+  const handleDeleteRow = useCallback((rowIndex: number) => {
+    onRowsChange(rows.filter((_, i) => i !== rowIndex));
+  }, [rows, onRowsChange]);
+
+  const handleAddRow = useCallback(() => {
+    onRowsChange([...rows, createEmptyRow(columns)]);
+  }, [rows, columns, onRowsChange]);
+
+  // Memoize visible rows for large tables
+  const visibleRows = useMemo(() => {
+    if (!shouldVirtualize) {
+      return rows;
+    }
+    // For virtualized tables, we show a summary indicator
+    return rows;
+  }, [rows, shouldVirtualize]);
 
   return (
     <div style={{ border: hasError ? "1.5px solid #EF4444" : "1px solid #E2E8F0", borderRadius: "6px", overflow: "hidden", backgroundColor: hasError ? "#FFFBFB" : "#FFFFFF" }}>
-      <div style={{ overflowX: "auto" }}>
+      {/* Row count indicator for large tables */}
+      {shouldVirtualize && (
+        <div style={{ padding: "6px 10px", backgroundColor: "#F0F9FF", borderBottom: "1px solid #BAE6FD", fontSize: "0.75rem", color: "#0369A1" }}>
+          大量データモード: {rows.length} 行（スクロールで表示）
+        </div>
+      )}
+
+      <VirtualizedTableWrapper rowCount={rows.length}>
         <table style={tableStyle}>
-          <thead><tr>{columns.map((c) => <ColumnHeader key={c.id} column={c} />)}<th style={{ ...thStyle, width: "50px", textAlign: "center" }}>操作</th></tr></thead>
+          <thead style={{ position: shouldVirtualize ? "sticky" : undefined, top: 0, zIndex: 1 }}>
+            <tr>{columns.map((c) => <ColumnHeader key={c.id} column={c} />)}<th style={{ ...thStyle, width: "50px", textAlign: "center" }}>操作</th></tr>
+          </thead>
           <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} style={{ backgroundColor: isRowEmpty(row, columns) ? "#FFFBEB" : undefined }}>
+            {visibleRows.map((row, rowIndex) => (
+              <tr key={rowIndex} style={{ backgroundColor: isRowEmpty(row, columns) ? "#FFFBEB" : undefined, height: shouldVirtualize ? DEFAULT_ROW_HEIGHT : undefined }}>
                 {columns.map((col) => {
                   const cellKey = `${field.id}:row${rowIndex}:${col.key}`;
                   return (
@@ -112,14 +143,15 @@ export function TableFieldEditor({ field, table, rows, hasError, cellErrors, cel
                     </td>
                   );
                 })}
-                <td style={{ ...tdStyle, textAlign: "center" }}><button type="button" style={{ background: "none", border: "1px solid #E2E8F0", borderRadius: "4px", padding: "4px 8px", fontSize: "0.7rem", color: "#94A3B8", cursor: "pointer" }} onClick={() => onRowsChange(rows.filter((_, i) => i !== rowIndex))}>削除</button></td>
+                <td style={{ ...tdStyle, textAlign: "center" }}><button type="button" style={{ background: "none", border: "1px solid #E2E8F0", borderRadius: "4px", padding: "4px 8px", fontSize: "0.7rem", color: "#94A3B8", cursor: "pointer" }} onClick={() => handleDeleteRow(rowIndex)}>削除</button></td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </VirtualizedTableWrapper>
+
       <div style={{ padding: "8px 10px", borderTop: "1px solid #F1F5F9", backgroundColor: "#FAFBFC" }}>
-        <button type="button" style={{ background: "none", border: "1px solid #CBD5E1", borderRadius: "6px", padding: "6px 14px", fontSize: "0.8rem", color: "#475569", cursor: "pointer", fontWeight: 500 }} onClick={() => onRowsChange([...rows, createEmptyRow(columns)])}>+ 行を追加</button>
+        <button type="button" style={{ background: "none", border: "1px solid #CBD5E1", borderRadius: "6px", padding: "6px 14px", fontSize: "0.8rem", color: "#475569", cursor: "pointer", fontWeight: 500 }} onClick={handleAddRow}>+ 行を追加</button>
       </div>
     </div>
   );

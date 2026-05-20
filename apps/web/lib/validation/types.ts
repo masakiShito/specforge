@@ -24,3 +24,8 @@ export interface TableValidationContext {
   fieldLabel: string;
   tableKey: string;
 }
+
+export interface DesignValidationResult {
+  issues: DesignValidationIssue[];
+  issueCountBySection: Record<string, { error: number; warning: number; info: number }>;
+}

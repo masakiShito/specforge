@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,6 +12,7 @@ from ..db.database import Base
 
 if TYPE_CHECKING:
     from .document import Document
+    from .user import User
 
 
 class Project(Base):
@@ -27,6 +28,14 @@ class Project(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+
+    # Owner (optional for backward compatibility)
+    owner_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -46,6 +55,11 @@ class Project(Base):
         "Document",
         back_populates="project",
         cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    owner: Mapped["User | None"] = relationship(
+        "User",
+        back_populates="projects",
         lazy="selectin",
     )
 

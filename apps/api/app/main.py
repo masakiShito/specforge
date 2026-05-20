@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .db import get_db, init_db, close_db
 from .models import Project, Document
 from .repositories import ProjectRepository, DocumentRepository
+from .auth.routes import router as auth_router
 
 
 # Load environment variables
@@ -85,6 +86,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(auth_router)
 
 
 # ---------------------------------------------------------------------------
