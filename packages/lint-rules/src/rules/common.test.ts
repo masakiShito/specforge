@@ -212,16 +212,16 @@ describe("validateDuplicateKeys", () => {
     const context: TableValidationContext = {
       documentId: "doc-1",
       sectionKey: "section-1",
-      fieldKey: "fields",
+      fieldKey: "screen-fields",
       rows: [
-        { id: "field-1", label: "Field 1" },
-        { id: "field-2", label: "Field 2" },
-        { id: "field-1", label: "Field 1 Dup" },
+        { fieldKey: "field-1", name: "Field 1" },
+        { fieldKey: "field-2", name: "Field 2" },
+        { fieldKey: "field-1", name: "Field 1 Dup" },
       ],
       columns: [],
     };
 
-    const issues = validateDuplicateKeys(context, "id", "項目ID");
+    const issues = validateDuplicateKeys(context, "fieldKey", "項目キー");
     expect(issues).toHaveLength(1);
     expect(issues[0]?.severity).toBe("error");
     expect(issues[0]?.message).toContain("field-1");

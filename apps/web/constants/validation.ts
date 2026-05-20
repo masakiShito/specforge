@@ -12,17 +12,32 @@
  * Penalty points deducted from quality score for each issue severity.
  */
 export const QUALITY_SCORE_PENALTIES = {
-  error: 20,
-  warning: 5,
+  error: 10,
+  warning: 3,
   info: 0,
+} as const;
+
+/**
+ * Maximum deduction per category to prevent score from dropping too quickly.
+ * Categories are determined by issue ID prefix.
+ */
+export const QUALITY_SCORE_CATEGORY_CAPS = {
+  duplicate: 20,      // 重複キー
+  required: 30,       // 必須フィールド未入力
+  "empty-row": 10,    // 空行
+  "invalid-path": 15, // パス形式エラー
+  "invalid-api": 15,  // API関連エラー
+  "missing-options": 15, // 選択肢未設定
+  reference: 20,      // 参照エラー
+  default: 40,        // その他（カテゴリ未定義）
 } as const;
 
 /**
  * Score thresholds for determining quality status.
  */
 export const QUALITY_SCORE_THRESHOLDS = {
-  good: 90,
-  caution: 70,
+  good: 80,
+  caution: 60,
 } as const;
 
 /**

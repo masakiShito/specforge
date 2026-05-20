@@ -35,11 +35,11 @@ export function isReferenceValue(value: unknown): value is ReferenceValue {
   }
   const obj = value as Record<string, unknown>;
   return (
-    obj.type === "reference" &&
-    typeof obj.referenceType === "string" &&
-    typeof obj.targetDocumentId === "string" &&
-    typeof obj.targetKey === "string" &&
-    typeof obj.displayValue === "string"
+    obj["type"] === "reference" &&
+    typeof obj["referenceType"] === "string" &&
+    typeof obj["targetDocumentId"] === "string" &&
+    typeof obj["targetKey"] === "string" &&
+    typeof obj["displayValue"] === "string"
   );
 }
 

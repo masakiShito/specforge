@@ -16,10 +16,21 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const validateEmail = (email: string): boolean => {
+    // Check for basic email format with a period in domain
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
     setValidationError(null);
+
+    if (!validateEmail(email)) {
+      setValidationError("有効なメールアドレスを入力してください");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setValidationError("パスワードが一致しません");

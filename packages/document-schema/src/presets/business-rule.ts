@@ -11,7 +11,7 @@ export const businessRulePreset: Document = {
     {
       id: "section-br-overview",
       key: "overview",
-      title: "Overview",
+      title: "概要",
       required: true,
       description: "ビジネスルールの概要・目的を記載します",
       fields: [
@@ -47,7 +47,7 @@ export const businessRulePreset: Document = {
     {
       id: "section-conditions",
       key: "conditions",
-      title: "Preconditions",
+      title: "前提条件",
       required: true,
       description: "ビジネスルールの前提条件を定義します",
       fields: [
@@ -111,7 +111,7 @@ export const businessRulePreset: Document = {
     {
       id: "section-rules",
       key: "rules",
-      title: "Rules",
+      title: "ビジネスルール",
       required: true,
       description: "ビジネスルールを定義します",
       fields: [
@@ -213,7 +213,7 @@ export const businessRulePreset: Document = {
     {
       id: "section-exceptions",
       key: "exceptions",
-      title: "Exceptions",
+      title: "例外事項",
       required: false,
       description: "例外事項を定義します",
       fields: [
@@ -293,7 +293,7 @@ export const businessRulePreset: Document = {
     {
       id: "section-validations",
       key: "validations",
-      title: "Validations",
+      title: "バリデーション",
       required: false,
       description: "バリデーションルールを定義します",
       fields: [

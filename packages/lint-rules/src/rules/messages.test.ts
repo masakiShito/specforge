@@ -1,27 +1,28 @@
 import { describe, it, expect } from "vitest";
 import { validateMessages, isMessagesTable } from "./messages";
-import type { TableValidationContext } from "../types";
+import type { TableValidationContext, TableRowValue } from "../types";
 
 describe("validateMessages", () => {
   const createContext = (
-    rows: Record<string, unknown>[]
+    rows: Record<string, TableRowValue>[]
   ): TableValidationContext => ({
     documentId: "doc-1",
     sectionKey: "messages",
     fieldKey: "messages",
     rows,
     columns: [
-      { key: "id", label: "メッセージID" },
-      { key: "type", label: "タイプ" },
-      { key: "message", label: "メッセージ内容" },
-      { key: "condition", label: "発生条件" },
+      { key: "messageId", label: "メッセージID" },
+      { key: "messageType", label: "種別" },
+      { key: "condition", label: "表示条件" },
+      { key: "messageText", label: "文言" },
+      { key: "note", label: "備考" },
     ],
   });
 
   it("should return no issues for valid messages", () => {
     const context = createContext([
-      { id: "MSG_001", type: "success", message: "処理が完了しました" },
-      { id: "MSG_002", type: "error", message: "エラーが発生しました", condition: "入力値が不正" },
+      { messageId: "MSG_001", messageType: "info", messageText: "処理が完了しました" },
+      { messageId: "MSG_002", messageType: "error", messageText: "エラーが発生しました", condition: "入力値が不正" },
     ]);
 
     const issues = validateMessages(context);
@@ -31,8 +32,8 @@ describe("validateMessages", () => {
 
   it("should detect duplicate message IDs", () => {
     const context = createContext([
-      { id: "MSG_001", type: "success", message: "成功しました" },
-      { id: "MSG_001", type: "error", message: "失敗しました" },
+      { messageId: "MSG_001", messageType: "info", messageText: "成功しました" },
+      { messageId: "MSG_001", messageType: "error", messageText: "失敗しました" },
     ]);
 
     const issues = validateMessages(context);
@@ -43,8 +44,8 @@ describe("validateMessages", () => {
 
   it("should detect missing required fields", () => {
     const context = createContext([
-      { id: "MSG_001", type: "success", message: "" },
-      { id: "", type: "error", message: "エラー" },
+      { messageId: "MSG_001", messageType: "info", messageText: "" },
+      { messageId: "", messageType: "error", messageText: "エラー" },
     ]);
 
     const issues = validateMessages(context);
@@ -54,7 +55,7 @@ describe("validateMessages", () => {
 
   it("should inform about non-standard message types", () => {
     const context = createContext([
-      { id: "MSG_001", type: "customType", message: "カスタムメッセージ" },
+      { messageId: "MSG_001", messageType: "customType", messageText: "カスタムメッセージ" },
     ]);
 
     const issues = validateMessages(context);
@@ -65,10 +66,10 @@ describe("validateMessages", () => {
 
   it("should accept standard message types", () => {
     const context = createContext([
-      { id: "MSG_001", type: "success", message: "成功メッセージ" },
-      { id: "MSG_002", type: "error", message: "エラーメッセージ" },
-      { id: "MSG_003", type: "warning", message: "警告メッセージ" },
-      { id: "MSG_004", type: "info", message: "情報メッセージ" },
+      { messageId: "MSG_001", messageType: "info", messageText: "情報メッセージ" },
+      { messageId: "MSG_002", messageType: "error", messageText: "エラーメッセージ" },
+      { messageId: "MSG_003", messageType: "warning", messageText: "警告メッセージ" },
+      { messageId: "MSG_004", messageType: "confirm", messageText: "確認メッセージ" },
     ]);
 
     const issues = validateMessages(context);
@@ -76,20 +77,9 @@ describe("validateMessages", () => {
     expect(typeIssues).toHaveLength(0);
   });
 
-  it("should suggest message type when missing", () => {
-    const context = createContext([
-      { id: "MSG_001", message: "メッセージ内容" },
-    ]);
-
-    const issues = validateMessages(context);
-    const missingTypeIssue = issues.find((i) => i.id.includes("missing-message-type"));
-    expect(missingTypeIssue).toBeDefined();
-    expect(missingTypeIssue?.severity).toBe("info");
-  });
-
   it("should warn about short messages", () => {
     const context = createContext([
-      { id: "MSG_001", type: "info", message: "OK" },
+      { messageId: "MSG_001", messageType: "info", messageText: "OK" },
     ]);
 
     const issues = validateMessages(context);
@@ -100,7 +90,7 @@ describe("validateMessages", () => {
 
   it("should warn about undocumented placeholders", () => {
     const context = createContext([
-      { id: "MSG_001", type: "info", message: "{{userName}}様、こんにちは" },
+      { messageId: "MSG_001", messageType: "info", messageText: "{{userName}}様、こんにちは" },
     ]);
 
     const issues = validateMessages(context);
@@ -109,19 +99,9 @@ describe("validateMessages", () => {
     expect(placeholderIssue?.severity).toBe("warning");
   });
 
-  it("should not warn about documented placeholders", () => {
-    const context = createContext([
-      { id: "MSG_001", type: "info", message: "{{userName}}様、こんにちは", params: "userName: string" },
-    ]);
-
-    const issues = validateMessages(context);
-    const placeholderIssue = issues.find((i) => i.id.includes("undocumented-placeholders"));
-    expect(placeholderIssue).toBeUndefined();
-  });
-
   it("should suggest condition for error messages", () => {
     const context = createContext([
-      { id: "MSG_001", type: "error", message: "エラーが発生しました" },
+      { messageId: "MSG_001", messageType: "error", messageText: "エラーが発生しました" },
     ]);
 
     const issues = validateMessages(context);
@@ -130,10 +110,20 @@ describe("validateMessages", () => {
     expect(conditionIssue?.severity).toBe("info");
   });
 
+  it("should not warn when condition is set for error messages", () => {
+    const context = createContext([
+      { messageId: "MSG_001", messageType: "error", messageText: "エラーが発生しました", condition: "入力値が不正な場合" },
+    ]);
+
+    const issues = validateMessages(context);
+    const conditionIssue = issues.find((i) => i.id.includes("error-without-condition"));
+    expect(conditionIssue).toBeUndefined();
+  });
+
   it("should suggest uppercase format for message IDs", () => {
     const context = createContext([
-      { id: "msg001", type: "info", message: "メッセージ" },
-      { id: "message-1", type: "info", message: "メッセージ" },
+      { messageId: "msg001", messageType: "info", messageText: "メッセージ" },
+      { messageId: "message-1", messageType: "info", messageText: "メッセージ" },
     ]);
 
     const issues = validateMessages(context);
@@ -144,8 +134,8 @@ describe("validateMessages", () => {
 
   it("should skip empty rows", () => {
     const context = createContext([
-      { id: "", type: "", message: "" },
-      { id: "MSG_001", type: "info", message: "メッセージ" },
+      { messageId: "", messageText: "" },
+      { messageId: "MSG_001", messageType: "info", messageText: "メッセージ" },
     ]);
 
     const issues = validateMessages(context);

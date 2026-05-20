@@ -1,27 +1,28 @@
 import { describe, it, expect } from "vitest";
 import { validateEvents, isEventsTable } from "./events";
-import type { TableValidationContext } from "../types";
+import type { TableValidationContext, TableRowValue } from "../types";
 
 describe("validateEvents", () => {
   const createContext = (
-    rows: Record<string, unknown>[]
+    rows: Record<string, TableRowValue>[]
   ): TableValidationContext => ({
     documentId: "doc-1",
     sectionKey: "events",
     fieldKey: "events",
     rows,
     columns: [
-      { key: "id", label: "イベントID" },
-      { key: "trigger", label: "トリガー" },
-      { key: "action", label: "アクション" },
-      { key: "condition", label: "条件" },
+      { key: "eventName", label: "イベント名" },
+      { key: "triggerType", label: "契機" },
+      { key: "actionType", label: "処理種別" },
+      { key: "target", label: "対象" },
+      { key: "note", label: "備考" },
     ],
   });
 
   it("should return no issues for valid events", () => {
     const context = createContext([
-      { id: "onSubmit", trigger: "click", action: "フォーム送信" },
-      { id: "onChange", trigger: "change", action: "値を更新" },
+      { eventName: "submitForm", triggerType: "onSubmit", actionType: "フォーム送信" },
+      { eventName: "changeValue", triggerType: "onChange", actionType: "値を更新" },
     ]);
 
     const issues = validateEvents(context);
@@ -29,10 +30,10 @@ describe("validateEvents", () => {
     expect(errors).toHaveLength(0);
   });
 
-  it("should detect duplicate event IDs", () => {
+  it("should detect duplicate event names", () => {
     const context = createContext([
-      { id: "onSubmit", trigger: "click", action: "フォーム送信" },
-      { id: "onSubmit", trigger: "submit", action: "送信処理" },
+      { eventName: "submitForm", triggerType: "onClick", actionType: "フォーム送信" },
+      { eventName: "submitForm", triggerType: "onSubmit", actionType: "送信処理" },
     ]);
 
     const issues = validateEvents(context);
@@ -43,8 +44,8 @@ describe("validateEvents", () => {
 
   it("should detect missing required fields", () => {
     const context = createContext([
-      { id: "onSubmit", trigger: "", action: "フォーム送信" },
-      { id: "", trigger: "click", action: "処理" },
+      { eventName: "submitForm", triggerType: "", actionType: "フォーム送信" },
+      { eventName: "", triggerType: "onClick", actionType: "処理" },
     ]);
 
     const issues = validateEvents(context);
@@ -54,7 +55,7 @@ describe("validateEvents", () => {
 
   it("should warn about non-standard trigger types", () => {
     const context = createContext([
-      { id: "onCustom", trigger: "unknownTrigger", action: "カスタム処理" },
+      { eventName: "customEvent", triggerType: "unknownTrigger", actionType: "カスタム処理" },
     ]);
 
     const issues = validateEvents(context);
@@ -65,10 +66,10 @@ describe("validateEvents", () => {
 
   it("should accept standard trigger types", () => {
     const context = createContext([
-      { id: "onClick", trigger: "click", action: "クリック処理" },
-      { id: "onSubmit", trigger: "submit", action: "送信処理" },
-      { id: "onChange", trigger: "change", action: "変更処理" },
-      { id: "onLoad", trigger: "load", action: "読み込み処理" },
+      { eventName: "clickEvent", triggerType: "onClick", actionType: "クリック処理" },
+      { eventName: "submitEvent", triggerType: "onSubmit", actionType: "送信処理" },
+      { eventName: "changeEvent", triggerType: "onChange", actionType: "変更処理" },
+      { eventName: "loadEvent", triggerType: "onLoad", actionType: "読み込み処理" },
     ]);
 
     const issues = validateEvents(context);
@@ -76,20 +77,9 @@ describe("validateEvents", () => {
     expect(triggerIssues).toHaveLength(0);
   });
 
-  it("should suggest condition for conditional actions", () => {
+  it("should suggest target for API call actions", () => {
     const context = createContext([
-      { id: "onSubmit", trigger: "click", action: "条件に応じて送信" },
-    ]);
-
-    const issues = validateEvents(context);
-    const conditionIssue = issues.find((i) => i.id.includes("missing-condition"));
-    expect(conditionIssue).toBeDefined();
-    expect(conditionIssue?.severity).toBe("info");
-  });
-
-  it("should suggest API reference for API call actions", () => {
-    const context = createContext([
-      { id: "onFetch", trigger: "load", action: "データをAPIから取得" },
+      { eventName: "fetchData", triggerType: "onLoad", actionType: "データをAPIから取得" },
     ]);
 
     const issues = validateEvents(context);
@@ -98,22 +88,20 @@ describe("validateEvents", () => {
     expect(apiIssue?.severity).toBe("info");
   });
 
-  it("should warn about invalid event ID format", () => {
+  it("should not warn when target is set for API calls", () => {
     const context = createContext([
-      { id: "123invalid", trigger: "click", action: "処理" },
-      { id: "has space", trigger: "click", action: "処理" },
+      { eventName: "fetchData", triggerType: "onLoad", actionType: "データをAPIから取得", target: "GET /api/users" },
     ]);
 
     const issues = validateEvents(context);
-    const formatIssues = issues.filter((i) => i.id.includes("invalid-event-id-format"));
-    expect(formatIssues.length).toBeGreaterThan(0);
-    expect(formatIssues[0]?.severity).toBe("warning");
+    const apiIssue = issues.find((i) => i.id.includes("event-api-reference"));
+    expect(apiIssue).toBeUndefined();
   });
 
   it("should skip empty rows", () => {
     const context = createContext([
-      { id: "", trigger: "", action: "" },
-      { id: "onClick", trigger: "click", action: "処理" },
+      { eventName: "", triggerType: "" },
+      { eventName: "clickEvent", triggerType: "onClick", actionType: "処理" },
     ]);
 
     const issues = validateEvents(context);

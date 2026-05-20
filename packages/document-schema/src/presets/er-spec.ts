@@ -11,7 +11,7 @@ export const erSpecPreset: Document = {
     {
       id: "section-er-overview",
       key: "overview",
-      title: "Overview",
+      title: "概要",
       required: true,
       description: "ER図の概要・目的を記載します",
       fields: [
@@ -38,7 +38,7 @@ export const erSpecPreset: Document = {
     {
       id: "section-entities",
       key: "entities",
-      title: "Entities",
+      title: "エンティティ",
       required: true,
       description: "エンティティ（テーブル）の一覧を定義します",
       fields: [
@@ -108,7 +108,7 @@ export const erSpecPreset: Document = {
     {
       id: "section-attributes",
       key: "attributes",
-      title: "Attributes",
+      title: "属性",
       required: true,
       description: "エンティティの属性（カラム）を定義します",
       fields: [
@@ -216,7 +216,7 @@ export const erSpecPreset: Document = {
     {
       id: "section-relationships",
       key: "relationships",
-      title: "Relationships",
+      title: "リレーション",
       required: true,
       description: "エンティティ間の関連を定義します",
       fields: [
@@ -308,7 +308,7 @@ export const erSpecPreset: Document = {
     {
       id: "section-indexes",
       key: "indexes",
-      title: "Indexes",
+      title: "インデックス",
       required: false,
       description: "インデックスの定義",
       fields: [

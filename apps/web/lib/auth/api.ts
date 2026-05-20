@@ -19,10 +19,23 @@ class AuthApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new AuthApiError(
-      data.detail || "An error occurred",
-      response.status
-    );
+    // Handle validation errors (422) with detailed messages
+    let errorMessage = "An error occurred";
+    if (data.detail) {
+      if (Array.isArray(data.detail)) {
+        // Pydantic validation errors return an array
+        errorMessage = data.detail
+          .map((err: { loc?: string[]; msg?: string }) => {
+            const field = err.loc?.slice(-1)[0] || "field";
+            return `${field}: ${err.msg || "invalid"}`;
+          })
+          .join(", ");
+      } else {
+        errorMessage = data.detail;
+      }
+    }
+    console.error("API Error:", response.status, data);
+    throw new AuthApiError(errorMessage, response.status);
   }
   return response.json();
 }

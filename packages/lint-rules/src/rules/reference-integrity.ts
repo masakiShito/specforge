@@ -160,10 +160,10 @@ function checkTargetKeyExists(
       if (field.type === "table" && field.rows) {
         // Check in table rows
         for (const row of field.rows) {
-          const idValue = getDisplayValue(row.id);
-          const keyValue = getDisplayValue(row.key);
-          const nameValue = getDisplayValue(row.name);
-          const pathValue = getDisplayValue(row.path);
+          const idValue = getDisplayValue(row["id"]);
+          const keyValue = getDisplayValue(row["key"]);
+          const nameValue = getDisplayValue(row["name"]);
+          const pathValue = getDisplayValue(row["path"]);
 
           if (
             idValue === targetKey ||

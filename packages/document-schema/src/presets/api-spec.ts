@@ -11,7 +11,7 @@ export const apiSpecPreset: Document = {
     {
       id: "section-overview",
       key: "overview",
-      title: "Overview",
+      title: "概要",
       required: true,
       description: "APIの概要・目的を記載します",
       fields: [
@@ -29,7 +29,7 @@ export const apiSpecPreset: Document = {
     {
       id: "section-endpoint-basic",
       key: "endpoint-basic",
-      title: "Endpoint Basic Info",
+      title: "基本情報",
       required: true,
       description: "エンドポイントの基本情報を定義します",
       fields: [
@@ -79,7 +79,7 @@ export const apiSpecPreset: Document = {
     {
       id: "section-request-parameters",
       key: "request-parameters",
-      title: "Request Parameters",
+      title: "リクエストパラメータ",
       required: true,
       description: "リクエストパラメータの一覧を定義します",
       fields: [
@@ -159,7 +159,7 @@ export const apiSpecPreset: Document = {
     {
       id: "section-response-parameters",
       key: "response-parameters",
-      title: "Response Parameters",
+      title: "レスポンスパラメータ",
       required: true,
       description: "レスポンスパラメータの一覧を定義します",
       fields: [
@@ -230,7 +230,7 @@ export const apiSpecPreset: Document = {
     {
       id: "section-error-responses",
       key: "error-responses",
-      title: "Error Responses",
+      title: "エラーレスポンス",
       required: true,
       description: "エラーレスポンスの一覧を定義します",
       fields: [
@@ -294,7 +294,7 @@ export const apiSpecPreset: Document = {
     {
       id: "section-processing-flow",
       key: "processing-flow",
-      title: "Processing Flow",
+      title: "処理フロー",
       required: true,
       description: "APIの処理フローを記載します",
       fields: [

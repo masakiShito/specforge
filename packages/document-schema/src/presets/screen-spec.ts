@@ -11,13 +11,13 @@ export const screenSpecPreset: Document = {
     {
       id: "section-overview",
       key: "overview",
-      title: "Overview",
+      title: "概要",
       required: true,
       fields: [
         {
           id: "field-purpose",
           key: "purpose",
-          label: "Purpose",
+          label: "目的",
           required: true,
           valueType: "textarea"
         }
@@ -26,13 +26,13 @@ export const screenSpecPreset: Document = {
     {
       id: "section-usage-scenario",
       key: "usage-scenario",
-      title: "Usage Scenario",
+      title: "利用シナリオ",
       required: true,
       fields: [
         {
           id: "field-main-scenario",
           key: "main-scenario",
-          label: "Main Scenario",
+          label: "主要シナリオ",
           required: true,
           valueType: "textarea"
         }
@@ -41,7 +41,7 @@ export const screenSpecPreset: Document = {
     {
       id: "section-screen-fields",
       key: "screen-fields",
-      title: "Screen Fields",
+      title: "画面項目",
       required: true,
       description: "画面に表示される入力項目・表示項目の一覧",
       fields: [
@@ -140,7 +140,7 @@ export const screenSpecPreset: Document = {
     {
       id: "section-events",
       key: "events",
-      title: "Events",
+      title: "イベント",
       required: true,
       description: "画面上で発生するイベントと処理の一覧",
       fields: [
@@ -210,7 +210,7 @@ export const screenSpecPreset: Document = {
     {
       id: "section-messages",
       key: "messages",
-      title: "Messages",
+      title: "メッセージ",
       required: true,
       description: "画面に表示されるメッセージの一覧",
       fields: [
@@ -280,7 +280,7 @@ export const screenSpecPreset: Document = {
     {
       id: "section-api-connections",
       key: "api-connections",
-      title: "API Connections",
+      title: "API連携",
       required: false,
       description: "画面から呼び出すAPIの一覧",
       fields: [

@@ -27,6 +27,7 @@ import { RightPanel } from "./right-panel";
 import { DocumentPreview } from "./document-preview";
 import { ProjectHealthDashboard } from "./health/ProjectHealthDashboard";
 import { ExportModal, ImportModal } from "./export";
+import { UserMenu } from "./auth";
 
 /**
  * Build initial per-document editor states for all documents in a project.
@@ -542,6 +543,8 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
           >
             {viewMode === "health" ? "エディタに戻る" : "プロジェクトヘルス"}
           </button>
+          <div style={{ width: "1px", height: "24px", backgroundColor: "#E2E8F0", margin: "0 4px" }} />
+          <UserMenu />
         </div>
       </header>
 

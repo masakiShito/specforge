@@ -12,10 +12,22 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
+    setValidationError(null);
+
+    if (!validateEmail(email)) {
+      setValidationError("有効なメールアドレスを入力してください");
+      return;
+    }
 
     try {
       await login({ email, password });
@@ -24,6 +36,8 @@ export default function LoginPage() {
       // Error is handled by auth context
     }
   };
+
+  const displayError = validationError || error;
 
   return (
     <div
@@ -56,7 +70,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {error && (
+        {displayError && (
           <div
             style={{
               padding: "12px",
@@ -68,7 +82,7 @@ export default function LoginPage() {
               fontSize: "0.875rem",
             }}
           >
-            {error}
+            {displayError}
           </div>
         )}
 

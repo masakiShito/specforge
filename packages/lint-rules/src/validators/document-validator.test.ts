@@ -38,15 +38,15 @@ describe("validateDocument", () => {
       title: "Test Screen",
       sections: [
         {
-          key: "screen-items",
+          key: "screen-fields",
           title: "画面項目",
           fields: [
             {
-              key: "fields",
+              key: "screen-fields",
               type: "table",
               value: [
-                { id: "userName", label: "ユーザー名", type: "text" },
-                { id: "userName", label: "ユーザー名2", type: "text" }, // duplicate
+                { name: "ユーザー名", fieldKey: "userName", inputType: "text" },
+                { name: "ユーザー名2", fieldKey: "userName", inputType: "text" }, // duplicate
               ],
             },
           ],
@@ -96,15 +96,15 @@ describe("validateDocument", () => {
       title: "Test Screen",
       sections: [
         {
-          key: "screen-items",
+          key: "screen-fields",
           title: "画面項目",
           fields: [
             {
-              key: "fields",
+              key: "screen-fields",
               type: "table",
               value: [
-                { id: "", label: "", type: "" }, // empty row - warning
-                { id: "select1", label: "選択", type: "select" }, // missing options - error
+                { name: "", fieldKey: "", inputType: "" }, // empty row - warning
+                { name: "選択", fieldKey: "select1", inputType: "select", options: "" }, // missing options - error
               ],
             },
           ],
@@ -127,15 +127,15 @@ describe("validateDocuments", () => {
         title: "Screen 1",
         sections: [
           {
-            key: "fields",
-            title: "Fields",
+            key: "screen-fields",
+            title: "画面項目",
             fields: [
               {
-                key: "fields",
+                key: "screen-fields",
                 type: "table",
                 value: [
-                  { id: "field1", label: "Field 1", type: "text" },
-                  { id: "field1", label: "Field 1 Dup", type: "text" }, // duplicate
+                  { name: "Field 1", fieldKey: "field1", inputType: "text" },
+                  { name: "Field 1 Dup", fieldKey: "field1", inputType: "text" }, // duplicate
                 ],
               },
             ],
@@ -148,15 +148,15 @@ describe("validateDocuments", () => {
         title: "Screen 2",
         sections: [
           {
-            key: "fields",
-            title: "Fields",
+            key: "screen-fields",
+            title: "画面項目",
             fields: [
               {
-                key: "fields",
+                key: "screen-fields",
                 type: "table",
                 value: [
-                  { id: "field2", label: "Field 2", type: "text" },
-                  { id: "field2", label: "Field 2 Dup", type: "text" }, // duplicate
+                  { name: "Field 2", fieldKey: "field2", inputType: "text" },
+                  { name: "Field 2 Dup", fieldKey: "field2", inputType: "text" }, // duplicate
                 ],
               },
             ],

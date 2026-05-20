@@ -5,7 +5,6 @@ import type {
 import { isReferenceValue } from "../types";
 import {
   createIssue,
-  validateDuplicateKeys,
   validateEmptyRows,
   validateRequiredTableFields,
   isCellEmpty,
@@ -13,164 +12,73 @@ import {
 } from "./common";
 
 /**
- * Valid HTTP methods
- */
-const VALID_HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-];
-
-/**
  * Validate API connections table
+ *
+ * Expected columns (from screen-spec.ts):
+ * - apiRef (API参照) - required, reference type
+ * - timing (呼出タイミング) - required
+ * - purpose (目的) - required
+ * - inputSummary (主な入力) - optional
+ * - outputSummary (主な出力) - optional
+ * - note (備考) - optional
  */
 export function validateApiConnections(
   context: TableValidationContext
 ): DesignValidationIssue[] {
   const issues: DesignValidationIssue[] = [];
 
-  // Check for duplicate connection IDs
-  issues.push(...validateDuplicateKeys(context, "id", "API連携ID"));
-
   // Check for empty rows
   issues.push(
-    ...validateEmptyRows(context, ["id", "endpoint"], "API連携")
+    ...validateEmptyRows(context, ["apiRef", "timing"], "API連携")
   );
 
   // Check required fields
   issues.push(
     ...validateRequiredTableFields(context, [
-      { key: "id", label: "API連携ID" },
-      { key: "endpoint", label: "エンドポイント" },
-      { key: "method", label: "HTTPメソッド" },
+      { key: "apiRef", label: "API参照" },
+      { key: "timing", label: "呼出タイミング" },
+      { key: "purpose", label: "目的" },
     ])
   );
 
   // Validate API connection-specific rules
   context.rows.forEach((row, rowIndex) => {
     // Skip empty rows
-    if (isCellEmpty(row.id) && isCellEmpty(row.endpoint)) return;
+    if (isCellEmpty(row["apiRef"]) && isCellEmpty(row["timing"])) return;
 
-    // Validate HTTP method
-    const method = getDisplayValue(row.method).toUpperCase();
-    if (method && !VALID_HTTP_METHODS.includes(method)) {
+    // Check if apiRef is a valid reference
+    const apiRef = row["apiRef"];
+    if (!isCellEmpty(apiRef) && !isReferenceValue(apiRef)) {
       issues.push(
         createIssue(
-          `invalid-http-method-${rowIndex}`,
-          "error",
-          `行${rowIndex + 1}のHTTPメソッド「${method}」は無効です。有効な値: ${VALID_HTTP_METHODS.join(", ")}`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "method",
-          }
-        )
-      );
-    }
-
-    // Check endpoint format
-    const endpoint = getDisplayValue(row.endpoint);
-    if (endpoint) {
-      // Check for API spec reference
-      if (isReferenceValue(row.endpoint)) {
-        // Valid reference - no further validation needed
-      } else if (!endpoint.startsWith("/") && !endpoint.startsWith("http")) {
-        issues.push(
-          createIssue(
-            `invalid-endpoint-format-${rowIndex}`,
-            "warning",
-            `行${rowIndex + 1}のエンドポイント「${endpoint}」は/またはhttpで始まる形式を推奨します`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: "endpoint",
-            }
-          )
-        );
-      }
-
-      // Check for path parameters
-      const pathParams = endpoint.match(/{\w+}|:\w+/g);
-      if (pathParams && pathParams.length > 0) {
-        // Check if request parameters are documented
-        if (isCellEmpty(row.requestParams) && isCellEmpty(row.pathParams)) {
-          issues.push(
-            createIssue(
-              `undocumented-path-params-${rowIndex}`,
-              "warning",
-              `行${rowIndex + 1}のエンドポイントにパスパラメータ（${pathParams.join(", ")}）がありますが、パラメータ定義がありません`,
-              {
-                documentId: context.documentId,
-                sectionKey: context.sectionKey,
-                fieldKey: context.fieldKey,
-                rowIndex,
-                cellKey: "endpoint",
-              }
-            )
-          );
-        }
-      }
-    }
-
-    // Check for request body on GET/DELETE
-    if ((method === "GET" || method === "DELETE") && !isCellEmpty(row.requestBody)) {
-      issues.push(
-        createIssue(
-          `unexpected-request-body-${rowIndex}`,
+          `invalid-api-ref-${rowIndex}`,
           "warning",
-          `行${rowIndex + 1}の${method}リクエストにリクエストボディが設定されています`,
+          `行${rowIndex + 1}のAPI参照が正しく設定されていません。API仕様書への参照を選択してください`,
           {
             documentId: context.documentId,
             sectionKey: context.sectionKey,
             fieldKey: context.fieldKey,
             rowIndex,
-            cellKey: "requestBody",
+            cellKey: "apiRef",
           }
         )
       );
     }
 
-    // Check for missing request body on POST/PUT/PATCH
-    if (
-      (method === "POST" || method === "PUT" || method === "PATCH") &&
-      isCellEmpty(row.requestBody) &&
-      isCellEmpty(row.requestData)
-    ) {
+    // Check if purpose is descriptive enough
+    const purpose = getDisplayValue(row["purpose"]);
+    if (purpose && purpose.length < 5) {
       issues.push(
         createIssue(
-          `missing-request-body-${rowIndex}`,
+          `short-purpose-${rowIndex}`,
           "info",
-          `行${rowIndex + 1}の${method}リクエストにリクエストボディが設定されていません`,
+          `行${rowIndex + 1}の目的が短すぎます。より詳細な説明を推奨します`,
           {
             documentId: context.documentId,
             sectionKey: context.sectionKey,
             fieldKey: context.fieldKey,
             rowIndex,
-          }
-        )
-      );
-    }
-
-    // Check for error handling
-    if (isCellEmpty(row.errorHandling) && isCellEmpty(row.onError)) {
-      issues.push(
-        createIssue(
-          `missing-error-handling-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}のAPI連携にエラーハンドリングが設定されていません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
+            cellKey: "purpose",
           }
         )
       );
@@ -185,6 +93,7 @@ export function validateApiConnections(
  */
 export function isApiConnectionsTable(fieldKey: string): boolean {
   return (
+    fieldKey === "api-connections" ||
     fieldKey === "apiConnections" ||
     fieldKey === "apiCalls" ||
     fieldKey === "apiIntegrations" ||

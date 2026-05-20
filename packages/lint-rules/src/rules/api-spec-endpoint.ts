@@ -59,8 +59,8 @@ export function validateApiSpecEndpoints(
   // Check for duplicate endpoint paths + methods
   const endpointMethodMap = new Map<string, number[]>();
   context.rows.forEach((row, index) => {
-    const path = getDisplayValue(row.path);
-    const method = getDisplayValue(row.method).toUpperCase();
+    const path = getDisplayValue(row["path"]);
+    const method = getDisplayValue(row["method"]).toUpperCase();
     if (path && method) {
       const key = `${method} ${path}`;
       const existing = endpointMethodMap.get(key) || [];
@@ -102,10 +102,10 @@ export function validateApiSpecEndpoints(
   // Validate endpoint-specific rules
   context.rows.forEach((row, rowIndex) => {
     // Skip empty rows
-    if (isCellEmpty(row.path) && isCellEmpty(row.method)) return;
+    if (isCellEmpty(row["path"]) && isCellEmpty(row["method"])) return;
 
     // Validate HTTP method
-    const method = getDisplayValue(row.method).toUpperCase();
+    const method = getDisplayValue(row["method"]).toUpperCase();
     if (method && !VALID_HTTP_METHODS.includes(method)) {
       issues.push(
         createIssue(
@@ -124,7 +124,7 @@ export function validateApiSpecEndpoints(
     }
 
     // Validate path format
-    const path = getDisplayValue(row.path);
+    const path = getDisplayValue(row["path"]);
     if (path) {
       if (!path.startsWith("/")) {
         issues.push(
@@ -165,7 +165,7 @@ export function validateApiSpecEndpoints(
     }
 
     // Check for response status codes
-    const statusCode = getDisplayValue(row.statusCode);
+    const statusCode = getDisplayValue(row["statusCode"]);
     if (statusCode && !VALID_STATUS_CODES.includes(statusCode)) {
       issues.push(
         createIssue(
@@ -184,7 +184,7 @@ export function validateApiSpecEndpoints(
     }
 
     // Check for authentication requirements
-    if (isCellEmpty(row.auth) && isCellEmpty(row.authentication)) {
+    if (isCellEmpty(row["auth"]) && isCellEmpty(row["authentication"])) {
       issues.push(
         createIssue(
           `missing-auth-info-${rowIndex}`,
@@ -202,7 +202,7 @@ export function validateApiSpecEndpoints(
 
     // Check for request/response schema on POST/PUT/PATCH
     if (method === "POST" || method === "PUT" || method === "PATCH") {
-      if (isCellEmpty(row.requestSchema) && isCellEmpty(row.requestBody)) {
+      if (isCellEmpty(row["requestSchema"]) && isCellEmpty(row["requestBody"])) {
         issues.push(
           createIssue(
             `missing-request-schema-${rowIndex}`,
@@ -221,8 +221,8 @@ export function validateApiSpecEndpoints(
 
     // Check for response schema
     if (
-      isCellEmpty(row.responseSchema) &&
-      isCellEmpty(row.response) &&
+      isCellEmpty(row["responseSchema"]) &&
+      isCellEmpty(row["response"]) &&
       method !== "DELETE"
     ) {
       issues.push(

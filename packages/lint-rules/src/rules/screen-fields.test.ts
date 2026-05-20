@@ -1,26 +1,28 @@
 import { describe, it, expect } from "vitest";
 import { validateScreenFields, isScreenFieldsTable } from "./screen-fields";
-import type { TableValidationContext } from "../types";
+import type { TableValidationContext, TableRowValue } from "../types";
 
 describe("validateScreenFields", () => {
   const createContext = (
-    rows: Record<string, unknown>[]
+    rows: Record<string, TableRowValue>[]
   ): TableValidationContext => ({
     documentId: "doc-1",
-    sectionKey: "screen-items",
-    fieldKey: "fields",
+    sectionKey: "screen-fields",
+    fieldKey: "screen-fields",
     rows,
     columns: [
-      { key: "id", label: "項目ID" },
-      { key: "label", label: "ラベル" },
-      { key: "type", label: "入力形式" },
+      { key: "name", label: "項目名" },
+      { key: "fieldKey", label: "項目キー" },
+      { key: "inputType", label: "入力形式" },
+      { key: "required", label: "必須" },
+      { key: "validationRule", label: "入力制御" },
     ],
   });
 
   it("should return no issues for valid fields", () => {
     const context = createContext([
-      { id: "userName", label: "ユーザー名", type: "text", maxLength: 50 },
-      { id: "email", label: "メールアドレス", type: "text", maxLength: 255 },
+      { name: "ユーザー名", fieldKey: "userName", inputType: "text", required: true },
+      { name: "メールアドレス", fieldKey: "email", inputType: "text", required: true },
     ]);
 
     const issues = validateScreenFields(context);
@@ -28,10 +30,10 @@ describe("validateScreenFields", () => {
     expect(errors).toHaveLength(0);
   });
 
-  it("should detect duplicate field IDs", () => {
+  it("should detect duplicate field keys", () => {
     const context = createContext([
-      { id: "userName", label: "ユーザー名", type: "text" },
-      { id: "userName", label: "ユーザー名2", type: "text" },
+      { name: "ユーザー名", fieldKey: "userName", inputType: "text" },
+      { name: "ユーザー名2", fieldKey: "userName", inputType: "text" },
     ]);
 
     const issues = validateScreenFields(context);
@@ -42,8 +44,8 @@ describe("validateScreenFields", () => {
 
   it("should detect missing required fields", () => {
     const context = createContext([
-      { id: "userName", label: "", type: "text" }, // missing label
-      { id: "", label: "Email", type: "text" }, // missing id
+      { name: "", fieldKey: "userName", inputType: "text" }, // missing name
+      { name: "Email", fieldKey: "", inputType: "text" }, // missing fieldKey
     ]);
 
     const issues = validateScreenFields(context);
@@ -51,34 +53,45 @@ describe("validateScreenFields", () => {
     expect(requiredIssues.length).toBeGreaterThan(0);
   });
 
-  it("should warn about invalid field ID format", () => {
+  it("should warn about invalid field key format", () => {
     const context = createContext([
-      { id: "123invalid", label: "Invalid ID", type: "text" },
-      { id: "has spaces", label: "Spaces", type: "text" },
+      { name: "Invalid ID", fieldKey: "123invalid", inputType: "text" },
+      { name: "Spaces", fieldKey: "has spaces", inputType: "text" },
     ]);
 
     const issues = validateScreenFields(context);
-    const formatIssues = issues.filter((i) => i.id.includes("invalid-field-id-format"));
+    const formatIssues = issues.filter((i) => i.id.includes("invalid-field-key-format"));
     expect(formatIssues.length).toBeGreaterThan(0);
     expect(formatIssues[0]?.severity).toBe("warning");
   });
 
-  it("should suggest maxLength for text inputs", () => {
+  it("should suggest validation rule for required fields", () => {
     const context = createContext([
-      { id: "userName", label: "ユーザー名", type: "text" }, // no maxLength
+      { name: "ユーザー名", fieldKey: "userName", inputType: "text", required: true }, // no validationRule
     ]);
 
     const issues = validateScreenFields(context);
-    const maxLengthIssue = issues.find((i) => i.id.includes("missing-max-length"));
-    expect(maxLengthIssue).toBeDefined();
-    expect(maxLengthIssue?.severity).toBe("info");
+    const validationIssue = issues.find((i) => i.id.includes("required-without-validation"));
+    expect(validationIssue).toBeDefined();
+    expect(validationIssue?.severity).toBe("info");
   });
 
-  it("should require options for select/radio types", () => {
-    const context = createContext([
-      { id: "gender", label: "性別", type: "select" }, // no options
-      { id: "agree", label: "同意", type: "checkbox" }, // no options
-    ]);
+  it("should require options for select/radio types when options column exists", () => {
+    const context: TableValidationContext = {
+      documentId: "doc-1",
+      sectionKey: "screen-fields",
+      fieldKey: "screen-fields",
+      rows: [
+        { name: "性別", fieldKey: "gender", inputType: "select", options: "" },
+        { name: "同意", fieldKey: "agree", inputType: "checkbox", options: "" },
+      ],
+      columns: [
+        { key: "name", label: "項目名" },
+        { key: "fieldKey", label: "項目キー" },
+        { key: "inputType", label: "入力形式" },
+        { key: "options", label: "選択肢" },
+      ],
+    };
 
     const issues = validateScreenFields(context);
     const optionIssues = issues.filter((i) => i.id.includes("missing-options"));
@@ -88,8 +101,8 @@ describe("validateScreenFields", () => {
 
   it("should skip empty rows", () => {
     const context = createContext([
-      { id: "", label: "", type: "" },
-      { id: "userName", label: "ユーザー名", type: "text", maxLength: 50 },
+      { name: "", fieldKey: "", inputType: "" },
+      { name: "ユーザー名", fieldKey: "userName", inputType: "text" },
     ]);
 
     const issues = validateScreenFields(context);

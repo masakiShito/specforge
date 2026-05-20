@@ -12,23 +12,24 @@ import {
 } from "./common";
 
 /**
- * Valid message types
+ * Valid message types (matching schema options)
  */
 const VALID_MESSAGE_TYPES = [
-  "success",
-  "error",
-  "warning",
   "info",
+  "warning",
+  "error",
   "confirm",
-  "notification",
-  "toast",
-  "modal",
-  "alert",
-  "validation",
 ];
 
 /**
  * Validate messages table
+ *
+ * Expected columns (from screen-spec.ts):
+ * - messageId (メッセージID) - required
+ * - messageType (種別) - required
+ * - condition (表示条件) - optional
+ * - messageText (文言) - required
+ * - note (備考) - optional
  */
 export function validateMessages(
   context: TableValidationContext
@@ -36,116 +37,97 @@ export function validateMessages(
   const issues: DesignValidationIssue[] = [];
 
   // Check for duplicate message IDs
-  issues.push(...validateDuplicateKeys(context, "id", "メッセージID"));
+  issues.push(...validateDuplicateKeys(context, "messageId", "メッセージID"));
 
   // Check for empty rows
-  issues.push(...validateEmptyRows(context, ["id", "message"], "メッセージ"));
+  issues.push(...validateEmptyRows(context, ["messageId", "messageText"], "メッセージ"));
 
   // Check required fields
   issues.push(
     ...validateRequiredTableFields(context, [
-      { key: "id", label: "メッセージID" },
-      { key: "message", label: "メッセージ内容" },
+      { key: "messageId", label: "メッセージID" },
+      { key: "messageType", label: "種別" },
+      { key: "messageText", label: "文言" },
     ])
   );
 
   // Validate message-specific rules
   context.rows.forEach((row, rowIndex) => {
     // Skip empty rows
-    if (isCellEmpty(row.id) && isCellEmpty(row.message)) return;
+    if (isCellEmpty(row["messageId"]) && isCellEmpty(row["messageText"])) return;
 
     // Validate message type
-    const messageType = getDisplayValue(row.type).toLowerCase();
+    const messageType = getDisplayValue(row["messageType"]);
     if (messageType && !VALID_MESSAGE_TYPES.includes(messageType)) {
       issues.push(
         createIssue(
           `invalid-message-type-${rowIndex}`,
           "info",
-          `行${rowIndex + 1}のメッセージタイプ「${messageType}」は標準的なタイプではありません`,
+          `行${rowIndex + 1}の種別「${messageType}」は標準的なタイプではありません`,
           {
             documentId: context.documentId,
             sectionKey: context.sectionKey,
             fieldKey: context.fieldKey,
             rowIndex,
-            cellKey: "type",
-          }
-        )
-      );
-    }
-
-    // Check if message type is set
-    if (isCellEmpty(row.type)) {
-      issues.push(
-        createIssue(
-          `missing-message-type-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}のメッセージタイプが未設定です`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "type",
+            cellKey: "messageType",
           }
         )
       );
     }
 
     // Check message content for potential issues
-    const message = getDisplayValue(row.message);
+    const messageText = getDisplayValue(row["messageText"]);
 
     // Check for very short messages
-    if (message && message.length < 5) {
+    if (messageText && messageText.length < 5) {
       issues.push(
         createIssue(
           `short-message-${rowIndex}`,
           "info",
-          `行${rowIndex + 1}のメッセージが短すぎる可能性があります`,
+          `行${rowIndex + 1}の文言が短すぎる可能性があります`,
           {
             documentId: context.documentId,
             sectionKey: context.sectionKey,
             fieldKey: context.fieldKey,
             rowIndex,
-            cellKey: "message",
+            cellKey: "messageText",
           }
         )
       );
     }
 
     // Check for placeholder patterns that might not have been replaced
-    if (message && /{{\s*\w+\s*}}/.test(message)) {
-      // Has placeholders - check if they're documented
-      if (isCellEmpty(row.params) && isCellEmpty(row.variables)) {
-        issues.push(
-          createIssue(
-            `undocumented-placeholders-${rowIndex}`,
-            "warning",
-            `行${rowIndex + 1}のメッセージにプレースホルダーがありますが、パラメータが未定義です`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: "message",
-            }
-          )
-        );
-      }
+    if (messageText && /{{\s*\w+\s*}}/.test(messageText)) {
+      issues.push(
+        createIssue(
+          `undocumented-placeholders-${rowIndex}`,
+          "warning",
+          `行${rowIndex + 1}の文言にプレースホルダーがありますが、ドキュメント化されていません`,
+          {
+            documentId: context.documentId,
+            sectionKey: context.sectionKey,
+            fieldKey: context.fieldKey,
+            rowIndex,
+            cellKey: "messageText",
+          }
+        )
+      );
     }
 
     // Check for error type without trigger condition
-    if (messageType === "error" || messageType === "validation") {
-      if (isCellEmpty(row.condition) && isCellEmpty(row.trigger)) {
+    if (messageType === "error") {
+      if (isCellEmpty(row["condition"])) {
         issues.push(
           createIssue(
             `error-without-condition-${rowIndex}`,
             "info",
-            `行${rowIndex + 1}のエラーメッセージに発生条件が設定されていません`,
+            `行${rowIndex + 1}のエラーメッセージに表示条件が設定されていません`,
             {
               documentId: context.documentId,
               sectionKey: context.sectionKey,
               fieldKey: context.fieldKey,
               rowIndex,
+              cellKey: "condition",
             }
           )
         );
@@ -153,7 +135,7 @@ export function validateMessages(
     }
 
     // Validate message ID format
-    const messageId = getDisplayValue(row.id);
+    const messageId = getDisplayValue(row["messageId"]);
     if (messageId && !/^[A-Z][A-Z0-9_]*$/.test(messageId)) {
       issues.push(
         createIssue(
@@ -165,7 +147,7 @@ export function validateMessages(
             sectionKey: context.sectionKey,
             fieldKey: context.fieldKey,
             rowIndex,
-            cellKey: "id",
+            cellKey: "messageId",
           }
         )
       );
