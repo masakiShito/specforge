@@ -8,7 +8,22 @@ from jose import JWTError, jwt
 
 
 # Configuration from environment variables
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "specforge-dev-secret-key-change-in-production")
+def _get_secret_key() -> str:
+    """Get JWT secret key from environment variable."""
+    secret = os.getenv("JWT_SECRET_KEY")
+    if not secret:
+        raise RuntimeError(
+            "JWT_SECRET_KEY environment variable is required. "
+            "Please set a secure secret key (at least 32 characters)."
+        )
+    if len(secret) < 32:
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be at least 32 characters for security."
+        )
+    return secret
+
+
+SECRET_KEY = _get_secret_key()
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))
