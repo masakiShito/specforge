@@ -142,6 +142,28 @@ export function DocumentEditor({
     (selectedDocumentId ? documentById[selectedDocumentId] : undefined) ??
     (fallbackDocumentId ? documentById[fallbackDocumentId] : undefined);
 
+  // Track previous document count to detect additions
+  const prevDocCountRef = useRef(projectState.documents.length);
+
+  useEffect(() => {
+    const currentCount = projectState.documents.length;
+    const prevCount = prevDocCountRef.current;
+
+    // When a document is added (count increased), select the latest one
+    if (currentCount > prevCount && currentCount > 0) {
+      const latestDoc = projectState.documents[currentCount - 1];
+      if (latestDoc) {
+        setSelectedDocumentId(latestDoc.id);
+        setSelectedSectionIdByDocument((prev) => ({
+          ...prev,
+          [latestDoc.id]: latestDoc.sections[0]?.id ?? "",
+        }));
+      }
+    }
+
+    prevDocCountRef.current = currentCount;
+  }, [projectState.documents]);
+
   useEffect(() => {
     if (!currentDocument) return;
     if (selectedDocumentId !== currentDocument.id) {
@@ -149,21 +171,23 @@ export function DocumentEditor({
     }
   }, [currentDocument, selectedDocumentId]);
 
-  
-  if (!currentDocument) {
-    return <main>ドキュメントが存在しません。</main>;
-  }
+  // Note: "no documents" check is handled after handlers are defined
+  // Provide safe defaults when there are no documents
+  const currentDocumentState = currentDocument
+    ? (documentStates[currentDocument.id] ?? createDocumentState(currentDocument))
+    : { document: null as unknown as Document, fieldValues: {} };
 
-  const currentDocumentState = documentStates[currentDocument.id] ?? createDocumentState(currentDocument);
-  const selectedSectionId =
-    selectedSectionIdByDocument[currentDocument.id] ??
-    currentDocument.sections[0]?.id ??
-    "";
+  const selectedSectionId = currentDocument
+    ? (selectedSectionIdByDocument[currentDocument.id] ?? currentDocument.sections[0]?.id ?? "")
+    : "";
 
-  const validation = useMemo(() => validateDocument(currentDocumentState), [currentDocumentState]);
+  const validation = useMemo(
+    () => currentDocument ? validateDocument(currentDocumentState) : { errors: [], warnings: [], missingRequiredBySection: {} },
+    [currentDocument, currentDocumentState]
+  );
   const designQuality = useMemo(
-    () => validateDesignQuality(currentDocumentState, projectState),
-    [currentDocumentState, projectState]
+    () => currentDocument ? validateDesignQuality(currentDocumentState, projectState) : { issues: [], issueCountBySection: {} },
+    [currentDocument, currentDocumentState, projectState]
   );
   const projectQuality = useMemo(
     () => validateProjectQuality(projectState, documentStates),
@@ -171,13 +195,14 @@ export function DocumentEditor({
   );
 
   const validationItems = useMemo(() => {
+    if (!currentDocument) return [];
     const nonTableWarnings = validation.warnings.filter(
       (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
     );
     const basicItems = enrichValidation(nonTableWarnings).map((item) => ({ ...item, documentId: currentDocument.id }));
     const designItems = convertDesignIssues(designQuality.issues);
     return [...basicItems, ...designItems];
-  }, [validation.warnings, designQuality.issues, currentDocument.id]);
+  }, [validation.warnings, designQuality.issues, currentDocument]);
 
   // All-document validation items for the panel (enables cross-document navigation)
   const allValidationItems = useMemo(() => {
@@ -240,10 +265,12 @@ export function DocumentEditor({
     return keys;
   }, [designQuality.issues]);
 
-  const selectedSection =
-    currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0];
+  const selectedSection = currentDocument
+    ? (currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0])
+    : undefined;
 
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
+    if (!currentDocument) return;
     setDocumentStates((prev) => ({
       ...prev,
       [currentDocument.id]: updateFieldValue(
@@ -450,7 +477,7 @@ export function DocumentEditor({
 
   const handleNavigateToField = useCallback(
     (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => {
-      const isCrossDocument = documentId !== currentDocument.id;
+      const isCrossDocument = documentId !== currentDocument?.id;
       if (isCrossDocument) {
         setSelectedDocumentId(documentId);
       }
@@ -465,7 +492,7 @@ export function DocumentEditor({
         setFocusFieldId(fieldId);
       }, isCrossDocument ? 150 : 50);
     },
-    [selectedSectionId, currentDocument.id]
+    [selectedSectionId, currentDocument?.id]
   );
 
   const handleFocusHandled = useCallback(() => {
@@ -540,6 +567,69 @@ export function DocumentEditor({
     },
     []
   );
+
+  // Show add document UI when there are no documents
+  if (!currentDocument) {
+    return (
+      <main
+        style={{
+          fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
+          backgroundColor: "#F1F5F9",
+          minHeight: "100vh",
+          padding: "24px",
+          boxSizing: "border-box",
+        }}
+      >
+        <header style={{ marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "#0F172A" }}>
+              SpecForge
+            </h1>
+            <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.875rem" }}>
+              {projectState.title}
+            </p>
+          </div>
+        </header>
+        <div
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: "8px",
+            border: "1px solid #E2E8F0",
+            padding: "48px",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: "0 0 24px", color: "#64748B", fontSize: "0.875rem" }}>
+            ドキュメントがありません。最初のドキュメントを追加してください。
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+            {(["screen-spec", "api-spec", "er-spec", "business-rule"] as const).map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => handleAddDocument(kind)}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: "#FFFFFF",
+                  backgroundColor: "#3B82F6",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+              >
+                {kind === "screen-spec" && "画面仕様書を追加"}
+                {kind === "api-spec" && "API仕様書を追加"}
+                {kind === "er-spec" && "ER設計書を追加"}
+                {kind === "business-rule" && "ビジネスルールを追加"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main

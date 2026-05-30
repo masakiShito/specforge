@@ -1,6 +1,5 @@
 "use client";
 
-import { use } from "react";
 import { useRouter } from "next/navigation";
 
 import { ProtectedRoute } from "../../../components/auth";
@@ -9,7 +8,7 @@ import { DocumentEditor } from "../../../components/document-editor";
 import { useProjectSync } from "../../../hooks/useProjectSync";
 
 interface ProjectPageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 function ProjectEditorContent({ projectId }: { projectId: string }) {
@@ -119,11 +118,9 @@ function ProjectEditorContent({ projectId }: { projectId: string }) {
 }
 
 export default function ProjectPage({ params }: ProjectPageProps) {
-  const { id } = use(params);
-
   return (
     <ProtectedRoute>
-      <ProjectEditorContent projectId={id} />
+      <ProjectEditorContent projectId={params.id} />
     </ProtectedRoute>
   );
 }
