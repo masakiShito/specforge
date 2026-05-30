@@ -64,12 +64,45 @@ function ensureUniqueDocumentTitle(
 
 interface DocumentEditorProps {
   project?: Project | Document;
+  // Callback props for sync with external storage
+  onFieldValueChange?: (documentId: string, fieldId: string, value: FieldValue) => void;
+  onAddDocument?: (kind: DocumentKind) => Promise<void>;
+  onDeleteDocument?: (documentId: string) => Promise<void>;
+  onDocumentTitleChange?: (documentId: string, newTitle: string) => Promise<void>;
+  onProjectTitleChange?: (newTitle: string) => Promise<void>;
+  isSaving?: boolean;
+  // Optional external state
+  externalProject?: Project;
+  externalDocumentStates?: Record<string, DocumentEditorState>;
+  setExternalProject?: React.Dispatch<React.SetStateAction<Project | null>>;
+  setExternalDocumentStates?: React.Dispatch<React.SetStateAction<Record<string, DocumentEditorState>>>;
 }
 
-export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
-  const [projectState, setProjectState] = useState<Project>(() =>
+export function DocumentEditor({
+  project: projectInput,
+  onFieldValueChange,
+  onAddDocument,
+  onDeleteDocument,
+  onDocumentTitleChange,
+  onProjectTitleChange,
+  isSaving = false,
+  externalProject,
+  externalDocumentStates,
+  setExternalProject,
+  setExternalDocumentStates,
+}: DocumentEditorProps) {
+  // Use external state if provided, otherwise use internal state
+  const useExternal = externalProject !== undefined && externalDocumentStates !== undefined;
+
+  const [internalProjectState, setInternalProjectState] = useState<Project>(() =>
     normalizeProjectData(projectInput ?? sampleScreenSpecProject)
   );
+
+  // Determine which state to use
+  const projectState = useExternal ? externalProject : internalProjectState;
+  const setProjectState = useExternal && setExternalProject
+    ? (setExternalProject as React.Dispatch<React.SetStateAction<Project>>)
+    : setInternalProjectState;
 
   const documentById = useMemo(
     () => Object.fromEntries(projectState.documents.map((document) => [document.id, document])),
@@ -77,9 +110,15 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   );
 
   // Per-document editor states keyed by document id
-  const [documentStates, setDocumentStates] = useState<Record<string, DocumentEditorState>>(
+  const [internalDocumentStates, setInternalDocumentStates] = useState<Record<string, DocumentEditorState>>(
     () => createProjectStates(projectState)
   );
+
+  // Use external document states if provided
+  const documentStates = useExternal ? externalDocumentStates : internalDocumentStates;
+  const setDocumentStates = useExternal && setExternalDocumentStates
+    ? setExternalDocumentStates
+    : setInternalDocumentStates;
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
     projectState.documents[0]?.id ?? ""
@@ -213,6 +252,10 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         value
       ),
     }));
+    // Call external callback if provided
+    if (onFieldValueChange) {
+      onFieldValueChange(currentDocument.id, fieldId, value);
+    }
   };
 
   const handleDocumentSelect = useCallback(
@@ -224,7 +267,13 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   );
 
   const handleAddDocument = useCallback(
-    (kind: DocumentKind) => {
+    async (kind: DocumentKind) => {
+      // If external callback is provided, use it instead of local state management
+      if (onAddDocument) {
+        await onAddDocument(kind);
+        return;
+      }
+
       const newDoc = createDocument(kind, projectState.documents);
 
       // Update project state
@@ -248,13 +297,29 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
       // Select the new document
       setSelectedDocumentId(newDoc.id);
     },
-    [projectState.documents]
+    [projectState.documents, onAddDocument]
   );
 
   const handleDeleteDocument = useCallback(
-    (documentId: string) => {
+    async (documentId: string) => {
       // Don't delete if it's the last document
       if (projectState.documents.length <= 1) return;
+
+      // If external callback is provided, use it instead of local state management
+      if (onDeleteDocument) {
+        await onDeleteDocument(documentId);
+        // Handle selection change after external deletion
+        if (selectedDocumentId === documentId) {
+          const deletedIndex = projectState.documents.findIndex((doc) => doc.id === documentId);
+          const remainingDocs = projectState.documents.filter((doc) => doc.id !== documentId);
+          const newSelectedIndex = Math.min(deletedIndex, remainingDocs.length - 1);
+          const newSelectedDoc = remainingDocs[newSelectedIndex];
+          if (newSelectedDoc) {
+            setSelectedDocumentId(newSelectedDoc.id);
+          }
+        }
+        return;
+      }
 
       // Find the index of the document to delete
       const deletedIndex = projectState.documents.findIndex((doc) => doc.id === documentId);
@@ -290,7 +355,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         }
       }
     },
-    [projectState.documents, selectedDocumentId]
+    [projectState.documents, selectedDocumentId, onDeleteDocument]
   );
 
   const handleReorderDocument = useCallback(
@@ -348,7 +413,13 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
   );
 
   const handleDocumentTitleChange = useCallback(
-    (documentId: string, newTitle: string) => {
+    async (documentId: string, newTitle: string) => {
+      // If external callback is provided, use it
+      if (onDocumentTitleChange) {
+        await onDocumentTitleChange(documentId, newTitle);
+        return;
+      }
+
       const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
       if (!uniqueTitle) return;
 
@@ -374,7 +445,7 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         };
       });
     },
-    [projectState.documents]
+    [projectState.documents, onDocumentTitleChange]
   );
 
   const handleNavigateToField = useCallback(
@@ -491,7 +562,30 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
             スキーマ駆動の構造化設計書エディタ
           </p>
         </div>
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          {isSaving && (
+            <span
+              style={{
+                fontSize: "0.75rem",
+                color: "#64748B",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                marginRight: "8px",
+              }}
+            >
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  backgroundColor: "#3B82F6",
+                  borderRadius: "50%",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              />
+              保存中...
+            </span>
+          )}
           <button
             type="button"
             onClick={() => setShowImportModal(true)}
@@ -583,10 +677,14 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
               autoFocus
               maxLength={100}
               defaultValue={projectState.title}
-              onBlur={(e) => {
+              onBlur={async (e) => {
                 const newTitle = e.target.value.trim();
                 if (newTitle) {
-                  setProjectState((prev) => ({ ...prev, title: newTitle }));
+                  if (onProjectTitleChange) {
+                    await onProjectTitleChange(newTitle);
+                  } else {
+                    setProjectState((prev) => ({ ...prev, title: newTitle }));
+                  }
                 }
                 setEditingProjectTitle(false);
               }}
@@ -821,6 +919,14 @@ export function DocumentEditor({ project: projectInput }: DocumentEditorProps) {
         onImportProject={handleImportProject}
         onImportDocument={handleImportDocument}
       />
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </main>
   );
 }

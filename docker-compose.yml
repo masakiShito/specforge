@@ -30,6 +30,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-specforge}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-specforge}
       DATABASE_URL: ${DATABASE_URL:-postgresql://specforge:specforge@db:5432/specforge}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-specforge-docker-dev-secret-key-32chars}
     volumes:
       - ./apps/api:/app
     depends_on:
