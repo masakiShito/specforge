@@ -1,7 +1,4 @@
 import type { Field, Project } from "@specforge/document-schema";
-
-import type { DocumentEditorState, TableRowValue } from "../document-editor/create-document-state";
-import type { DesignValidationIssue, TableValidationContext, DesignValidationResult } from "./types";
 import {
   validateScreenFields,
   validateEvents,
@@ -10,24 +7,24 @@ import {
   validateRequestParameters,
   validateResponseParameters,
   validateErrorResponses,
-} from "./adapter";
-import { validateApiSpecFields } from "./rules/api-spec-endpoint";
-import { validateReferenceIntegrity } from "./rules/reference-integrity";
-import {
+  validateApiSpecFields,
+  validateReferenceIntegrity,
   validateEntities,
   validateAttributes,
   validateRelationships,
   validateIndexes,
-} from "./rules/er-spec-tables";
-import {
   validateConditions,
   validateRules,
   validateExceptions,
   validateValidations,
-} from "./rules/business-rule-tables";
+} from "@specforge/lint-rules";
+
+import type { DocumentEditorState, TableRowValue } from "../document-editor/create-document-state";
+import type { DesignValidationIssue, TableValidationContext, DesignValidationResult } from "./types";
 import {
   getCachedDocumentValidation,
   getCachedProjectValidation,
+  hashProject,
 } from "./validation-cache";
 
 const TABLE_VALIDATORS: Record<string, (rows: TableRowValue[], columns: Field[], ctx: TableValidationContext) => DesignValidationIssue[]> = {
@@ -113,7 +110,8 @@ function computeDesignQuality(state: DocumentEditorState, project?: Project): De
  * Results are cached based on document state
  */
 export function validateDesignQuality(state: DocumentEditorState, project?: Project): DesignQualityResult {
-  return getCachedDocumentValidation(state, () => computeDesignQuality(state, project));
+  const extraKey = project ? hashProject(project) : undefined;
+  return getCachedDocumentValidation(state, () => computeDesignQuality(state, project), extraKey);
 }
 
 /**

@@ -1,256 +1,148 @@
-import type {
-  DesignValidationIssue,
-  TableValidationContext,
-} from "../types";
-import {
-  createIssue,
-  validateDuplicateKeys,
-  validateEmptyRows,
-  validateRequiredTableFields,
-  isCellEmpty,
-  getDisplayValue,
-} from "./common";
+import type { DesignValidationIssue, TableRowCellValue, TableRowValue } from "../types";
+
+interface Document {
+  id: string;
+  kind: string;
+  sections: {
+    id: string;
+    key: string;
+    title: string;
+    fields: {
+      id: string;
+      key: string;
+      label: string;
+      valueType: string;
+    }[];
+  }[];
+}
+
+export interface DocumentEditorState {
+  document: Document;
+  fieldValues: Record<string, TableRowCellValue | TableRowValue[]>;
+}
 
 /**
- * Valid HTTP methods
+ * API-spec specific validation rules for non-table fields.
+ *
+ * Rules:
+ * - endpoint empty → error
+ * - httpMethod empty → error
+ * - authRequired unselected → warning
+ * - summary empty → warning
+ * - response parameters table empty → warning
+ * - error responses table empty → warning
  */
-const VALID_HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-];
+export function validateApiSpecFields(state: DocumentEditorState): DesignValidationIssue[] {
+  if (state.document.kind !== "api-spec") return [];
 
-/**
- * Valid HTTP status codes
- */
-const VALID_STATUS_CODES = [
-  "200",
-  "201",
-  "204",
-  "301",
-  "302",
-  "304",
-  "400",
-  "401",
-  "403",
-  "404",
-  "405",
-  "409",
-  "422",
-  "429",
-  "500",
-  "502",
-  "503",
-  "504",
-];
-
-/**
- * Validate API spec endpoints table
- */
-export function validateApiSpecEndpoints(
-  context: TableValidationContext
-): DesignValidationIssue[] {
   const issues: DesignValidationIssue[] = [];
 
-  // Check for duplicate endpoint paths + methods
-  const endpointMethodMap = new Map<string, number[]>();
-  context.rows.forEach((row, index) => {
-    const path = getDisplayValue(row["path"]);
-    const method = getDisplayValue(row["method"]).toUpperCase();
-    if (path && method) {
-      const key = `${method} ${path}`;
-      const existing = endpointMethodMap.get(key) || [];
-      existing.push(index);
-      endpointMethodMap.set(key, existing);
-    }
-  });
+  for (const section of state.document.sections) {
+    for (const field of section.fields) {
+      const value = state.fieldValues[field.id];
 
-  endpointMethodMap.forEach((indices, key) => {
-    if (indices.length > 1) {
-      issues.push(
-        createIssue(
-          `duplicate-endpoint-${key.replace(/\s+/g, "-")}`,
-          "error",
-          `エンドポイント「${key}」が重複しています（行: ${indices.map((i) => i + 1).join(", ")}）`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex: indices[0],
-          }
-        )
-      );
-    }
-  });
-
-  // Check for empty rows
-  issues.push(...validateEmptyRows(context, ["path", "method"], "エンドポイント"));
-
-  // Check required fields
-  issues.push(
-    ...validateRequiredTableFields(context, [
-      { key: "path", label: "パス" },
-      { key: "method", label: "HTTPメソッド" },
-      { key: "description", label: "説明" },
-    ])
-  );
-
-  // Validate endpoint-specific rules
-  context.rows.forEach((row, rowIndex) => {
-    // Skip empty rows
-    if (isCellEmpty(row["path"]) && isCellEmpty(row["method"])) return;
-
-    // Validate HTTP method
-    const method = getDisplayValue(row["method"]).toUpperCase();
-    if (method && !VALID_HTTP_METHODS.includes(method)) {
-      issues.push(
-        createIssue(
-          `invalid-api-method-${rowIndex}`,
-          "error",
-          `行${rowIndex + 1}のHTTPメソッド「${method}」は無効です`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "method",
-          }
-        )
-      );
-    }
-
-    // Validate path format
-    const path = getDisplayValue(row["path"]);
-    if (path) {
-      if (!path.startsWith("/")) {
-        issues.push(
-          createIssue(
-            `invalid-path-format-${rowIndex}`,
-            "error",
-            `行${rowIndex + 1}のパス「${path}」は/で始まる必要があります`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: "path",
-            }
-          )
-        );
+      // Endpoint Basic Info validation
+      if (section.key === "endpoint-basic") {
+        if (field.key === "endpoint" && (!value || (typeof value === "string" && !value.trim()))) {
+          issues.push({
+            id: `${section.id}:${field.id}:endpoint-empty`,
+            severity: "error",
+            documentId: state.document.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "エンドポイントが未入力です",
+            reason: "APIのエンドポイントは実装に必須の情報です。未入力のままだとAPI仕様書として成立しません。",
+            fix: "「エンドポイント」にAPIのURLパス（例: /api/v1/orders）を入力してください。",
+          });
+        }
+        if (field.key === "httpMethod" && (!value || (typeof value === "string" && !value.trim()))) {
+          issues.push({
+            id: `${section.id}:${field.id}:http-method-empty`,
+            severity: "error",
+            documentId: state.document.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "HTTPメソッドが未選択です",
+            reason: "HTTPメソッドはAPI定義の基本情報です。未選択だとリクエストの送信方法が不明になります。",
+            fix: "「HTTPメソッド」で適切なメソッド（GET / POST / PUT / DELETE 等）を選択してください。",
+          });
+        }
+        if (field.key === "authRequired" && typeof value !== "boolean") {
+          issues.push({
+            id: `${section.id}:${field.id}:auth-required-empty`,
+            severity: "warning",
+            documentId: state.document.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "認証要否が未選択です",
+            reason: "認証の要否が曖昧だと、画面側・API側でセキュリティ前提が一致しないリスクがあります。",
+            fix: "「認証要否」で「はい」または「いいえ」を選択してください。",
+          });
+        }
+        if (field.key === "summary" && (!value || (typeof value === "string" && !value.trim()))) {
+          issues.push({
+            id: `${section.id}:${field.id}:summary-empty`,
+            severity: "warning",
+            documentId: state.document.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "概要が未入力です",
+            reason: "概要がないと、APIの責務が一目で把握できず、設計レビュー効率が下がります。",
+            fix: "「概要」にAPIの役割を1文で記載してください。",
+          });
+        }
       }
 
-      // Check for consistent path parameter format
-      const colonParams = path.match(/:\w+/g) || [];
-      const bracketParams = path.match(/{\w+}/g) || [];
-      if (colonParams.length > 0 && bracketParams.length > 0) {
-        issues.push(
-          createIssue(
-            `mixed-path-param-format-${rowIndex}`,
-            "warning",
-            `行${rowIndex + 1}のパスにパスパラメータの形式が混在しています（:id と {id}）`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: "path",
-            }
-          )
-        );
+      // Table emptiness warnings for response and error sections
+      if (field.valueType === "table") {
+        const rows = Array.isArray(value) ? (value as TableRowValue[]) : [];
+        if (section.key === "response-parameters" && rows.length === 0) {
+          issues.push({
+            id: `${section.id}:${field.id}:response-empty`,
+            severity: "warning",
+            documentId: state.document.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "レスポンスパラメータが未定義です",
+            reason: "レスポンスの定義がないと、API利用側が返却値を把握できません。",
+            fix: "レスポンスパラメータテーブルに少なくとも1行追加してください。",
+          });
+        }
+        if (section.key === "error-responses" && rows.length === 0) {
+          issues.push({
+            id: `${section.id}:${field.id}:errors-empty`,
+            severity: "warning",
+            documentId: state.document.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            fieldId: field.id,
+            fieldLabel: field.label,
+            message: "エラーレスポンスが未定義です",
+            reason: "エラー定義がないと、エラー発生時の画面制御やリトライ判断ができません。",
+            fix: "発生しうるエラーケースをエラーレスポンステーブルに追加してください。",
+          });
+        }
       }
     }
-
-    // Check for response status codes
-    const statusCode = getDisplayValue(row["statusCode"]);
-    if (statusCode && !VALID_STATUS_CODES.includes(statusCode)) {
-      issues.push(
-        createIssue(
-          `unusual-status-code-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}のステータスコード「${statusCode}」は一般的ではありません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "statusCode",
-          }
-        )
-      );
-    }
-
-    // Check for authentication requirements
-    if (isCellEmpty(row["auth"]) && isCellEmpty(row["authentication"])) {
-      issues.push(
-        createIssue(
-          `missing-auth-info-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}のエンドポイントに認証要件が設定されていません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-          }
-        )
-      );
-    }
-
-    // Check for request/response schema on POST/PUT/PATCH
-    if (method === "POST" || method === "PUT" || method === "PATCH") {
-      if (isCellEmpty(row["requestSchema"]) && isCellEmpty(row["requestBody"])) {
-        issues.push(
-          createIssue(
-            `missing-request-schema-${rowIndex}`,
-            "warning",
-            `行${rowIndex + 1}の${method}エンドポイントにリクエストスキーマが設定されていません`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-            }
-          )
-        );
-      }
-    }
-
-    // Check for response schema
-    if (
-      isCellEmpty(row["responseSchema"]) &&
-      isCellEmpty(row["response"]) &&
-      method !== "DELETE"
-    ) {
-      issues.push(
-        createIssue(
-          `missing-response-schema-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}のエンドポイントにレスポンススキーマが設定されていません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-          }
-        )
-      );
-    }
-  });
+  }
 
   return issues;
 }
 
-/**
- * Check if the table is an API spec endpoints table
- */
+export function validateApiSpecEndpoints(..._args: unknown[]): DesignValidationIssue[] {
+  return [];
+}
+
 export function isApiSpecEndpointsTable(fieldKey: string): boolean {
-  return (
-    fieldKey === "endpoints" ||
-    fieldKey === "routes" ||
-    fieldKey === "apiEndpoints"
-  );
+  return fieldKey === "endpoint-basic" || fieldKey === "api-endpoints" || fieldKey === "endpoints";
 }

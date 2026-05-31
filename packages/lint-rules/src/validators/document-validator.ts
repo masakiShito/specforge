@@ -67,6 +67,11 @@ export function validateDocument(
       if (field.type === "table" && Array.isArray(field.value)) {
         const tableContext: TableValidationContext = {
           documentId: document.id,
+          sectionId: section.key,
+          sectionTitle: section.title,
+          fieldId: field.key,
+          fieldLabel: field.label ?? field.key,
+          tableKey: field.key,
           sectionKey: section.key,
           fieldKey: field.key,
           rows: field.value as Record<string, TableRowValue>[],
@@ -90,7 +95,7 @@ function validateTableField(
   documentKind: string
 ): DesignValidationIssue[] {
   const issues: DesignValidationIssue[] = [];
-  const fieldKey = context.fieldKey;
+  const fieldKey = context.fieldId ?? context.fieldKey ?? "";
 
   // Screen spec validations
   if (documentKind === "screen-spec") {

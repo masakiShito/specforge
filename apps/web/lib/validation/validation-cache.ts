@@ -1,3 +1,5 @@
+import type { Project } from "@specforge/document-schema";
+
 import type { DocumentEditorState } from "../document-editor/create-document-state";
 
 interface CacheEntry<T> {
@@ -31,6 +33,17 @@ function hashDocumentState(state: DocumentEditorState): string {
     docVersion: state.document.version,
     fieldValues: state.fieldValues,
   };
+  return hashString(JSON.stringify(simplified));
+}
+
+/**
+ * Create a lightweight hash for project metadata that can affect document-level validation.
+ */
+export function hashProject(project: Project): string {
+  const simplified = project.documents.map((document) => ({
+    id: document.id,
+    title: document.title,
+  }));
   return hashString(JSON.stringify(simplified));
 }
 
@@ -112,9 +125,10 @@ const projectValidationCache = new ValidationCache<any>(20);
  */
 export function getCachedDocumentValidation<T>(
   state: DocumentEditorState,
-  compute: () => T
+  compute: () => T,
+  extraKey?: string
 ): T {
-  const hash = hashDocumentState(state);
+  const hash = `${hashDocumentState(state)}:${extraKey ?? ""}`;
   const cached = documentValidationCache.get(hash) as T | undefined;
 
   if (cached) {

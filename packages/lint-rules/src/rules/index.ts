@@ -26,11 +26,14 @@ export { validateApiConnections, isApiConnectionsTable } from "./api-connections
 // API spec endpoint validation
 export {
   validateApiSpecEndpoints,
+  validateApiSpecFields,
   isApiSpecEndpointsTable,
 } from "./api-spec-endpoint";
 
 // API spec tables validation
 export {
+  validateRequestParameters,
+  validateResponseParameters,
   validateRequestParams,
   validateResponseSchema,
   validateErrorResponses,
@@ -38,6 +41,22 @@ export {
   isResponseSchemaTable,
   isErrorResponsesTable,
 } from "./api-spec-tables";
+
+// ER spec tables validation
+export {
+  validateEntities,
+  validateAttributes,
+  validateRelationships,
+  validateIndexes,
+} from "./er-spec-tables";
+
+// Business rule tables validation
+export {
+  validateConditions,
+  validateRules,
+  validateExceptions,
+  validateValidations,
+} from "./business-rule-tables";
 
 // Reference integrity validation
 export {

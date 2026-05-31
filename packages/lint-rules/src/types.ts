@@ -1,85 +1,109 @@
 /**
- * Validation severity levels
+ * Validation severity levels.
  */
 export type ValidationSeverity = "error" | "warning" | "info";
 
 /**
- * Possible cell value types in a table row
- */
-export type TableRowValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | ReferenceValue
-  | TableRowValue[];
-
-/**
- * Reference value type for cross-document references
+ * Reference value used by the web editor.
  */
 export interface ReferenceValue {
-  type: "reference";
-  referenceType: string;
-  targetDocumentId: string;
-  targetKey: string;
-  displayValue: string;
+  refId?: string;
+  kind?: string;
+  documentId?: string;
+  sectionId?: string;
+  fieldId?: string;
+  rowKey?: string;
+  type?: "reference";
+  referenceType?: string;
+  targetDocumentId?: string;
+  targetKey?: string;
+  displayValue?: string;
 }
 
+export type LegacyReferenceValue = ReferenceValue;
+export type AnyReferenceValue = ReferenceValue;
+
+// Kept permissive because older package APIs used this name for a cell value,
+// while web validation rules use it for a row object.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TableRowCellValue = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TableRowValue = any;
+
 /**
- * Type guard to check if a value is a ReferenceValue
+ * Type guard to check if a value is a supported reference value.
  */
-export function isReferenceValue(value: unknown): value is ReferenceValue {
+export function isReferenceValue(value: unknown): value is AnyReferenceValue {
   if (typeof value !== "object" || value === null) {
     return false;
   }
   const obj = value as Record<string, unknown>;
-  return (
+  const isWebReference =
+    typeof obj["refId"] === "string" &&
+    typeof obj["kind"] === "string" &&
+    typeof obj["documentId"] === "string";
+  const isLegacyReference =
     obj["type"] === "reference" &&
     typeof obj["referenceType"] === "string" &&
     typeof obj["targetDocumentId"] === "string" &&
     typeof obj["targetKey"] === "string" &&
-    typeof obj["displayValue"] === "string"
-  );
+    typeof obj["displayValue"] === "string";
+  return isWebReference || isLegacyReference;
 }
 
 /**
- * Validation issue returned by lint rules
+ * Validation issue returned by lint rules. This matches apps/web validation
+ * issues while retaining legacy aliases for existing lint-rules consumers.
  */
 export interface DesignValidationIssue {
   id: string;
+  documentId: string;
   severity: ValidationSeverity;
+  sectionId: string;
+  sectionTitle: string;
+  fieldId: string;
+  fieldLabel: string;
+  rowIndex?: number;
+  columnKey?: string;
+  referenceId?: string;
   message: string;
-  documentId?: string;
+  reason: string;
+  fix: string;
   sectionKey?: string;
   fieldKey?: string;
-  rowIndex?: number;
   cellKey?: string;
 }
 
 /**
- * Context passed to table validation rules
+ * Context passed to table validation rules.
  */
 export interface TableValidationContext {
   documentId: string;
-  sectionKey: string;
-  fieldKey: string;
-  rows: Record<string, TableRowValue>[];
-  columns: TableColumnDefinition[];
+  sectionId?: string;
+  sectionTitle?: string;
+  fieldId?: string;
+  fieldLabel?: string;
+  tableKey?: string;
+  sectionKey?: string;
+  fieldKey?: string;
+  rows?: TableRowValue[];
+  columns?: TableColumnDefinition[];
 }
 
 /**
- * Column definition for table validation
+ * Column definition for table validation.
  */
 export interface TableColumnDefinition {
+  id?: string;
   key: string;
   label: string;
   type?: string;
+  valueType?: string;
   required?: boolean;
 }
 
 /**
- * Validation rule interface
+ * Validation rule interface.
  */
 export interface ValidationRule {
   id: string;
@@ -90,7 +114,7 @@ export interface ValidationRule {
 }
 
 /**
- * Context passed to validation rules
+ * Context passed to validation rules.
  */
 export interface ValidationRuleContext {
   documentId: string;
@@ -98,18 +122,12 @@ export interface ValidationRuleContext {
   sections: SectionContext[];
 }
 
-/**
- * Section context for validation
- */
 export interface SectionContext {
   key: string;
   title: string;
   fields: FieldContext[];
 }
 
-/**
- * Field context for validation
- */
 export interface FieldContext {
   key: string;
   type: string;
@@ -118,9 +136,6 @@ export interface FieldContext {
   required?: boolean;
 }
 
-/**
- * Validation result containing all issues
- */
 export interface ValidationResult {
   issues: DesignValidationIssue[];
   isValid: boolean;

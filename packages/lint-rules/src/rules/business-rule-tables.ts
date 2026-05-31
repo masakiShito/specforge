@@ -1,7 +1,12 @@
-import type { Field } from "@specforge/document-schema";
-import type { TableRowValue } from "../../document-editor/create-document-state";
-import type { DesignValidationIssue, TableValidationContext } from "../types";
-import { validateUniqueness, validateRequiredColumns, createIssue } from "./common";
+import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import {
+  validateUniqueness,
+  validateRequiredColumns,
+  createIssue,
+  normalizeTableValidationArgs,
+} from "./common";
+
+type Field = TableColumnDefinition;
 
 /**
  * Validate conditions table
@@ -9,10 +14,11 @@ import { validateUniqueness, validateRequiredColumns, createIssue } from "./comm
  * - Required columns must be filled
  */
 export function validateConditions(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns
@@ -31,10 +37,11 @@ export function validateConditions(
  * - Validate condition-action consistency
  */
 export function validateRules(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns
@@ -83,10 +90,11 @@ export function validateRules(
  * - Required columns must be filled
  */
 export function validateExceptions(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns
@@ -121,10 +129,11 @@ export function validateExceptions(
  * - Error message should be appropriate for validation type
  */
 export function validateValidations(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns

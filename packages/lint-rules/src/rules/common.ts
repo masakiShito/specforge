@@ -1,120 +1,199 @@
 import type {
-  TableRowValue,
   DesignValidationIssue,
-  ValidationSeverity,
+  TableColumnDefinition,
+  TableRowCellValue,
+  TableRowValue,
   TableValidationContext,
+  ValidationSeverity,
 } from "../types";
 import { isReferenceValue } from "../types";
 
-/**
- * Get display value from a cell value (handles references)
- */
-export function getDisplayValue(value: TableRowValue): string {
-  if (value === null || value === undefined) {
-    return "";
-  }
+type ColumnLike = TableColumnDefinition;
+type ResolvedTableValidationContext = TableValidationContext & {
+  documentId: string;
+  sectionId: string;
+  sectionTitle: string;
+  fieldId: string;
+  fieldLabel: string;
+  tableKey: string;
+};
+
+export function isCellEmpty(value: TableRowCellValue): boolean {
+  return value === undefined || value === null || value === "";
+}
+
+export function isRowEmpty(row: TableRowValue, columns: ColumnLike[]): boolean {
+  return columns.every((col) => isCellEmpty(row[col.key]));
+}
+
+function cellStr(value: TableRowCellValue): string {
+  if (value === undefined || value === null) return "";
   if (isReferenceValue(value)) {
-    return value.displayValue;
-  }
-  if (Array.isArray(value)) {
-    return value.map(getDisplayValue).join(", ");
+    return value.refId ?? value.displayValue ?? "";
   }
   return String(value);
 }
 
-/**
- * Check if a cell value is empty
- */
-export function isCellEmpty(value: TableRowValue): boolean {
-  if (value === null || value === undefined) {
-    return true;
-  }
-  if (typeof value === "string") {
-    return value.trim() === "";
-  }
-  if (isReferenceValue(value)) {
-    return value.displayValue.trim() === "";
-  }
-  if (Array.isArray(value)) {
-    return value.length === 0 || value.every(isCellEmpty);
-  }
-  return false;
+export function getDisplayValue(value: TableRowCellValue): string {
+  if (Array.isArray(value)) return value.map(getDisplayValue).join(", ");
+  return cellStr(value);
 }
 
-/**
- * Find duplicate keys in a table column
- */
-export function findDuplicateKeys(
-  rows: Record<string, TableRowValue>[],
-  keyColumn: string
-): { value: string; indices: number[] }[] {
-  const valueMap = new Map<string, number[]>();
-
-  rows.forEach((row, index) => {
-    const cellValue = row[keyColumn];
-    const displayValue = getDisplayValue(cellValue);
-    if (displayValue) {
-      const existing = valueMap.get(displayValue) || [];
-      existing.push(index);
-      valueMap.set(displayValue, existing);
-    }
-  });
-
-  const duplicates: { value: string; indices: number[] }[] = [];
-  valueMap.forEach((indices, value) => {
-    if (indices.length > 1) {
-      duplicates.push({ value, indices });
-    }
-  });
-
-  return duplicates;
-}
-
-/**
- * Find empty rows in a table (all cells empty)
- */
-export function findEmptyRows(
-  rows: Record<string, TableRowValue>[],
-  requiredColumns: string[]
-): number[] {
-  const emptyIndices: number[] = [];
-
-  rows.forEach((row, index) => {
-    const allEmpty = requiredColumns.every((col) => isCellEmpty(row[col]));
-    if (allEmpty) {
-      emptyIndices.push(index);
-    }
-  });
-
-  return emptyIndices;
-}
-
-/**
- * Check if a row has required fields filled
- */
 export function checkRequiredFields(
-  row: Record<string, TableRowValue>,
+  row: TableRowValue,
   requiredColumns: string[],
   rowIndex: number
 ): { column: string; rowIndex: number }[] {
-  const missingFields: { column: string; rowIndex: number }[] = [];
+  return requiredColumns
+    .filter((column) => isCellEmpty(row[column]))
+    .map((column) => ({ column, rowIndex }));
+}
 
-  requiredColumns.forEach((col) => {
-    if (isCellEmpty(row[col])) {
-      missingFields.push({ column: col, rowIndex });
+function getSectionId(ctx: TableValidationContext): string {
+  return ctx.sectionId ?? ctx.sectionKey ?? "";
+}
+
+function getFieldId(ctx: TableValidationContext): string {
+  return ctx.fieldId ?? ctx.fieldKey ?? "";
+}
+
+function baseIssue(ctx: TableValidationContext) {
+  const sectionId = getSectionId(ctx);
+  const fieldId = getFieldId(ctx);
+  return {
+    documentId: ctx.documentId,
+    sectionId,
+    sectionTitle: ctx.sectionTitle ?? sectionId,
+    fieldId,
+    fieldLabel: ctx.fieldLabel ?? fieldId,
+    sectionKey: ctx.sectionKey ?? sectionId,
+    fieldKey: ctx.fieldKey ?? fieldId,
+  };
+}
+
+export function findDuplicateKeys(rows: TableRowValue[], columnKey: string): { value: string; indices: number[] }[];
+export function findDuplicateKeys(rows: TableRowValue[], columnKey: string, columnLabel: string, ctx: TableValidationContext): DesignValidationIssue[];
+export function findDuplicateKeys(rows: TableRowValue[], columnKey: string, columnLabel?: string, ctx?: TableValidationContext): DesignValidationIssue[] | { value: string; indices: number[] }[] {
+  if (!ctx) {
+    const valueMap = new Map<string, number[]>();
+    rows.forEach((row, index) => {
+      const value = cellStr(row[columnKey]);
+      if (!value) return;
+      valueMap.set(value, [...(valueMap.get(value) ?? []), index]);
+    });
+    return Array.from(valueMap.entries())
+      .filter(([, indices]) => indices.length > 1)
+      .map(([value, indices]) => ({ value, indices }));
+  }
+
+  const issues: DesignValidationIssue[] = [];
+  const sectionId = getSectionId(ctx);
+  const fieldId = getFieldId(ctx);
+  const seen = new Map<string, number>();
+  rows.forEach((row, rowIndex) => {
+    const raw = cellStr(row[columnKey]).trim();
+    if (!raw) return;
+    if (seen.has(raw)) {
+      issues.push({ id: `${sectionId}:${fieldId}:row${rowIndex}:${columnKey}:duplicate`, severity: "error", ...baseIssue(ctx), rowIndex, columnKey, cellKey: columnKey, message: `${columnLabel ?? columnKey}が重複しています`, reason: `同じセクション内で ${columnLabel ?? columnKey} は一意である必要があります。行 ${seen.get(raw)! + 1} と重複しています。`, fix: `行 ${rowIndex + 1} の ${columnLabel ?? columnKey}「${raw}」を一意な値に修正してください。` });
+    } else {
+      seen.set(raw, rowIndex);
     }
   });
+  return issues;
+}
 
-  return missingFields;
+export function findEmptyRows(rows: TableRowValue[], requiredColumns: string[]): number[];
+export function findEmptyRows(rows: TableRowValue[], columns: ColumnLike[], ctx: TableValidationContext): DesignValidationIssue[];
+export function findEmptyRows(rows: TableRowValue[], columns: ColumnLike[] | string[], ctx?: TableValidationContext): DesignValidationIssue[] | number[] {
+  if (!ctx) {
+    return rows.flatMap((row, index) => {
+      const isEmpty = (columns as string[]).every((column) => isCellEmpty(row[column]));
+      return isEmpty ? [index] : [];
+    });
+  }
+
+  const issues: DesignValidationIssue[] = [];
+  const sectionId = getSectionId(ctx);
+  const fieldId = getFieldId(ctx);
+  rows.forEach((row, rowIndex) => {
+    if (isRowEmpty(row, columns as ColumnLike[])) {
+      issues.push({ id: `${sectionId}:${fieldId}:row${rowIndex}:all-empty`, severity: "warning", ...baseIssue(ctx), rowIndex, message: `行 ${rowIndex + 1} がすべて空です`, reason: "全セル空の行は設計書として意味がありません。入力途中か、削除忘れの可能性があります。", fix: "内容を入力するか、不要であれば行を削除してください。" });
+    }
+  });
+  return issues;
+}
+
+export function findMissingRequiredCells(rows: TableRowValue[], columns: ColumnLike[], ctx: TableValidationContext): DesignValidationIssue[] {
+  const issues: DesignValidationIssue[] = [];
+  const sectionId = getSectionId(ctx);
+  const fieldId = getFieldId(ctx);
+  rows.forEach((row, rowIndex) => {
+    if (isRowEmpty(row, columns)) return;
+    columns.forEach((col) => {
+      if (!col.required) return;
+      if (isCellEmpty(row[col.key])) {
+        issues.push({ id: `${sectionId}:${fieldId}:row${rowIndex}:${col.key}:required`, severity: "error", ...baseIssue(ctx), rowIndex, columnKey: col.key, cellKey: col.key, message: `行 ${rowIndex + 1} の「${col.label}」が未入力です`, reason: `「${col.label}」は必須項目です。未入力のまま残すと設計書として不完全になります。`, fix: `行 ${rowIndex + 1} の「${col.label}」に値を入力してください。` });
+      }
+    });
+  });
+  return issues;
+}
+
+export function getCellString(row: TableRowValue, key: string): string {
+  return cellStr(row[key]).trim();
+}
+
+export function getCellReferenceId(row: TableRowValue, key: string): string {
+  const value = row[key];
+  if (!isReferenceValue(value)) return "";
+  return value.refId ?? value.targetKey ?? "";
+}
+
+export function getCellReferenceDocumentId(row: TableRowValue, key: string): string {
+  const value = row[key];
+  if (!isReferenceValue(value)) return "";
+  return value.documentId ?? value.targetDocumentId ?? "";
+}
+
+export function getCellBoolean(row: TableRowValue, key: string): boolean | undefined {
+  const v = row[key];
+  return typeof v === "boolean" ? v : undefined;
 }
 
 /**
- * Create a validation issue
+ * Create a standardized validation issue
  */
+type CreateIssueParams = {
+  documentId: string;
+  sectionId: string;
+  sectionTitle: string;
+  fieldId: string;
+  fieldLabel: string;
+  rowIndex: number;
+  columnKey: string;
+  severity: ValidationSeverity;
+  message: string;
+  reason?: string;
+  fix?: string;
+};
+
+export function createIssue(params: CreateIssueParams): DesignValidationIssue;
 export function createIssue(
   id: string,
   severity: ValidationSeverity,
   message: string,
+  options?: {
+    documentId?: string;
+    sectionKey?: string;
+    fieldKey?: string;
+    rowIndex?: number;
+    cellKey?: string;
+  }
+): DesignValidationIssue;
+export function createIssue(
+  paramsOrId: CreateIssueParams | string,
+  severity?: ValidationSeverity,
+  message?: string,
   options: {
     documentId?: string;
     sectionKey?: string;
@@ -123,108 +202,144 @@ export function createIssue(
     cellKey?: string;
   } = {}
 ): DesignValidationIssue {
+  if (typeof paramsOrId === "string") {
+    const sectionId = options.sectionKey ?? "";
+    const fieldId = options.fieldKey ?? "";
+    return {
+      id: paramsOrId,
+      documentId: options.documentId ?? "",
+      sectionId,
+      sectionTitle: sectionId,
+      fieldId,
+      fieldLabel: fieldId,
+      rowIndex: options.rowIndex,
+      columnKey: options.cellKey,
+      cellKey: options.cellKey,
+      severity: severity ?? "warning",
+      message: message ?? "",
+      reason: message ?? "",
+      fix: "該当箇所を確認してください",
+      sectionKey: sectionId,
+      fieldKey: fieldId,
+    };
+  }
+
+  const params = paramsOrId;
+  const sectionId = params.sectionId;
+  const fieldId = params.fieldId;
   return {
-    id,
-    severity,
-    message,
-    ...options,
+    id: `${sectionId}:${fieldId}:row${params.rowIndex}:${params.columnKey}:custom`,
+    documentId: params.documentId,
+    sectionId,
+    sectionTitle: params.sectionTitle,
+    fieldId,
+    fieldLabel: params.fieldLabel,
+    rowIndex: params.rowIndex,
+    columnKey: params.columnKey,
+    cellKey: params.columnKey,
+    severity: params.severity,
+    message: params.message,
+    reason: params.reason ?? params.message,
+    fix: params.fix ?? "該当箇所を確認してください",
+    sectionKey: sectionId,
+    fieldKey: fieldId,
   };
 }
 
 /**
- * Validate table for duplicate keys
+ * Validate uniqueness of a column value across all rows
  */
+export function validateUniqueness(
+  rows: TableRowValue[],
+  columnKey: string,
+  columnLabel: string,
+  ctx: TableValidationContext
+): DesignValidationIssue[] {
+  return findDuplicateKeys(rows, columnKey, columnLabel, ctx) as DesignValidationIssue[];
+}
+
+/**
+ * Validate that required columns are filled in non-empty rows
+ */
+export function validateRequiredColumns(
+  rows: TableRowValue[],
+  columns: ColumnLike[],
+  ctx: TableValidationContext
+): DesignValidationIssue[] {
+  const issues: DesignValidationIssue[] = [];
+
+  // Check for empty rows
+  issues.push(...(findEmptyRows(rows, columns, ctx) as DesignValidationIssue[]));
+
+  // Check for missing required cells
+  issues.push(...findMissingRequiredCells(rows, columns, ctx));
+
+  return issues;
+}
+
 export function validateDuplicateKeys(
   context: TableValidationContext,
   keyColumn: string,
   itemLabel: string
 ): DesignValidationIssue[] {
-  const issues: DesignValidationIssue[] = [];
-  const duplicates = findDuplicateKeys(context.rows, keyColumn);
-
-  duplicates.forEach(({ value, indices }) => {
-    issues.push(
-      createIssue(
-        `duplicate-${context.fieldKey}-${keyColumn}-${value}`,
-        "error",
-        `${itemLabel}「${value}」が重複しています（行: ${indices.map((i) => i + 1).join(", ")}）`,
-        {
-          documentId: context.documentId,
-          sectionKey: context.sectionKey,
-          fieldKey: context.fieldKey,
-          rowIndex: indices[0],
-          cellKey: keyColumn,
-        }
-      )
-    );
-  });
-
-  return issues;
+  return findDuplicateKeys(context.rows ?? [], keyColumn, itemLabel, context);
 }
 
-/**
- * Validate table for empty rows
- */
 export function validateEmptyRows(
   context: TableValidationContext,
   requiredColumns: string[],
   tableLabel: string
 ): DesignValidationIssue[] {
-  const issues: DesignValidationIssue[] = [];
-  const emptyRows = findEmptyRows(context.rows, requiredColumns);
-
-  emptyRows.forEach((rowIndex) => {
-    issues.push(
-      createIssue(
-        `empty-row-${context.fieldKey}-${rowIndex}`,
-        "warning",
-        `${tableLabel}の行${rowIndex + 1}が空です`,
-        {
-          documentId: context.documentId,
-          sectionKey: context.sectionKey,
-          fieldKey: context.fieldKey,
-          rowIndex,
-        }
-      )
-    );
-  });
-
-  return issues;
+  const columns = requiredColumns.map((key) => ({ key, label: key, required: false }));
+  return findEmptyRows(context.rows ?? [], columns, context).map((issue) => ({
+    ...issue,
+    message: `${tableLabel}の行${(issue.rowIndex ?? 0) + 1}が空です`,
+  }));
 }
 
-/**
- * Validate required fields in a table row
- */
 export function validateRequiredTableFields(
   context: TableValidationContext,
   requiredColumns: { key: string; label: string }[]
 ): DesignValidationIssue[] {
-  const issues: DesignValidationIssue[] = [];
+  const columns = requiredColumns.map((column) => ({ ...column, required: true }));
+  return findMissingRequiredCells(context.rows ?? [], columns, context);
+}
 
-  context.rows.forEach((row, rowIndex) => {
-    // Skip completely empty rows (handled by validateEmptyRows)
-    const hasAnyValue = Object.values(row).some((v) => !isCellEmpty(v));
-    if (!hasAnyValue) return;
+export function normalizeTableValidationArgs(
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columns?: ColumnLike[],
+  ctx?: TableValidationContext
+): { rows: TableRowValue[]; columns: ColumnLike[]; ctx: ResolvedTableValidationContext } {
+  if (Array.isArray(rowsOrContext)) {
+    const resolved = resolveContext(ctx);
+    return {
+      rows: rowsOrContext,
+      columns: columns ?? [],
+      ctx: resolved,
+    };
+  }
 
-    requiredColumns.forEach(({ key, label }) => {
-      if (isCellEmpty(row[key])) {
-        issues.push(
-          createIssue(
-            `required-${context.fieldKey}-${key}-${rowIndex}`,
-            "error",
-            `行${rowIndex + 1}の${label}は必須です`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: key,
-            }
-          )
-        );
-      }
-    });
-  });
+  const resolved = resolveContext(rowsOrContext);
+  return {
+    rows: rowsOrContext.rows ?? [],
+    columns: rowsOrContext.columns ?? [],
+    ctx: resolved,
+  };
+}
 
-  return issues;
+function resolveContext(ctx?: TableValidationContext): ResolvedTableValidationContext {
+  const sectionId = ctx?.sectionId ?? ctx?.sectionKey ?? "";
+  const fieldId = ctx?.fieldId ?? ctx?.fieldKey ?? "";
+  return {
+    documentId: ctx?.documentId ?? "",
+    sectionId,
+    sectionTitle: ctx?.sectionTitle ?? sectionId,
+    fieldId,
+    fieldLabel: ctx?.fieldLabel ?? fieldId,
+    tableKey: ctx?.tableKey ?? fieldId,
+    sectionKey: ctx?.sectionKey ?? sectionId,
+    fieldKey: ctx?.fieldKey ?? fieldId,
+    rows: ctx?.rows,
+    columns: ctx?.columns,
+  };
 }

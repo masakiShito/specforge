@@ -1,170 +1,101 @@
-import type {
-  DesignValidationIssue,
-  TableValidationContext,
-} from "../types";
+import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
 import {
-  createIssue,
-  validateDuplicateKeys,
-  validateEmptyRows,
-  validateRequiredTableFields,
-  isCellEmpty,
-  getDisplayValue,
+  findDuplicateKeys,
+  findEmptyRows,
+  findMissingRequiredCells,
+  getCellString,
+  isRowEmpty,
+  normalizeTableValidationArgs,
 } from "./common";
 
-/**
- * Valid message types (matching schema options)
- */
-const VALID_MESSAGE_TYPES = [
-  "info",
-  "warning",
-  "error",
-  "confirm",
-];
+type Field = TableColumnDefinition;
+
+/** Keywords typically found in confirm-style messages */
+const CONFIRM_KEYWORDS = ["よろしいですか", "確認", "実行しますか", "削除しますか", "送信しますか", "保存しますか", "OK"];
 
 /**
- * Validate messages table
+ * Messages section – design quality rules.
  *
- * Expected columns (from screen-spec.ts):
- * - messageId (メッセージID) - required
- * - messageType (種別) - required
- * - condition (表示条件) - optional
- * - messageText (文言) - required
- * - note (備考) - optional
+ * Rules:
+ * - messageId duplicate → error
+ * - messageText empty → error (covered by required check)
+ * - messageType=confirm but text doesn't look like a confirmation → info
+ * - error messages without condition → warning (if many)
+ * - empty rows → warning
+ * - required cells missing → error
  */
 export function validateMessages(
-  context: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
-  // Check for duplicate message IDs
-  issues.push(...validateDuplicateKeys(context, "messageId", "メッセージID"));
+  // Common rules
+  issues.push(...findEmptyRows(rows, columns, ctx));
+  issues.push(...findMissingRequiredCells(rows, columns, ctx));
+  issues.push(...findDuplicateKeys(rows, "messageId", "メッセージID", ctx));
 
-  // Check for empty rows
-  issues.push(...validateEmptyRows(context, ["messageId", "messageText"], "メッセージ"));
+  // Count error messages without condition for batch warning
+  let errorMsgsWithoutCondition = 0;
 
-  // Check required fields
-  issues.push(
-    ...validateRequiredTableFields(context, [
-      { key: "messageId", label: "メッセージID" },
-      { key: "messageType", label: "種別" },
-      { key: "messageText", label: "文言" },
-    ])
-  );
+  // Domain rules per row
+  rows.forEach((row, rowIndex) => {
+    if (isRowEmpty(row, columns)) return;
 
-  // Validate message-specific rules
-  context.rows.forEach((row, rowIndex) => {
-    // Skip empty rows
-    if (isCellEmpty(row["messageId"]) && isCellEmpty(row["messageText"])) return;
+    const messageType = getCellString(row, "messageType");
+    const messageText = getCellString(row, "messageText");
+    const condition = getCellString(row, "condition");
 
-    // Validate message type
-    const messageType = getDisplayValue(row["messageType"]);
-    if (messageType && !VALID_MESSAGE_TYPES.includes(messageType)) {
-      issues.push(
-        createIssue(
-          `invalid-message-type-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}の種別「${messageType}」は標準的なタイプではありません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "messageType",
-          }
-        )
+    // confirm type without confirm-like text → info
+    if (messageType === "confirm" && messageText) {
+      const looksLikeConfirm = CONFIRM_KEYWORDS.some((kw) =>
+        messageText.includes(kw)
       );
-    }
-
-    // Check message content for potential issues
-    const messageText = getDisplayValue(row["messageText"]);
-
-    // Check for very short messages
-    if (messageText && messageText.length < 5) {
-      issues.push(
-        createIssue(
-          `short-message-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}の文言が短すぎる可能性があります`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "messageText",
-          }
-        )
-      );
-    }
-
-    // Check for placeholder patterns that might not have been replaced
-    if (messageText && /{{\s*\w+\s*}}/.test(messageText)) {
-      issues.push(
-        createIssue(
-          `undocumented-placeholders-${rowIndex}`,
-          "warning",
-          `行${rowIndex + 1}の文言にプレースホルダーがありますが、ドキュメント化されていません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "messageText",
-          }
-        )
-      );
-    }
-
-    // Check for error type without trigger condition
-    if (messageType === "error") {
-      if (isCellEmpty(row["condition"])) {
-        issues.push(
-          createIssue(
-            `error-without-condition-${rowIndex}`,
-            "info",
-            `行${rowIndex + 1}のエラーメッセージに表示条件が設定されていません`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: "condition",
-            }
-          )
-        );
+      if (!looksLikeConfirm) {
+        issues.push({
+          id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:confirm-text-mismatch`,
+          severity: "info",
+          documentId: ctx.documentId,
+          sectionId: ctx.sectionId,
+          sectionTitle: ctx.sectionTitle,
+          fieldId: ctx.fieldId,
+          fieldLabel: ctx.fieldLabel,
+          rowIndex,
+          columnKey: "messageText",
+          message: `行 ${rowIndex + 1}: confirm メッセージに確認文言が見当たりません`,
+          reason: "confirm タイプのメッセージは、ユーザーに確認を促す文言（例：「よろしいですか？」）を含むのが一般的です。",
+          fix: "文言が確認を求める内容か確認してください。意図的であれば問題ありません。",
+        });
       }
     }
 
-    // Validate message ID format
-    const messageId = getDisplayValue(row["messageId"]);
-    if (messageId && !/^[A-Z][A-Z0-9_]*$/.test(messageId)) {
-      issues.push(
-        createIssue(
-          `invalid-message-id-format-${rowIndex}`,
-          "info",
-          `行${rowIndex + 1}のメッセージID「${messageId}」は大文字英字とアンダースコアの形式（例: MSG_001）を推奨します`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "messageId",
-          }
-        )
-      );
+    // Track error messages without condition
+    if (messageType === "error" && !condition) {
+      errorMsgsWithoutCondition++;
     }
   });
+
+  // Many error messages without condition → warning
+  if (errorMsgsWithoutCondition >= 3) {
+    issues.push({
+      id: `${ctx.sectionId}:${ctx.fieldId}:error-msgs-no-condition`,
+      severity: "warning",
+      documentId: ctx.documentId,
+      sectionId: ctx.sectionId,
+      sectionTitle: ctx.sectionTitle,
+      fieldId: ctx.fieldId,
+      fieldLabel: ctx.fieldLabel,
+      message: `表示条件が未設定の error メッセージが ${errorMsgsWithoutCondition} 件あります`,
+      reason: "error メッセージは特定の条件下で表示されるのが一般的です。表示条件がないと、いつ表示されるか実装者が判断できません。",
+      fix: "各 error メッセージの「表示条件」欄に、エラーが発生する条件を記載してください。",
+    });
+  }
 
   return issues;
 }
 
-/**
- * Check if the table is a messages table
- */
 export function isMessagesTable(fieldKey: string): boolean {
-  return (
-    fieldKey === "messages" ||
-    fieldKey === "errorMessages" ||
-    fieldKey === "notifications" ||
-    fieldKey === "alerts"
-  );
+  return fieldKey === "messages";
 }

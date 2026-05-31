@@ -120,6 +120,12 @@ function findOrphanedDocuments(
           severity: "info",
           message: `ドキュメント「${doc.title}」は他のドキュメントから参照されていません`,
           documentId: doc.id,
+          sectionId: "",
+          sectionTitle: "",
+          fieldId: "",
+          fieldLabel: "",
+          reason: "他のドキュメントから参照されていないため、必要性を確認してください。",
+          fix: "不要な場合は削除し、必要な場合は関連ドキュメントから参照してください。",
         });
       }
     }

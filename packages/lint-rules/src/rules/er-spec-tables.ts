@@ -1,7 +1,12 @@
-import type { Field } from "@specforge/document-schema";
-import type { TableRowValue } from "../../document-editor/create-document-state";
-import type { DesignValidationIssue, TableValidationContext } from "../types";
-import { validateUniqueness, validateRequiredColumns, createIssue } from "./common";
+import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import {
+  validateUniqueness,
+  validateRequiredColumns,
+  createIssue,
+  normalizeTableValidationArgs,
+} from "./common";
+
+type Field = TableColumnDefinition;
 
 /**
  * Validate entities table
@@ -9,10 +14,11 @@ import { validateUniqueness, validateRequiredColumns, createIssue } from "./comm
  * - Required columns must be filled
  */
 export function validateEntities(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns
@@ -50,10 +56,11 @@ export function validateEntities(
  * - At least one PK should be defined per entity
  */
 export function validateAttributes(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns
@@ -115,10 +122,11 @@ export function validateAttributes(
  * - Validate parent/child entity references
  */
 export function validateRelationships(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns
@@ -153,10 +161,11 @@ export function validateRelationships(
  * - Validate unique index names
  */
 export function validateIndexes(
-  rows: TableRowValue[],
-  columns: Field[],
-  ctx: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
   // Validate required columns

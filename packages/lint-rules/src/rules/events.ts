@@ -1,118 +1,93 @@
-import type {
-  DesignValidationIssue,
-  TableValidationContext,
-} from "../types";
+import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
 import {
-  createIssue,
-  validateDuplicateKeys,
-  validateEmptyRows,
-  validateRequiredTableFields,
-  isCellEmpty,
-  getDisplayValue,
+  findDuplicateKeys,
+  findEmptyRows,
+  findMissingRequiredCells,
+  getCellString,
+  isRowEmpty,
+  normalizeTableValidationArgs,
 } from "./common";
 
-/**
- * Valid event trigger types (matching schema options)
- */
-const VALID_TRIGGERS = [
-  "onLoad",
-  "onClick",
-  "onChange",
-  "onSubmit",
-];
+type Field = TableColumnDefinition;
+
+/** API call related keywords in actionType */
+const API_ACTION_KEYWORDS = ["api", "API", "通信", "呼出", "リクエスト", "fetch", "送信", "取得"];
 
 /**
- * Validate events table
+ * Events section – design quality rules.
  *
- * Expected columns (from screen-spec.ts):
- * - eventName (イベント名) - required
- * - triggerType (契機) - required
- * - actionType (処理種別) - required
- * - target (対象) - optional
- * - note (備考) - optional
+ * Rules:
+ * - eventName duplicate → error
+ * - actionType contains API keywords but target is empty → error
+ * - triggerType=onChange but target (対象) is empty → warning
+ * - target is free text only (no structured reference) → info
+ * - empty rows → warning
+ * - required cells missing → error
  */
 export function validateEvents(
-  context: TableValidationContext
+  rowsOrContext: TableRowValue[] | TableValidationContext,
+  columnsArg?: Field[],
+  ctxArg?: TableValidationContext
 ): DesignValidationIssue[] {
+  const { rows, columns, ctx } = normalizeTableValidationArgs(rowsOrContext, columnsArg, ctxArg);
   const issues: DesignValidationIssue[] = [];
 
-  // Check for duplicate event names
-  issues.push(...validateDuplicateKeys(context, "eventName", "イベント名"));
+  // Common rules
+  issues.push(...findEmptyRows(rows, columns, ctx));
+  issues.push(...findMissingRequiredCells(rows, columns, ctx));
+  issues.push(...findDuplicateKeys(rows, "eventName", "イベント名", ctx));
 
-  // Check for empty rows
-  issues.push(...validateEmptyRows(context, ["eventName", "triggerType"], "イベント"));
+  // Domain rules per row
+  rows.forEach((row, rowIndex) => {
+    if (isRowEmpty(row, columns)) return;
 
-  // Check required fields
-  issues.push(
-    ...validateRequiredTableFields(context, [
-      { key: "eventName", label: "イベント名" },
-      { key: "triggerType", label: "契機" },
-      { key: "actionType", label: "処理種別" },
-    ])
-  );
+    const actionType = getCellString(row, "actionType");
+    const triggerType = getCellString(row, "triggerType");
+    const target = getCellString(row, "target");
 
-  // Validate event-specific rules
-  context.rows.forEach((row, rowIndex) => {
-    // Skip empty rows
-    if (isCellEmpty(row["eventName"]) && isCellEmpty(row["triggerType"])) return;
-
-    // Validate trigger type
-    const triggerType = getDisplayValue(row["triggerType"]);
-    if (triggerType && !VALID_TRIGGERS.includes(triggerType)) {
-      issues.push(
-        createIssue(
-          `invalid-trigger-${rowIndex}`,
-          "warning",
-          `行${rowIndex + 1}の契機「${triggerType}」は標準的なイベントタイプではありません`,
-          {
-            documentId: context.documentId,
-            sectionKey: context.sectionKey,
-            fieldKey: context.fieldKey,
-            rowIndex,
-            cellKey: "triggerType",
-          }
-        )
-      );
+    // API action without target → error
+    const isApiAction = API_ACTION_KEYWORDS.some((kw) =>
+      actionType.toLowerCase().includes(kw.toLowerCase())
+    );
+    if (isApiAction && !target) {
+      issues.push({
+        id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:api-no-target`,
+        severity: "error",
+        documentId: ctx.documentId,
+        sectionId: ctx.sectionId,
+        sectionTitle: ctx.sectionTitle,
+        fieldId: ctx.fieldId,
+        fieldLabel: ctx.fieldLabel,
+        rowIndex,
+        columnKey: "target",
+        message: `行 ${rowIndex + 1}: API呼出の処理なのに対象が未指定です`,
+        reason: "API呼出系の処理では、呼び出すAPIやエンドポイントを対象に記載しないと実装時に情報が不足します。",
+        fix: "「対象」に呼び出すAPI名またはエンドポイントを記載してください。",
+      });
     }
 
-    // Check for API call references in action type
-    const actionType = getDisplayValue(row["actionType"]);
-    if (
-      actionType.includes("API") ||
-      actionType.includes("api") ||
-      actionType.includes("送信") ||
-      actionType.includes("取得")
-    ) {
-      if (isCellEmpty(row["target"])) {
-        issues.push(
-          createIssue(
-            `event-api-reference-${rowIndex}`,
-            "info",
-            `行${rowIndex + 1}の処理種別にAPI呼び出しがありますが、対象が設定されていません`,
-            {
-              documentId: context.documentId,
-              sectionKey: context.sectionKey,
-              fieldKey: context.fieldKey,
-              rowIndex,
-              cellKey: "target",
-            }
-          )
-        );
-      }
+    // onChange without target → warning
+    if (triggerType === "onChange" && !target) {
+      issues.push({
+        id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:onchange-no-target`,
+        severity: "warning",
+        documentId: ctx.documentId,
+        sectionId: ctx.sectionId,
+        sectionTitle: ctx.sectionTitle,
+        fieldId: ctx.fieldId,
+        fieldLabel: ctx.fieldLabel,
+        rowIndex,
+        columnKey: "target",
+        message: `行 ${rowIndex + 1}: onChange イベントなのに対象が未指定です`,
+        reason: "onChange は特定の入力項目に紐づくイベントです。対象が不明だと、どの項目の変更時に発火するか分かりません。",
+        fix: "「対象」にどの画面項目の変更がトリガーになるかを記載してください。",
+      });
     }
   });
 
   return issues;
 }
 
-/**
- * Check if the table is an events table
- */
 export function isEventsTable(fieldKey: string): boolean {
-  return (
-    fieldKey === "events" ||
-    fieldKey === "eventHandlers" ||
-    fieldKey === "actions" ||
-    fieldKey === "interactions"
-  );
+  return fieldKey === "events";
 }
