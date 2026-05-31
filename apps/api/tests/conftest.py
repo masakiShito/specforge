@@ -1,12 +1,7 @@
 """Pytest configuration and fixtures for API tests."""
 
-import os
 import pytest
 from typing import AsyncGenerator
-
-# Set up test environment variables BEFORE importing app modules
-os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-testing-only-32chars"
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -35,7 +30,12 @@ TestSessionLocal = async_sessionmaker(
 async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
     """Override database dependency for testing."""
     async with TestSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 @pytest.fixture(scope="function")
