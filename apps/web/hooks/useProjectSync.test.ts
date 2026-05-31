@@ -358,6 +358,127 @@ describe("useProjectSync", () => {
 
       // Assert - only one API call after debounce
       expect(mockApiUpdateDocument).toHaveBeenCalledTimes(1);
+      expect(mockApiUpdateDocument).toHaveBeenCalledWith("doc-1", {
+        content: { "field-1": "Value 3" },
+      });
+    });
+
+    it("should flush the latest document state after multiple debounced field updates", async () => {
+      // Arrange
+      const apiProject = createMockApiProject({
+        documents: [createMockApiDocument()],
+      });
+      mockGetProject.mockResolvedValue(apiProject);
+      mockApiProjectToFullState.mockReturnValue({
+        project: {
+          id: "proj-1",
+          title: "Test Project",
+          key: "test-proj",
+          required: true,
+          documents: [{
+            id: "doc-1",
+            key: "test-doc",
+            title: "Test Doc",
+            kind: "screen-spec",
+            version: "1.0.0",
+            required: true,
+            sections: [{
+              id: "sec-1",
+              key: "overview",
+              title: "Overview",
+              required: true,
+              fields: [
+                {
+                  id: "field-1",
+                  key: "purpose",
+                  label: "Purpose",
+                  required: true,
+                  valueType: "text",
+                },
+                {
+                  id: "field-2",
+                  key: "notes",
+                  label: "Notes",
+                  required: false,
+                  valueType: "text",
+                },
+              ],
+            }],
+          }],
+        },
+        documentStates: {
+          "doc-1": {
+            document: {
+              id: "doc-1",
+              key: "test-doc",
+              title: "Test Doc",
+              kind: "screen-spec",
+              version: "1.0.0",
+              required: true,
+              sections: [{
+                id: "sec-1",
+                key: "overview",
+                title: "Overview",
+                required: true,
+                fields: [
+                  {
+                    id: "field-1",
+                    key: "purpose",
+                    label: "Purpose",
+                    required: true,
+                    valueType: "text",
+                  },
+                  {
+                    id: "field-2",
+                    key: "notes",
+                    label: "Notes",
+                    required: false,
+                    valueType: "text",
+                  },
+                ],
+              }],
+            },
+            fieldValues: {
+              "field-1": "Initial 1",
+              "field-2": "Initial 2",
+            },
+          },
+        },
+      });
+      mockApiUpdateDocument.mockResolvedValue(createMockApiDocument());
+
+      const { result } = renderHook(() => useProjectSync({ projectId: "proj-1" }));
+
+      await vi.waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Act - update different fields before the debounce timer flushes.
+      act(() => {
+        result.current.handleFieldValueChangeWithSync("doc-1", "field-1", "Latest 1");
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      act(() => {
+        result.current.handleFieldValueChangeWithSync("doc-1", "field-2", "Latest 2");
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      // Assert - flushed content includes the latest full state, not the state
+      // captured when the debounced callback was created.
+      expect(mockApiUpdateDocument).toHaveBeenCalledTimes(1);
+      expect(mockApiUpdateDocument).toHaveBeenCalledWith("doc-1", {
+        content: {
+          "field-1": "Latest 1",
+          "field-2": "Latest 2",
+        },
+      });
     });
   });
 

@@ -58,6 +58,16 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
   // Refs for debouncing
   const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
   const pendingUpdates = useRef<Record<string, Record<string, FieldValue>>>({});
+  const projectRef = useRef<Project | null>(project);
+  const documentStatesRef = useRef<Record<string, DocumentEditorState>>(documentStates);
+
+  useEffect(() => {
+    projectRef.current = project;
+  }, [project]);
+
+  useEffect(() => {
+    documentStatesRef.current = documentStates;
+  }, [documentStates]);
 
   // Clear error
   const clearError = useCallback(() => setError(null), []);
@@ -112,7 +122,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
     if (!updates || Object.keys(updates).length === 0) return;
 
     // Get current document state content
-    const currentState = documentStates[documentId];
+    const currentState = documentStatesRef.current[documentId];
     if (!currentState) return;
 
     const content = { ...currentState.fieldValues };
@@ -132,7 +142,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
     } finally {
       setIsSaving(false);
     }
-  }, [documentStates]);
+  }, []);
 
   // Handle field value change with debounced sync
   const handleFieldValueChangeWithSync = useCallback(
@@ -170,14 +180,15 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
   // Handle add document with sync
   const handleAddDocumentWithSync = useCallback(
     async (kind: DocumentKind) => {
-      if (!project) return;
+      const currentProject = projectRef.current;
+      if (!currentProject) return;
 
-      const existingDocs = project.documents;
+      const existingDocs = currentProject.documents;
       const newDoc = createDocument(kind, existingDocs);
 
       try {
         setIsSaving(true);
-        const apiDoc = await apiCreateDocument(project.id, {
+        const apiDoc = await apiCreateDocument(currentProject.id, {
           title: newDoc.title,
           key: newDoc.key,
           kind: newDoc.kind,
@@ -217,16 +228,17 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         setIsSaving(false);
       }
     },
-    [project]
+    []
   );
 
   // Handle delete document with sync
   const handleDeleteDocumentWithSync = useCallback(
     async (documentId: string) => {
-      if (!project) return;
+      const currentProject = projectRef.current;
+      if (!currentProject) return;
 
       // Don't delete if it's the last document
-      if (project.documents.length <= 1) return;
+      if (currentProject.documents.length <= 1) return;
 
       try {
         setIsSaving(true);
@@ -265,20 +277,21 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         setIsSaving(false);
       }
     },
-    [project]
+    []
   );
 
   // Handle document title change with sync
   const handleDocumentTitleChangeWithSync = useCallback(
     async (documentId: string, title: string) => {
-      if (!project) return;
+      const currentProject = projectRef.current;
+      if (!currentProject) return;
 
       const trimmedTitle = title.trim();
       if (!trimmedTitle) return;
 
       // Ensure unique title
       const existingTitles = new Set(
-        project.documents.filter((doc) => doc.id !== documentId).map((doc) => doc.title)
+        currentProject.documents.filter((doc) => doc.id !== documentId).map((doc) => doc.title)
       );
 
       let uniqueTitle = trimmedTitle;
@@ -328,13 +341,14 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         setIsSaving(false);
       }
     },
-    [project]
+    []
   );
 
   // Handle project title change with sync
   const handleProjectTitleChangeWithSync = useCallback(
     async (title: string) => {
-      if (!project) return;
+      const currentProject = projectRef.current;
+      if (!currentProject) return;
 
       const trimmedTitle = title.trim();
       if (!trimmedTitle) return;
@@ -345,7 +359,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
       // Sync to API
       try {
         setIsSaving(true);
-        await apiUpdateProject(project.id, { title: trimmedTitle });
+        await apiUpdateProject(currentProject.id, { title: trimmedTitle });
       } catch (err) {
         if (err instanceof ApiError) {
           setError(err.message);
@@ -356,7 +370,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         setIsSaving(false);
       }
     },
-    [project]
+    []
   );
 
   return {
