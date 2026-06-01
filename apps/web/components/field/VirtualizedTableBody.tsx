@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { type CSSProperties, memo, useCallback, useRef, useState } from "react";
-import type { Field, Project } from "@specforge/document-schema";
+import { type CSSProperties, memo, useRef, useState } from 'react';
+import type { Field } from '@specforge/document-schema';
 
-import type { DocumentEditorState, TableRowValue } from "../../lib/document-editor/create-document-state";
+import type { TableRowValue } from '../../lib/document-editor/create-document-state';
 import {
   useVirtualization,
   VIRTUALIZATION_THRESHOLD,
   DEFAULT_ROW_HEIGHT,
   DEFAULT_TABLE_HEIGHT,
-} from "../../hooks/useVirtualization";
+} from '../../hooks/useVirtualization';
 
 interface VirtualizedTableBodyProps {
   columns: Field[];
@@ -30,9 +30,9 @@ interface VirtualizedTableBodyProps {
 }
 
 const tdStyle: CSSProperties = {
-  padding: "4px 6px",
-  borderBottom: "1px solid #F1F5F9",
-  verticalAlign: "top",
+  padding: '4px 6px',
+  borderBottom: '1px solid #F1F5F9',
+  verticalAlign: 'top',
 };
 
 const MemoizedRow = memo(function TableRow({
@@ -65,7 +65,7 @@ const MemoizedRow = memo(function TableRow({
   isEmpty: boolean;
 }) {
   return (
-    <tr style={{ backgroundColor: isEmpty ? "#FFFBEB" : undefined, height: DEFAULT_ROW_HEIGHT }}>
+    <tr style={{ backgroundColor: isEmpty ? '#FFFBEB' : undefined, height: DEFAULT_ROW_HEIGHT }}>
       {columns.map((col) => {
         const cellKey = `${fieldId}:row${rowIndex}:${col.key}`;
         const hasError = cellErrors?.has(cellKey) ?? false;
@@ -79,17 +79,17 @@ const MemoizedRow = memo(function TableRow({
           </td>
         );
       })}
-      <td style={{ ...tdStyle, textAlign: "center" }}>
+      <td style={{ ...tdStyle, textAlign: 'center' }}>
         <button
           type="button"
           style={{
-            background: "none",
-            border: "1px solid #E2E8F0",
-            borderRadius: "4px",
-            padding: "4px 8px",
-            fontSize: "0.7rem",
-            color: "#94A3B8",
-            cursor: "pointer",
+            background: 'none',
+            border: '1px solid #E2E8F0',
+            borderRadius: '4px',
+            padding: '4px 8px',
+            fontSize: '0.7rem',
+            color: '#94A3B8',
+            cursor: 'pointer',
           }}
           onClick={() => onDeleteRow(rowIndex)}
         >
@@ -115,13 +115,18 @@ export function VirtualizedTableBody({
   renderCell,
   isRowEmpty,
 }: VirtualizedTableBodyProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState(DEFAULT_TABLE_HEIGHT);
+  const _containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, _setContainerHeight] = useState(DEFAULT_TABLE_HEIGHT);
 
   // Use virtualization only for large tables
   const shouldVirtualize = rows.length > VIRTUALIZATION_THRESHOLD;
 
-  const { visibleItems, totalHeight, offsetTop, onScroll } = useVirtualization({
+  const {
+    visibleItems,
+    totalHeight,
+    offsetTop,
+    onScroll: _onScroll,
+  } = useVirtualization({
     itemCount: rows.length,
     itemHeight: DEFAULT_ROW_HEIGHT,
     overscan: 5,
@@ -210,14 +215,14 @@ export function VirtualizedTableWrapper({
   const shouldVirtualize = rowCount > VIRTUALIZATION_THRESHOLD;
 
   if (!shouldVirtualize) {
-    return <div style={{ overflowX: "auto" }}>{children}</div>;
+    return <div style={{ overflowX: 'auto' }}>{children}</div>;
   }
 
   return (
     <div
       style={{
-        overflowY: "auto",
-        overflowX: "auto",
+        overflowY: 'auto',
+        overflowX: 'auto',
         maxHeight: DEFAULT_TABLE_HEIGHT,
       }}
       onScroll={onScroll}

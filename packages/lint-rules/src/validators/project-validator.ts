@@ -1,17 +1,6 @@
-import type {
-  DesignValidationIssue,
-  ValidationResult,
-  TableRowValue,
-} from "../types";
-import {
-  validateDocument,
-  validateDocuments,
-  type ValidatableDocument,
-} from "./document-validator";
-import {
-  validateProjectReferences,
-  type DocumentMap,
-} from "../rules/reference-integrity";
+import type { DesignValidationIssue, ValidationResult, TableRowValue } from '../types';
+import { validateDocuments, type ValidatableDocument } from './document-validator';
+import { validateProjectReferences, type DocumentMap } from '../rules/reference-integrity';
 
 /**
  * Project structure for validation
@@ -25,9 +14,7 @@ export interface ValidatableProject {
 /**
  * Validate an entire project including cross-document references
  */
-export function validateProject(
-  project: ValidatableProject
-): ValidationResult {
+export function validateProject(project: ValidatableProject): ValidationResult {
   const issues: DesignValidationIssue[] = [];
 
   // Validate each document individually
@@ -56,16 +43,16 @@ function buildDocumentMap(documents: ValidatableDocument[]): DocumentMap {
   const map: DocumentMap = {};
 
   documents.forEach((doc) => {
-    const sections: DocumentMap[string]["sections"] = {};
+    const sections: DocumentMap[string]['sections'] = {};
 
     doc.sections.forEach((section) => {
-      const fields: DocumentMap[string]["sections"][string]["fields"] = {};
+      const fields: DocumentMap[string]['sections'][string]['fields'] = {};
 
       section.fields.forEach((field) => {
         fields[field.key] = {
           type: field.type,
           rows:
-            field.type === "table" && Array.isArray(field.value)
+            field.type === 'table' && Array.isArray(field.value)
               ? (field.value as Record<string, TableRowValue>[])
               : undefined,
         };
@@ -117,15 +104,15 @@ function findOrphanedDocuments(
       if (doc !== documents[0]) {
         issues.push({
           id: `orphaned-document-${doc.id}`,
-          severity: "info",
+          severity: 'info',
           message: `ドキュメント「${doc.title}」は他のドキュメントから参照されていません`,
           documentId: doc.id,
-          sectionId: "",
-          sectionTitle: "",
-          fieldId: "",
-          fieldLabel: "",
-          reason: "他のドキュメントから参照されていないため、必要性を確認してください。",
-          fix: "不要な場合は削除し、必要な場合は関連ドキュメントから参照してください。",
+          sectionId: '',
+          sectionTitle: '',
+          fieldId: '',
+          fieldLabel: '',
+          reason: '他のドキュメントから参照されていないため、必要性を確認してください。',
+          fix: '不要な場合は削除し、必要な場合は関連ドキュメントから参照してください。',
         });
       }
     }
@@ -137,15 +124,12 @@ function findOrphanedDocuments(
 /**
  * Collect referenced document IDs from a cell value
  */
-function collectReferencedIds(
-  value: TableRowValue,
-  referencedIds: Set<string>
-): void {
+function collectReferencedIds(value: TableRowValue, referencedIds: Set<string>): void {
   if (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
-    "type" in value &&
-    value.type === "reference"
+    'type' in value &&
+    value.type === 'reference'
   ) {
     const ref = value as { targetDocumentId: string };
     referencedIds.add(ref.targetDocumentId);
@@ -159,12 +143,10 @@ function collectReferencedIds(
 /**
  * Create a validation result from issues
  */
-function createValidationResult(
-  issues: DesignValidationIssue[]
-): ValidationResult {
-  const errorCount = issues.filter((i) => i.severity === "error").length;
-  const warningCount = issues.filter((i) => i.severity === "warning").length;
-  const infoCount = issues.filter((i) => i.severity === "info").length;
+function createValidationResult(issues: DesignValidationIssue[]): ValidationResult {
+  const errorCount = issues.filter((i) => i.severity === 'error').length;
+  const warningCount = issues.filter((i) => i.severity === 'warning').length;
+  const infoCount = issues.filter((i) => i.severity === 'info').length;
 
   return {
     issues,
@@ -200,8 +182,8 @@ export function calculateProjectQualityScore(
 export function getQualityStatus(
   score: number,
   thresholds: { good: number; caution: number } = { good: 90, caution: 70 }
-): "good" | "caution" | "poor" {
-  if (score >= thresholds.good) return "good";
-  if (score >= thresholds.caution) return "caution";
-  return "poor";
+): 'good' | 'caution' | 'poor' {
+  if (score >= thresholds.good) return 'good';
+  if (score >= thresholds.caution) return 'caution';
+  return 'poor';
 }

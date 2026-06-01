@@ -5,8 +5,8 @@ import type {
   TableRowValue,
   TableValidationContext,
   ValidationSeverity,
-} from "../types";
-import { isReferenceValue } from "../types";
+} from '../types';
+import { isReferenceValue } from '../types';
 
 type ColumnLike = TableColumnDefinition;
 type ResolvedTableValidationContext = TableValidationContext & {
@@ -19,7 +19,7 @@ type ResolvedTableValidationContext = TableValidationContext & {
 };
 
 export function isCellEmpty(value: TableRowCellValue): boolean {
-  return value === undefined || value === null || value === "";
+  return value === undefined || value === null || value === '';
 }
 
 export function isRowEmpty(row: TableRowValue, columns: ColumnLike[]): boolean {
@@ -27,15 +27,15 @@ export function isRowEmpty(row: TableRowValue, columns: ColumnLike[]): boolean {
 }
 
 function cellStr(value: TableRowCellValue): string {
-  if (value === undefined || value === null) return "";
+  if (value === undefined || value === null) return '';
   if (isReferenceValue(value)) {
-    return value.refId ?? value.displayValue ?? "";
+    return value.refId ?? value.displayValue ?? '';
   }
   return String(value);
 }
 
 export function getDisplayValue(value: TableRowCellValue): string {
-  if (Array.isArray(value)) return value.map(getDisplayValue).join(", ");
+  if (Array.isArray(value)) return value.map(getDisplayValue).join(', ');
   return cellStr(value);
 }
 
@@ -50,11 +50,11 @@ export function checkRequiredFields(
 }
 
 function getSectionId(ctx: TableValidationContext): string {
-  return ctx.sectionId ?? ctx.sectionKey ?? "";
+  return ctx.sectionId ?? ctx.sectionKey ?? '';
 }
 
 function getFieldId(ctx: TableValidationContext): string {
-  return ctx.fieldId ?? ctx.fieldKey ?? "";
+  return ctx.fieldId ?? ctx.fieldKey ?? '';
 }
 
 function baseIssue(ctx: TableValidationContext) {
@@ -71,9 +71,22 @@ function baseIssue(ctx: TableValidationContext) {
   };
 }
 
-export function findDuplicateKeys(rows: TableRowValue[], columnKey: string): { value: string; indices: number[] }[];
-export function findDuplicateKeys(rows: TableRowValue[], columnKey: string, columnLabel: string, ctx: TableValidationContext): DesignValidationIssue[];
-export function findDuplicateKeys(rows: TableRowValue[], columnKey: string, columnLabel?: string, ctx?: TableValidationContext): DesignValidationIssue[] | { value: string; indices: number[] }[] {
+export function findDuplicateKeys(
+  rows: TableRowValue[],
+  columnKey: string
+): { value: string; indices: number[] }[];
+export function findDuplicateKeys(
+  rows: TableRowValue[],
+  columnKey: string,
+  columnLabel: string,
+  ctx: TableValidationContext
+): DesignValidationIssue[];
+export function findDuplicateKeys(
+  rows: TableRowValue[],
+  columnKey: string,
+  columnLabel?: string,
+  ctx?: TableValidationContext
+): DesignValidationIssue[] | { value: string; indices: number[] }[] {
   if (!ctx) {
     const valueMap = new Map<string, number[]>();
     rows.forEach((row, index) => {
@@ -94,7 +107,17 @@ export function findDuplicateKeys(rows: TableRowValue[], columnKey: string, colu
     const raw = cellStr(row[columnKey]).trim();
     if (!raw) return;
     if (seen.has(raw)) {
-      issues.push({ id: `${sectionId}:${fieldId}:row${rowIndex}:${columnKey}:duplicate`, severity: "error", ...baseIssue(ctx), rowIndex, columnKey, cellKey: columnKey, message: `${columnLabel ?? columnKey}が重複しています`, reason: `同じセクション内で ${columnLabel ?? columnKey} は一意である必要があります。行 ${seen.get(raw)! + 1} と重複しています。`, fix: `行 ${rowIndex + 1} の ${columnLabel ?? columnKey}「${raw}」を一意な値に修正してください。` });
+      issues.push({
+        id: `${sectionId}:${fieldId}:row${rowIndex}:${columnKey}:duplicate`,
+        severity: 'error',
+        ...baseIssue(ctx),
+        rowIndex,
+        columnKey,
+        cellKey: columnKey,
+        message: `${columnLabel ?? columnKey}が重複しています`,
+        reason: `同じセクション内で ${columnLabel ?? columnKey} は一意である必要があります。行 ${seen.get(raw)! + 1} と重複しています。`,
+        fix: `行 ${rowIndex + 1} の ${columnLabel ?? columnKey}「${raw}」を一意な値に修正してください。`,
+      });
     } else {
       seen.set(raw, rowIndex);
     }
@@ -103,8 +126,16 @@ export function findDuplicateKeys(rows: TableRowValue[], columnKey: string, colu
 }
 
 export function findEmptyRows(rows: TableRowValue[], requiredColumns: string[]): number[];
-export function findEmptyRows(rows: TableRowValue[], columns: ColumnLike[], ctx: TableValidationContext): DesignValidationIssue[];
-export function findEmptyRows(rows: TableRowValue[], columns: ColumnLike[] | string[], ctx?: TableValidationContext): DesignValidationIssue[] | number[] {
+export function findEmptyRows(
+  rows: TableRowValue[],
+  columns: ColumnLike[],
+  ctx: TableValidationContext
+): DesignValidationIssue[];
+export function findEmptyRows(
+  rows: TableRowValue[],
+  columns: ColumnLike[] | string[],
+  ctx?: TableValidationContext
+): DesignValidationIssue[] | number[] {
   if (!ctx) {
     return rows.flatMap((row, index) => {
       const isEmpty = (columns as string[]).every((column) => isCellEmpty(row[column]));
@@ -117,13 +148,26 @@ export function findEmptyRows(rows: TableRowValue[], columns: ColumnLike[] | str
   const fieldId = getFieldId(ctx);
   rows.forEach((row, rowIndex) => {
     if (isRowEmpty(row, columns as ColumnLike[])) {
-      issues.push({ id: `${sectionId}:${fieldId}:row${rowIndex}:all-empty`, severity: "warning", ...baseIssue(ctx), rowIndex, message: `行 ${rowIndex + 1} がすべて空です`, reason: "全セル空の行は設計書として意味がありません。入力途中か、削除忘れの可能性があります。", fix: "内容を入力するか、不要であれば行を削除してください。" });
+      issues.push({
+        id: `${sectionId}:${fieldId}:row${rowIndex}:all-empty`,
+        severity: 'warning',
+        ...baseIssue(ctx),
+        rowIndex,
+        message: `行 ${rowIndex + 1} がすべて空です`,
+        reason:
+          '全セル空の行は設計書として意味がありません。入力途中か、削除忘れの可能性があります。',
+        fix: '内容を入力するか、不要であれば行を削除してください。',
+      });
     }
   });
   return issues;
 }
 
-export function findMissingRequiredCells(rows: TableRowValue[], columns: ColumnLike[], ctx: TableValidationContext): DesignValidationIssue[] {
+export function findMissingRequiredCells(
+  rows: TableRowValue[],
+  columns: ColumnLike[],
+  ctx: TableValidationContext
+): DesignValidationIssue[] {
   const issues: DesignValidationIssue[] = [];
   const sectionId = getSectionId(ctx);
   const fieldId = getFieldId(ctx);
@@ -132,7 +176,17 @@ export function findMissingRequiredCells(rows: TableRowValue[], columns: ColumnL
     columns.forEach((col) => {
       if (!col.required) return;
       if (isCellEmpty(row[col.key])) {
-        issues.push({ id: `${sectionId}:${fieldId}:row${rowIndex}:${col.key}:required`, severity: "error", ...baseIssue(ctx), rowIndex, columnKey: col.key, cellKey: col.key, message: `行 ${rowIndex + 1} の「${col.label}」が未入力です`, reason: `「${col.label}」は必須項目です。未入力のまま残すと設計書として不完全になります。`, fix: `行 ${rowIndex + 1} の「${col.label}」に値を入力してください。` });
+        issues.push({
+          id: `${sectionId}:${fieldId}:row${rowIndex}:${col.key}:required`,
+          severity: 'error',
+          ...baseIssue(ctx),
+          rowIndex,
+          columnKey: col.key,
+          cellKey: col.key,
+          message: `行 ${rowIndex + 1} の「${col.label}」が未入力です`,
+          reason: `「${col.label}」は必須項目です。未入力のまま残すと設計書として不完全になります。`,
+          fix: `行 ${rowIndex + 1} の「${col.label}」に値を入力してください。`,
+        });
       }
     });
   });
@@ -145,19 +199,19 @@ export function getCellString(row: TableRowValue, key: string): string {
 
 export function getCellReferenceId(row: TableRowValue, key: string): string {
   const value = row[key];
-  if (!isReferenceValue(value)) return "";
-  return value.refId ?? value.targetKey ?? "";
+  if (!isReferenceValue(value)) return '';
+  return value.refId ?? value.targetKey ?? '';
 }
 
 export function getCellReferenceDocumentId(row: TableRowValue, key: string): string {
   const value = row[key];
-  if (!isReferenceValue(value)) return "";
-  return value.documentId ?? value.targetDocumentId ?? "";
+  if (!isReferenceValue(value)) return '';
+  return value.documentId ?? value.targetDocumentId ?? '';
 }
 
 export function getCellBoolean(row: TableRowValue, key: string): boolean | undefined {
   const v = row[key];
-  return typeof v === "boolean" ? v : undefined;
+  return typeof v === 'boolean' ? v : undefined;
 }
 
 /**
@@ -202,12 +256,12 @@ export function createIssue(
     cellKey?: string;
   } = {}
 ): DesignValidationIssue {
-  if (typeof paramsOrId === "string") {
-    const sectionId = options.sectionKey ?? "";
-    const fieldId = options.fieldKey ?? "";
+  if (typeof paramsOrId === 'string') {
+    const sectionId = options.sectionKey ?? '';
+    const fieldId = options.fieldKey ?? '';
     return {
       id: paramsOrId,
-      documentId: options.documentId ?? "",
+      documentId: options.documentId ?? '',
       sectionId,
       sectionTitle: sectionId,
       fieldId,
@@ -215,10 +269,10 @@ export function createIssue(
       rowIndex: options.rowIndex,
       columnKey: options.cellKey,
       cellKey: options.cellKey,
-      severity: severity ?? "warning",
-      message: message ?? "",
-      reason: message ?? "",
-      fix: "該当箇所を確認してください",
+      severity: severity ?? 'warning',
+      message: message ?? '',
+      reason: message ?? '',
+      fix: '該当箇所を確認してください',
       sectionKey: sectionId,
       fieldKey: fieldId,
     };
@@ -240,7 +294,7 @@ export function createIssue(
     severity: params.severity,
     message: params.message,
     reason: params.reason ?? params.message,
-    fix: params.fix ?? "該当箇所を確認してください",
+    fix: params.fix ?? '該当箇所を確認してください',
     sectionKey: sectionId,
     fieldKey: fieldId,
   };
@@ -328,10 +382,10 @@ export function normalizeTableValidationArgs(
 }
 
 function resolveContext(ctx?: TableValidationContext): ResolvedTableValidationContext {
-  const sectionId = ctx?.sectionId ?? ctx?.sectionKey ?? "";
-  const fieldId = ctx?.fieldId ?? ctx?.fieldKey ?? "";
+  const sectionId = ctx?.sectionId ?? ctx?.sectionKey ?? '';
+  const fieldId = ctx?.fieldId ?? ctx?.fieldKey ?? '';
   return {
-    documentId: ctx?.documentId ?? "",
+    documentId: ctx?.documentId ?? '',
     sectionId,
     sectionTitle: ctx?.sectionTitle ?? sectionId,
     fieldId,

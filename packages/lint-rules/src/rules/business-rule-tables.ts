@@ -1,10 +1,15 @@
-import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import type {
+  DesignValidationIssue,
+  TableColumnDefinition,
+  TableRowValue,
+  TableValidationContext,
+} from '../types';
 import {
   validateUniqueness,
   validateRequiredColumns,
   createIssue,
   normalizeTableValidationArgs,
-} from "./common";
+} from './common';
 
 type Field = TableColumnDefinition;
 
@@ -25,7 +30,7 @@ export function validateConditions(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique condition IDs
-  issues.push(...validateUniqueness(rows, "conditionId", "条件ID", ctx));
+  issues.push(...validateUniqueness(rows, 'conditionId', '条件ID', ctx));
 
   return issues;
 }
@@ -48,7 +53,7 @@ export function validateRules(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique rule IDs
-  issues.push(...validateUniqueness(rows, "ruleId", "ルールID", ctx));
+  issues.push(...validateUniqueness(rows, 'ruleId', 'ルールID', ctx));
 
   // Check for rules with condition but no action (or vice versa)
   rows.forEach((row, rowIndex) => {
@@ -60,9 +65,9 @@ export function validateRules(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "action",
-          severity: "warning",
-          message: "条件は定義されていますが、アクションが未入力です",
+          columnKey: 'action',
+          severity: 'warning',
+          message: '条件は定義されていますが、アクションが未入力です',
         })
       );
     }
@@ -72,9 +77,9 @@ export function validateRules(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "condition",
-          severity: "warning",
-          message: "アクションは定義されていますが、適用条件が未入力です",
+          columnKey: 'condition',
+          severity: 'warning',
+          message: 'アクションは定義されていますが、適用条件が未入力です',
         })
       );
     }
@@ -101,7 +106,7 @@ export function validateExceptions(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique exception IDs
-  issues.push(...validateUniqueness(rows, "exceptionId", "例外ID", ctx));
+  issues.push(...validateUniqueness(rows, 'exceptionId', '例外ID', ctx));
 
   // Check that related rule ID is filled
   rows.forEach((row, rowIndex) => {
@@ -111,9 +116,9 @@ export function validateExceptions(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "relatedRuleId",
-          severity: "warning",
-          message: "関連ルールIDが指定されていません",
+          columnKey: 'relatedRuleId',
+          severity: 'warning',
+          message: '関連ルールIDが指定されていません',
         })
       );
     }
@@ -140,7 +145,7 @@ export function validateValidations(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique validation IDs
-  issues.push(...validateUniqueness(rows, "validationId", "バリデーションID", ctx));
+  issues.push(...validateUniqueness(rows, 'validationId', 'バリデーションID', ctx));
 
   // Check that error message is provided
   rows.forEach((row, rowIndex) => {
@@ -150,9 +155,9 @@ export function validateValidations(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "errorMessage",
-          severity: "info",
-          message: "エラーメッセージを定義することを推奨します",
+          columnKey: 'errorMessage',
+          severity: 'info',
+          message: 'エラーメッセージを定義することを推奨します',
         })
       );
     }

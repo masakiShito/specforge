@@ -1,6 +1,6 @@
-import type { Project } from "@specforge/document-schema";
+import type { Project } from '@specforge/document-schema';
 
-import type { DocumentEditorState } from "../document-editor/create-document-state";
+import type { DocumentEditorState } from '../document-editor/create-document-state';
 
 interface CacheEntry<T> {
   hash: string;
@@ -16,7 +16,7 @@ function hashString(str: string): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return hash.toString(36);
@@ -54,7 +54,7 @@ function hashProjectStates(states: Record<string, DocumentEditorState>): string 
   const hashes = Object.entries(states)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([id, state]) => `${id}:${hashDocumentState(state)}`);
-  return hashString(hashes.join("|"));
+  return hashString(hashes.join('|'));
 }
 
 /**
@@ -128,7 +128,7 @@ export function getCachedDocumentValidation<T>(
   compute: () => T,
   extraKey?: string
 ): T {
-  const hash = `${hashDocumentState(state)}:${extraKey ?? ""}`;
+  const hash = `${hashDocumentState(state)}:${extraKey ?? ''}`;
   const cached = documentValidationCache.get(hash) as T | undefined;
 
   if (cached) {

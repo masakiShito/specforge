@@ -1,4 +1,9 @@
-import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import type {
+  DesignValidationIssue,
+  TableColumnDefinition,
+  TableRowValue,
+  TableValidationContext,
+} from '../types';
 import {
   findDuplicateKeys,
   findEmptyRows,
@@ -7,7 +12,7 @@ import {
   getCellBoolean,
   isRowEmpty,
   normalizeTableValidationArgs,
-} from "./common";
+} from './common';
 
 type Field = TableColumnDefinition;
 
@@ -34,70 +39,71 @@ export function validateScreenFields(
   // Common rules
   issues.push(...findEmptyRows(rows, columns, ctx));
   issues.push(...findMissingRequiredCells(rows, columns, ctx));
-  issues.push(...findDuplicateKeys(rows, "fieldKey", "項目キー", ctx));
+  issues.push(...findDuplicateKeys(rows, 'fieldKey', '項目キー', ctx));
 
   // Domain rules per row
   rows.forEach((row, rowIndex) => {
     if (isRowEmpty(row, columns)) return;
 
-    const name = getCellString(row, "name");
-    const fieldKey = getCellString(row, "fieldKey");
-    const inputType = getCellString(row, "inputType");
-    const required = getCellBoolean(row, "required");
-    const editable = getCellBoolean(row, "editable");
-    const visibleCondition = getCellString(row, "visibleCondition");
+    const name = getCellString(row, 'name');
+    const fieldKey = getCellString(row, 'fieldKey');
+    const inputType = getCellString(row, 'inputType');
+    const required = getCellBoolean(row, 'required');
+    const editable = getCellBoolean(row, 'editable');
+    const visibleCondition = getCellString(row, 'visibleCondition');
 
     // name empty but fieldKey exists
     if (!name && fieldKey) {
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:name:missing-with-key`,
-        severity: "error",
+        severity: 'error',
         documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
         fieldLabel: ctx.fieldLabel,
         rowIndex,
-        columnKey: "name",
+        columnKey: 'name',
         message: `行 ${rowIndex + 1}: 項目名が空で項目キーのみ入力されています`,
-        reason: "項目名がないと、設計書を読む人がその項目の用途を理解できません。",
+        reason: '項目名がないと、設計書を読む人がその項目の用途を理解できません。',
         fix: `行 ${rowIndex + 1} の「項目名」にユーザーに見える表示名を入力してください。`,
       });
     }
 
     // inputType=label + editable=true → warning
-    if (inputType === "label" && editable === true) {
+    if (inputType === 'label' && editable === true) {
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:label-editable`,
-        severity: "warning",
+        severity: 'warning',
         documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
         fieldLabel: ctx.fieldLabel,
         rowIndex,
-        columnKey: "editable",
+        columnKey: 'editable',
         message: `行 ${rowIndex + 1}: ラベル項目に「編集可」が設定されています`,
-        reason: "inputType が label の場合、ユーザーが編集することはできません。editable=true は矛盾した設計です。",
-        fix: "「編集可」を「いいえ」に変更するか、inputType を text 等の入力可能な型に変更してください。",
+        reason:
+          'inputType が label の場合、ユーザーが編集することはできません。editable=true は矛盾した設計です。',
+        fix: '「編集可」を「いいえ」に変更するか、inputType を text 等の入力可能な型に変更してください。',
       });
     }
 
     // inputType=button + required=true → warning
-    if (inputType === "button" && required === true) {
+    if (inputType === 'button' && required === true) {
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:button-required`,
-        severity: "warning",
+        severity: 'warning',
         documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
         fieldLabel: ctx.fieldLabel,
         rowIndex,
-        columnKey: "required",
+        columnKey: 'required',
         message: `行 ${rowIndex + 1}: ボタン項目に「必須」が設定されています`,
-        reason: "ボタンはユーザーが「入力」する項目ではないため、必須の概念は通常適用されません。",
-        fix: "「必須」を「いいえ」に変更するか、意図を備考欄に記載してください。",
+        reason: 'ボタンはユーザーが「入力」する項目ではないため、必須の概念は通常適用されません。',
+        fix: '「必須」を「いいえ」に変更するか、意図を備考欄に記載してください。',
       });
     }
 
@@ -105,17 +111,18 @@ export function validateScreenFields(
     if (visibleCondition.length > 120) {
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:visible-condition-long`,
-        severity: "info",
+        severity: 'info',
         documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
         fieldLabel: ctx.fieldLabel,
         rowIndex,
-        columnKey: "visibleCondition",
+        columnKey: 'visibleCondition',
         message: `行 ${rowIndex + 1}: 表示条件が長すぎる可能性があります`,
-        reason: "表示条件が複雑すぎると実装時の認識齟齬が生じやすくなります。条件をシンプルに保つか、分割を検討してください。",
-        fix: "条件が複雑な場合は、備考欄で補足するか、条件を分割して記述してください。",
+        reason:
+          '表示条件が複雑すぎると実装時の認識齟齬が生じやすくなります。条件をシンプルに保つか、分割を検討してください。',
+        fix: '条件が複雑な場合は、備考欄で補足するか、条件を分割して記述してください。',
       });
     }
   });
@@ -124,5 +131,7 @@ export function validateScreenFields(
 }
 
 export function isScreenFieldsTable(fieldKey: string): boolean {
-  return ["fields", "screenFields", "inputFields", "formFields", "screen-fields"].includes(fieldKey);
+  return ['fields', 'screenFields', 'inputFields', 'formFields', 'screen-fields'].includes(
+    fieldKey
+  );
 }

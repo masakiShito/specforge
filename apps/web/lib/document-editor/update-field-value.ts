@@ -1,4 +1,4 @@
-import type { DocumentEditorState, FieldValue } from "./create-document-state";
+import type { DocumentEditorState, FieldValue } from './create-document-state';
 
 export function updateFieldValue(
   state: DocumentEditorState,
@@ -9,7 +9,7 @@ export function updateFieldValue(
     ...state,
     fieldValues: {
       ...state.fieldValues,
-      [fieldId]: value
-    }
+      [fieldId]: value,
+    },
   };
 }

@@ -3,7 +3,7 @@ import type {
   ValidationResult,
   TableValidationContext,
   TableRowValue,
-} from "../types";
+} from '../types';
 import {
   validateScreenFields,
   isScreenFieldsTable,
@@ -21,7 +21,7 @@ import {
   isRequestParamsTable,
   isResponseSchemaTable,
   isErrorResponsesTable,
-} from "../rules";
+} from '../rules';
 
 /**
  * Document structure for validation
@@ -57,14 +57,12 @@ export interface ValidatableField {
 /**
  * Validate a single document
  */
-export function validateDocument(
-  document: ValidatableDocument
-): ValidationResult {
+export function validateDocument(document: ValidatableDocument): ValidationResult {
   const issues: DesignValidationIssue[] = [];
 
   document.sections.forEach((section) => {
     section.fields.forEach((field) => {
-      if (field.type === "table" && Array.isArray(field.value)) {
+      if (field.type === 'table' && Array.isArray(field.value)) {
         const tableContext: TableValidationContext = {
           documentId: document.id,
           sectionId: section.key,
@@ -95,10 +93,10 @@ function validateTableField(
   documentKind: string
 ): DesignValidationIssue[] {
   const issues: DesignValidationIssue[] = [];
-  const fieldKey = context.fieldId ?? context.fieldKey ?? "";
+  const fieldKey = context.fieldId ?? context.fieldKey ?? '';
 
   // Screen spec validations
-  if (documentKind === "screen-spec") {
+  if (documentKind === 'screen-spec') {
     if (isScreenFieldsTable(fieldKey)) {
       issues.push(...validateScreenFields(context));
     }
@@ -114,7 +112,7 @@ function validateTableField(
   }
 
   // API spec validations
-  if (documentKind === "api-spec") {
+  if (documentKind === 'api-spec') {
     if (isApiSpecEndpointsTable(fieldKey)) {
       issues.push(...validateApiSpecEndpoints(context));
     }
@@ -140,12 +138,10 @@ function validateTableField(
 /**
  * Create a validation result from issues
  */
-function createValidationResult(
-  issues: DesignValidationIssue[]
-): ValidationResult {
-  const errorCount = issues.filter((i) => i.severity === "error").length;
-  const warningCount = issues.filter((i) => i.severity === "warning").length;
-  const infoCount = issues.filter((i) => i.severity === "info").length;
+function createValidationResult(issues: DesignValidationIssue[]): ValidationResult {
+  const errorCount = issues.filter((i) => i.severity === 'error').length;
+  const warningCount = issues.filter((i) => i.severity === 'warning').length;
+  const infoCount = issues.filter((i) => i.severity === 'info').length;
 
   return {
     issues,
@@ -159,9 +155,7 @@ function createValidationResult(
 /**
  * Validate multiple documents
  */
-export function validateDocuments(
-  documents: ValidatableDocument[]
-): ValidationResult {
+export function validateDocuments(documents: ValidatableDocument[]): ValidationResult {
   const allIssues: DesignValidationIssue[] = [];
 
   documents.forEach((doc) => {

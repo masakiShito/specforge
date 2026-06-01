@@ -1,10 +1,15 @@
-import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import type {
+  DesignValidationIssue,
+  TableColumnDefinition,
+  TableRowValue,
+  TableValidationContext,
+} from '../types';
 import {
   findDuplicateKeys,
   findEmptyRows,
   findMissingRequiredCells,
   normalizeTableValidationArgs,
-} from "./common";
+} from './common';
 
 type Field = TableColumnDefinition;
 
@@ -21,7 +26,7 @@ export function validateRequestParameters(
 
   issues.push(...findEmptyRows(rows, columns, ctx));
   issues.push(...findMissingRequiredCells(rows, columns, ctx));
-  issues.push(...findDuplicateKeys(rows, "parameterKey", "パラメータキー", ctx));
+  issues.push(...findDuplicateKeys(rows, 'parameterKey', 'パラメータキー', ctx));
 
   return issues;
 }
@@ -39,7 +44,7 @@ export function validateResponseParameters(
 
   issues.push(...findEmptyRows(rows, columns, ctx));
   issues.push(...findMissingRequiredCells(rows, columns, ctx));
-  issues.push(...findDuplicateKeys(rows, "parameterKey", "パラメータキー", ctx));
+  issues.push(...findDuplicateKeys(rows, 'parameterKey', 'パラメータキー', ctx));
 
   return issues;
 }
@@ -57,7 +62,7 @@ export function validateErrorResponses(
 
   issues.push(...findEmptyRows(rows, columns, ctx));
   issues.push(...findMissingRequiredCells(rows, columns, ctx));
-  issues.push(...findDuplicateKeys(rows, "errorCode", "エラーコード", ctx));
+  issues.push(...findDuplicateKeys(rows, 'errorCode', 'エラーコード', ctx));
 
   return issues;
 }
@@ -66,13 +71,13 @@ export const validateRequestParams = validateRequestParameters;
 export const validateResponseSchema = validateResponseParameters;
 
 export function isRequestParamsTable(fieldKey: string): boolean {
-  return fieldKey === "request-parameters" || fieldKey === "requestParams";
+  return fieldKey === 'request-parameters' || fieldKey === 'requestParams';
 }
 
 export function isResponseSchemaTable(fieldKey: string): boolean {
-  return fieldKey === "response-parameters" || fieldKey === "responseSchema";
+  return fieldKey === 'response-parameters' || fieldKey === 'responseSchema';
 }
 
 export function isErrorResponsesTable(fieldKey: string): boolean {
-  return fieldKey === "error-responses" || fieldKey === "errorResponses";
+  return fieldKey === 'error-responses' || fieldKey === 'errorResponses';
 }

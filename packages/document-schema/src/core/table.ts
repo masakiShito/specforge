@@ -1,4 +1,4 @@
-import type { Field } from "./field";
+import type { Field } from './field';
 
 export type TableRowValue = Record<string, string | number | boolean | undefined>;
 

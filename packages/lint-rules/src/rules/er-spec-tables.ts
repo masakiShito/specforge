@@ -1,10 +1,15 @@
-import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import type {
+  DesignValidationIssue,
+  TableColumnDefinition,
+  TableRowValue,
+  TableValidationContext,
+} from '../types';
 import {
   validateUniqueness,
   validateRequiredColumns,
   createIssue,
   normalizeTableValidationArgs,
-} from "./common";
+} from './common';
 
 type Field = TableColumnDefinition;
 
@@ -25,22 +30,27 @@ export function validateEntities(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique entity names
-  issues.push(...validateUniqueness(rows, "entityName", "エンティティ名", ctx));
+  issues.push(...validateUniqueness(rows, 'entityName', 'エンティティ名', ctx));
 
   // Validate unique physical names
-  issues.push(...validateUniqueness(rows, "physicalName", "物理名", ctx));
+  issues.push(...validateUniqueness(rows, 'physicalName', '物理名', ctx));
 
   // Validate physical name format (alphanumeric and underscores only)
   rows.forEach((row, rowIndex) => {
     const physicalName = row.physicalName;
-    if (typeof physicalName === "string" && physicalName && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(physicalName)) {
+    if (
+      typeof physicalName === 'string' &&
+      physicalName &&
+      !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(physicalName)
+    ) {
       issues.push(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "physicalName",
-          severity: "warning",
-          message: "物理名は英字・数字・アンダースコアのみで、英字またはアンダースコアで始めてください",
+          columnKey: 'physicalName',
+          severity: 'warning',
+          message:
+            '物理名は英字・数字・アンダースコアのみで、英字またはアンダースコアで始めてください',
         })
       );
     }
@@ -69,14 +79,19 @@ export function validateAttributes(
   // Validate physical name format
   rows.forEach((row, rowIndex) => {
     const physicalName = row.physicalName;
-    if (typeof physicalName === "string" && physicalName && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(physicalName)) {
+    if (
+      typeof physicalName === 'string' &&
+      physicalName &&
+      !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(physicalName)
+    ) {
       issues.push(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "physicalName",
-          severity: "warning",
-          message: "物理名は英字・数字・アンダースコアのみで、英字またはアンダースコアで始めてください",
+          columnKey: 'physicalName',
+          severity: 'warning',
+          message:
+            '物理名は英字・数字・アンダースコアのみで、英字またはアンダースコアで始めてください',
         })
       );
     }
@@ -88,7 +103,7 @@ export function validateAttributes(
 
   rows.forEach((row) => {
     const entityName = row.entityName;
-    if (typeof entityName === "string" && entityName) {
+    if (typeof entityName === 'string' && entityName) {
       allEntities.add(entityName);
       if (row.isPrimaryKey === true) {
         entitiesWithPk.add(entityName);
@@ -104,8 +119,8 @@ export function validateAttributes(
           createIssue({
             ...ctx,
             rowIndex: firstRowIndex,
-            columnKey: "isPrimaryKey",
-            severity: "warning",
+            columnKey: 'isPrimaryKey',
+            severity: 'warning',
             message: `エンティティ「${entityName}」に主キーが定義されていません`,
           })
         );
@@ -133,7 +148,7 @@ export function validateRelationships(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique relation names
-  issues.push(...validateUniqueness(rows, "relationName", "リレーション名", ctx));
+  issues.push(...validateUniqueness(rows, 'relationName', 'リレーション名', ctx));
 
   // Check for self-referential relationships (not necessarily an error, but info)
   rows.forEach((row, rowIndex) => {
@@ -144,9 +159,9 @@ export function validateRelationships(
         createIssue({
           ...ctx,
           rowIndex,
-          columnKey: "childEntity",
-          severity: "info",
-          message: "自己参照リレーションが定義されています",
+          columnKey: 'childEntity',
+          severity: 'info',
+          message: '自己参照リレーションが定義されています',
         })
       );
     }
@@ -172,7 +187,7 @@ export function validateIndexes(
   issues.push(...validateRequiredColumns(rows, columns, ctx));
 
   // Validate unique index names
-  issues.push(...validateUniqueness(rows, "indexName", "インデックス名", ctx));
+  issues.push(...validateUniqueness(rows, 'indexName', 'インデックス名', ctx));
 
   return issues;
 }

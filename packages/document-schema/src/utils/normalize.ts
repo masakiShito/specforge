@@ -1,31 +1,35 @@
-import type { Document } from "../core/document";
-import type { Project } from "../core/project";
-import { ok, err, type Result } from "./result";
+import type { Document } from '../core/document';
+import type { Project } from '../core/project';
+import { ok, err, type Result } from './result';
 
 /**
  * Error types for normalization failures.
  */
 export type NormalizeError =
-  | { code: "INVALID_INPUT"; message: string }
-  | { code: "NULL_INPUT"; message: string }
-  | { code: "UNKNOWN_TYPE"; message: string };
+  | { code: 'INVALID_INPUT'; message: string }
+  | { code: 'NULL_INPUT'; message: string }
+  | { code: 'UNKNOWN_TYPE'; message: string };
 
 /**
  * Type guard: checks whether the input is a Project (has `documents` array).
  */
 export function isProject(input: unknown): input is Project {
-  if (typeof input !== "object" || input === null) return false;
+  if (typeof input !== 'object' || input === null) return false;
   const obj = input as Record<string, unknown>;
-  return Array.isArray(obj.documents) && typeof obj.title === "string" && typeof obj.id === "string";
+  return (
+    Array.isArray(obj.documents) && typeof obj.title === 'string' && typeof obj.id === 'string'
+  );
 }
 
 /**
  * Type guard: checks whether the input is a standalone Document (has `kind` and `sections`).
  */
 export function isDocument(input: unknown): input is Document {
-  if (typeof input !== "object" || input === null) return false;
+  if (typeof input !== 'object' || input === null) return false;
   const obj = input as Record<string, unknown>;
-  return typeof obj.kind === "string" && Array.isArray(obj.sections) && !Array.isArray(obj.documents);
+  return (
+    typeof obj.kind === 'string' && Array.isArray(obj.sections) && !Array.isArray(obj.documents)
+  );
 }
 
 /**
@@ -57,7 +61,7 @@ export function normalizeProjectData(input: Project | Document): Project {
     return wrapDocumentInProject(input);
   }
 
-  throw new Error("normalizeProjectData: input is neither a Project nor a Document");
+  throw new Error('normalizeProjectData: input is neither a Project nor a Document');
 }
 
 /**
@@ -73,26 +77,24 @@ export function normalizeProjectData(input: Project | Document): Project {
  *   console.error(result.error.message);
  * }
  */
-export function safeNormalizeProjectData(
-  input: unknown
-): Result<Project, NormalizeError> {
+export function safeNormalizeProjectData(input: unknown): Result<Project, NormalizeError> {
   if (input === null) {
     return err({
-      code: "NULL_INPUT",
-      message: "Input is null",
+      code: 'NULL_INPUT',
+      message: 'Input is null',
     });
   }
 
   if (input === undefined) {
     return err({
-      code: "NULL_INPUT",
-      message: "Input is undefined",
+      code: 'NULL_INPUT',
+      message: 'Input is undefined',
     });
   }
 
-  if (typeof input !== "object") {
+  if (typeof input !== 'object') {
     return err({
-      code: "INVALID_INPUT",
+      code: 'INVALID_INPUT',
       message: `Expected object, got ${typeof input}`,
     });
   }
@@ -106,7 +108,7 @@ export function safeNormalizeProjectData(
   }
 
   return err({
-    code: "UNKNOWN_TYPE",
-    message: "Input is neither a Project nor a Document",
+    code: 'UNKNOWN_TYPE',
+    message: 'Input is neither a Project nor a Document',
   });
 }

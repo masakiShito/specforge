@@ -1,9 +1,9 @@
-import { useEffect, useRef, type MutableRefObject } from "react";
-import type { Project, Section } from "@specforge/document-schema";
+import { useEffect, useRef, type MutableRefObject } from 'react';
+import type { Project, Section } from '@specforge/document-schema';
 
-import type { DocumentEditorState, FieldValue } from "../lib/document-editor/create-document-state";
-import { FieldDescription } from "./field/FieldDescription";
-import { FieldRenderer } from "./field-renderer";
+import type { DocumentEditorState, FieldValue } from '../lib/document-editor/create-document-state';
+import { FieldDescription } from './field/FieldDescription';
+import { FieldRenderer } from './field-renderer';
 
 interface SectionFormProps {
   section: Section;
@@ -41,8 +41,8 @@ export function SectionForm({
 
     const el = fieldRefs.current[focusFieldId];
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      if ("focus" in el && typeof el.focus === "function") {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if ('focus' in el && typeof el.focus === 'function') {
         el.focus();
       }
       onFocusHandled?.();
@@ -51,14 +51,18 @@ export function SectionForm({
 
   return (
     <section ref={containerRef}>
-      <header style={{ marginBottom: "16px", borderBottom: "1px solid #F1F5F9", paddingBottom: "12px" }}>
-        <h2 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600, color: "#0F172A" }}>{section.title}</h2>
-        <p style={{ margin: "4px 0 0", color: "#94A3B8", fontSize: "0.75rem" }}>
-          {section.required ? "必須セクション" : "任意セクション"}
+      <header
+        style={{ marginBottom: '16px', borderBottom: '1px solid #F1F5F9', paddingBottom: '12px' }}
+      >
+        <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: '#0F172A' }}>
+          {section.title}
+        </h2>
+        <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: '0.75rem' }}>
+          {section.required ? '必須セクション' : '任意セクション'}
         </p>
       </header>
 
-      <div style={{ display: "grid", gap: "16px" }}>
+      <div style={{ display: 'grid', gap: '16px' }}>
         {section.fields.map((field) => {
           const hasError = errorFieldIds.has(field.id);
 
@@ -66,13 +70,13 @@ export function SectionForm({
             <div key={field.id}>
               <label
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                   fontWeight: 600,
-                  fontSize: "0.875rem",
-                  color: "#334155",
-                  marginBottom: field.description ? "2px" : "6px"
+                  fontSize: '0.875rem',
+                  color: '#334155',
+                  marginBottom: field.description ? '2px' : '6px',
                 }}
               >
                 {field.label}
@@ -80,8 +84,8 @@ export function SectionForm({
                   <>
                     <span
                       style={{
-                        color: "#EF4444",
-                        fontSize: "0.875rem",
+                        color: '#EF4444',
+                        fontSize: '0.875rem',
                         lineHeight: 1,
                       }}
                       aria-hidden="true"
@@ -90,13 +94,13 @@ export function SectionForm({
                     </span>
                     <span
                       style={{
-                        fontSize: "0.65rem",
+                        fontSize: '0.65rem',
                         fontWeight: 600,
-                        color: "#EF4444",
-                        border: "1px solid #FCA5A5",
-                        borderRadius: "4px",
-                        padding: "0 4px",
-                        lineHeight: "1.6"
+                        color: '#EF4444',
+                        border: '1px solid #FCA5A5',
+                        borderRadius: '4px',
+                        padding: '0 4px',
+                        lineHeight: '1.6',
                       }}
                     >
                       必須
@@ -119,12 +123,12 @@ export function SectionForm({
                 documentStates={documentStates}
                 onNavigateToReference={onNavigateToReference}
               />
-              {hasError && field.valueType !== "table" && (
+              {hasError && field.valueType !== 'table' && (
                 <div
                   style={{
-                    marginTop: "4px",
-                    fontSize: "0.72rem",
-                    color: "#EF4444",
+                    marginTop: '4px',
+                    fontSize: '0.72rem',
+                    color: '#EF4444',
                     fontWeight: 500,
                   }}
                 >

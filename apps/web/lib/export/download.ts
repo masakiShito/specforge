@@ -5,15 +5,11 @@
 /**
  * Download a file with the specified content and filename
  */
-export function downloadFile(
-  content: string,
-  filename: string,
-  mimeType: string
-): void {
+export function downloadFile(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = filename;
 
@@ -28,14 +24,14 @@ export function downloadFile(
  * Download content as JSON file
  */
 export function downloadAsJson(content: string, filename: string): void {
-  downloadFile(content, filename, "application/json;charset=utf-8");
+  downloadFile(content, filename, 'application/json;charset=utf-8');
 }
 
 /**
  * Download content as Markdown file
  */
 export function downloadAsMarkdown(content: string, filename: string): void {
-  downloadFile(content, filename, "text/markdown;charset=utf-8");
+  downloadFile(content, filename, 'text/markdown;charset=utf-8');
 }
 
 /**
@@ -43,8 +39,8 @@ export function downloadAsMarkdown(content: string, filename: string): void {
  */
 export function downloadAsCsv(content: string, filename: string): void {
   // Add BOM for Excel compatibility with Japanese characters
-  const bom = "\uFEFF";
-  downloadFile(bom + content, filename, "text/csv;charset=utf-8");
+  const bom = '\uFEFF';
+  downloadFile(bom + content, filename, 'text/csv;charset=utf-8');
 }
 
 /**
@@ -55,15 +51,15 @@ export function readFileAsText(file: File): Promise<string> {
     const reader = new FileReader();
 
     reader.onload = () => {
-      if (typeof reader.result === "string") {
+      if (typeof reader.result === 'string') {
         resolve(reader.result);
       } else {
-        reject(new Error("Failed to read file as text"));
+        reject(new Error('Failed to read file as text'));
       }
     };
 
     reader.onerror = () => {
-      reject(new Error("Failed to read file"));
+      reject(new Error('Failed to read file'));
     };
 
     reader.readAsText(file);
@@ -75,8 +71,8 @@ export function readFileAsText(file: File): Promise<string> {
  */
 export function openFilePicker(accept: string): Promise<File | null> {
   return new Promise((resolve) => {
-    const input = document.createElement("input");
-    input.type = "file";
+    const input = document.createElement('input');
+    input.type = 'file';
     input.accept = accept;
 
     input.onchange = () => {
@@ -95,7 +91,9 @@ export function openFilePicker(accept: string): Promise<File | null> {
 /**
  * Open file picker and read file content as text
  */
-export async function openAndReadFile(accept: string): Promise<{ file: File; content: string } | null> {
+export async function openAndReadFile(
+  accept: string
+): Promise<{ file: File; content: string } | null> {
   const file = await openFilePicker(accept);
 
   if (!file) {

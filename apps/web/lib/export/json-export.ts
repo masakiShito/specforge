@@ -1,8 +1,8 @@
-import type { Project, Document } from "@specforge/document-schema";
-import type { DocumentEditorState, FieldValue } from "../document-editor/create-document-state";
-import type { ProjectExportData, DocumentExportData, ExportResponse } from "./types";
+import type { Project, Document } from '@specforge/document-schema';
+import type { DocumentEditorState, FieldValue } from '../document-editor/create-document-state';
+import type { ProjectExportData, DocumentExportData, ExportResponse } from './types';
 
-const EXPORT_VERSION = "1.0.0";
+const EXPORT_VERSION = '1.0.0';
 
 /**
  * Export entire project with all document states to JSON
@@ -16,7 +16,7 @@ export function exportProjectToJson(
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       project,
-      documentStates
+      documentStates,
     };
 
     const json = JSON.stringify(exportData, null, 2);
@@ -24,7 +24,7 @@ export function exportProjectToJson(
   } catch (error) {
     return {
       success: false,
-      error: `Failed to export project: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to export project: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -41,7 +41,7 @@ export function exportDocumentToJson(
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       document,
-      fieldValues
+      fieldValues,
     };
 
     const json = JSON.stringify(exportData, null, 2);
@@ -49,7 +49,7 @@ export function exportDocumentToJson(
   } catch (error) {
     return {
       success: false,
-      error: `Failed to export document: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to export document: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -58,7 +58,7 @@ export function exportDocumentToJson(
  * Generate filename for project export
  */
 export function generateProjectFilename(project: Project): string {
-  const sanitizedTitle = project.title.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const sanitizedTitle = project.title.replace(/[^a-zA-Z0-9_-]/g, '_');
   const timestamp = new Date().toISOString().slice(0, 10);
   return `${sanitizedTitle}_${timestamp}.json`;
 }
@@ -67,7 +67,7 @@ export function generateProjectFilename(project: Project): string {
  * Generate filename for document export
  */
 export function generateDocumentFilename(document: Document): string {
-  const sanitizedTitle = document.title.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const sanitizedTitle = document.title.replace(/[^a-zA-Z0-9_-]/g, '_');
   const timestamp = new Date().toISOString().slice(0, 10);
   return `${sanitizedTitle}_${timestamp}.json`;
 }

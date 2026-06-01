@@ -1,14 +1,14 @@
-import type { ValidationItem } from "../types/validation";
+import type { ValidationItem } from '../types/validation';
 import {
   QUALITY_SCORE_PENALTIES,
   QUALITY_SCORE_CATEGORY_CAPS,
   QUALITY_SCORE_THRESHOLDS,
   QUALITY_STATUS_LABELS,
-} from "../constants/validation";
+} from '../constants/validation';
 
 export interface QualityScoreResult {
   score: number;
-  status: "good" | "caution" | "needs-improvement";
+  status: 'good' | 'caution' | 'needs-improvement';
   statusLabel: string;
 }
 
@@ -18,9 +18,7 @@ export interface QualityScoreResult {
  */
 function extractCategory(issueId: string): string {
   // Check for known category prefixes
-  const knownPrefixes = Object.keys(QUALITY_SCORE_CATEGORY_CAPS).filter(
-    (key) => key !== "default"
-  );
+  const knownPrefixes = Object.keys(QUALITY_SCORE_CATEGORY_CAPS).filter((key) => key !== 'default');
 
   for (const prefix of knownPrefixes) {
     if (issueId.startsWith(prefix)) {
@@ -28,7 +26,7 @@ function extractCategory(issueId: string): string {
     }
   }
 
-  return "default";
+  return 'default';
 }
 
 /**
@@ -60,27 +58,26 @@ export function calculateQualityScore(items: ValidationItem[]): QualityScoreResu
   let totalDeduction = 0;
   for (const [category, rawDeduction] of categoryDeductions) {
     const cap =
-      QUALITY_SCORE_CATEGORY_CAPS[
-        category as keyof typeof QUALITY_SCORE_CATEGORY_CAPS
-      ] || QUALITY_SCORE_CATEGORY_CAPS.default;
+      QUALITY_SCORE_CATEGORY_CAPS[category as keyof typeof QUALITY_SCORE_CATEGORY_CAPS] ||
+      QUALITY_SCORE_CATEGORY_CAPS.default;
     const cappedDeduction = Math.min(rawDeduction, cap);
     totalDeduction += cappedDeduction;
   }
 
   const score = Math.max(0, 100 - totalDeduction);
 
-  let status: QualityScoreResult["status"];
+  let status: QualityScoreResult['status'];
   let statusLabel: string;
 
   if (score >= QUALITY_SCORE_THRESHOLDS.good) {
-    status = "good";
+    status = 'good';
     statusLabel = QUALITY_STATUS_LABELS.good;
   } else if (score >= QUALITY_SCORE_THRESHOLDS.caution) {
-    status = "caution";
+    status = 'caution';
     statusLabel = QUALITY_STATUS_LABELS.caution;
   } else {
-    status = "needs-improvement";
-    statusLabel = QUALITY_STATUS_LABELS["needs-improvement"];
+    status = 'needs-improvement';
+    statusLabel = QUALITY_STATUS_LABELS['needs-improvement'];
   }
 
   return { score, status, statusLabel };

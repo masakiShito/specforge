@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../lib/auth";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../lib/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login");
+      router.push('/login');
     }
   }, [user, isLoading, router]);
 
@@ -22,26 +22,26 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          backgroundColor: "#F1F5F9",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#F1F5F9',
         }}
       >
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: 'center' }}>
           <div
             style={{
-              width: "40px",
-              height: "40px",
-              border: "3px solid #E2E8F0",
-              borderTopColor: "#3B82F6",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 16px",
+              width: '40px',
+              height: '40px',
+              border: '3px solid #E2E8F0',
+              borderTopColor: '#3B82F6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px',
             }}
           />
-          <p style={{ color: "#64748B", fontSize: "0.875rem" }}>読み込み中...</p>
+          <p style={{ color: '#64748B', fontSize: '0.875rem' }}>読み込み中...</p>
         </div>
         <style>{`
           @keyframes spin {

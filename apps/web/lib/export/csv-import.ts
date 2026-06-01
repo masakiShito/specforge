@@ -1,6 +1,6 @@
-import type { Field } from "@specforge/document-schema";
-import type { TableRowValue, TableRowCellValue } from "../document-editor/create-document-state";
-import type { ImportResponse } from "./types";
+import type { Field } from '@specforge/document-schema';
+import type { TableRowValue, TableRowCellValue } from '../document-editor/create-document-state';
+import type { ImportResponse } from './types';
 
 interface CsvImportOptions {
   delimiter?: string;
@@ -49,7 +49,7 @@ export function importTableFromCsv(
       const rowResult = parseRow(cells, columns, columnMapping);
 
       if (rowResult.errors.length > 0) {
-        errors.push(`Row ${i + 1}: ${rowResult.errors.join(", ")}`);
+        errors.push(`Row ${i + 1}: ${rowResult.errors.join(', ')}`);
       }
 
       rows.push(rowResult.row);
@@ -58,8 +58,8 @@ export function importTableFromCsv(
     if (errors.length > 0) {
       return {
         success: false,
-        error: "CSV parsing completed with warnings",
-        details: errors
+        error: 'CSV parsing completed with warnings',
+        details: errors,
       };
     }
 
@@ -67,13 +67,13 @@ export function importTableFromCsv(
   } catch (error) {
     return {
       success: false,
-      error: `Failed to parse CSV: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to parse CSV: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
 
 function detectDelimiter(csvString: string): string {
-  const firstLine = csvString.split(/[\r\n]/)[0] ?? "";
+  const firstLine = csvString.split(/[\r\n]/)[0] ?? '';
 
   // Count occurrences of common delimiters
   const commaCount = (firstLine.match(/,/g) ?? []).length;
@@ -81,21 +81,21 @@ function detectDelimiter(csvString: string): string {
   const semicolonCount = (firstLine.match(/;/g) ?? []).length;
 
   if (tabCount > commaCount && tabCount > semicolonCount) {
-    return "\t";
+    return '\t';
   }
   if (semicolonCount > commaCount) {
-    return ";";
+    return ';';
   }
-  return ",";
+  return ',';
 }
 
 function parseCsvLines(csvString: string): string[] {
   // Normalize line endings
-  const normalized = csvString.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const normalized = csvString.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
   // Split by lines, handling quoted fields that may contain newlines
   const lines: string[] = [];
-  let currentLine = "";
+  let currentLine = '';
   let inQuotes = false;
 
   for (let i = 0; i < normalized.length; i++) {
@@ -110,9 +110,9 @@ function parseCsvLines(csvString: string): string[] {
         inQuotes = !inQuotes;
         currentLine += char;
       }
-    } else if (char === "\n" && !inQuotes) {
+    } else if (char === '\n' && !inQuotes) {
       lines.push(currentLine);
-      currentLine = "";
+      currentLine = '';
     } else {
       currentLine += char;
     }
@@ -127,7 +127,7 @@ function parseCsvLines(csvString: string): string[] {
 
 function parseCsvLine(line: string, delimiter: string): string[] {
   const cells: string[] = [];
-  let current = "";
+  let current = '';
   let inQuotes = false;
 
   for (let i = 0; i < line.length; i++) {
@@ -144,7 +144,7 @@ function parseCsvLine(line: string, delimiter: string): string[] {
       }
     } else if (char === delimiter && !inQuotes) {
       cells.push(current);
-      current = "";
+      current = '';
     } else {
       current += char;
     }
@@ -159,10 +159,7 @@ interface ColumnMapping {
   column: Field;
 }
 
-function createColumnMapping(
-  headerRow: string[] | null,
-  columns: Field[]
-): ColumnMapping[] {
+function createColumnMapping(headerRow: string[] | null, columns: Field[]): ColumnMapping[] {
   if (!headerRow) {
     // No header, assume columns are in order
     return columns.map((column, index) => ({ columnIndex: index, column }));
@@ -198,7 +195,7 @@ function parseRow(
       continue;
     }
 
-    const cellValue = cells[columnIndex]?.trim() ?? "";
+    const cellValue = cells[columnIndex]?.trim() ?? '';
     const parsed = parseCellValue(cellValue, column);
 
     if (parsed.error) {
@@ -215,18 +212,18 @@ function parseCellValue(
   cellValue: string,
   column: Field
 ): { value: TableRowCellValue; error?: string } {
-  if (cellValue === "") {
+  if (cellValue === '') {
     return { value: undefined };
   }
 
   switch (column.valueType) {
-    case "boolean":
+    case 'boolean':
       return parseBooleanValue(cellValue);
 
-    case "number":
+    case 'number':
       return parseNumberValue(cellValue);
 
-    case "enum":
+    case 'enum':
       return parseEnumValue(cellValue, column);
 
     default:
@@ -237,11 +234,11 @@ function parseCellValue(
 function parseBooleanValue(value: string): { value: boolean | undefined; error?: string } {
   const lower = value.toLowerCase();
 
-  if (["true", "yes", "1", "○", "はい"].includes(lower)) {
+  if (['true', 'yes', '1', '○', 'はい'].includes(lower)) {
     return { value: true };
   }
 
-  if (["false", "no", "0", "-", "いいえ", ""].includes(lower)) {
+  if (['false', 'no', '0', '-', 'いいえ', ''].includes(lower)) {
     return { value: false };
   }
 
@@ -281,6 +278,6 @@ function parseEnumValue(
 
   return {
     value: undefined,
-    error: `Invalid enum value: ${value}. Expected: ${column.options.map((o) => o.label).join(", ")}`
+    error: `Invalid enum value: ${value}. Expected: ${column.options.map((o) => o.label).join(', ')}`,
   };
 }

@@ -3,14 +3,14 @@
  * Handles secure storage of authentication tokens
  */
 
-const ACCESS_TOKEN_KEY = "specforge_access_token";
-const REFRESH_TOKEN_KEY = "specforge_refresh_token";
+const ACCESS_TOKEN_KEY = 'specforge_access_token';
+const REFRESH_TOKEN_KEY = 'specforge_refresh_token';
 
 /**
  * Check if we're running in browser environment
  */
 function isBrowser(): boolean {
-  return typeof window !== "undefined";
+  return typeof window !== 'undefined';
 }
 
 /**

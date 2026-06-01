@@ -1,35 +1,33 @@
-"use client";
+'use client';
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   normalizeProjectData,
   sampleScreenSpecProject,
   type Document,
   type DocumentKind,
   type Project,
-} from "@specforge/document-schema";
+} from '@specforge/document-schema';
 
 import {
   createDocumentState,
   type DocumentEditorState,
   type FieldValue,
-} from "../lib/document-editor/create-document-state";
-import { createDocument } from "../lib/document-editor/create-document";
-import { updateFieldValue } from "../lib/document-editor/update-field-value";
-import { validateDocument } from "../lib/document-editor/validate-document";
+} from '../lib/document-editor/create-document-state';
+import { createDocument } from '../lib/document-editor/create-document';
+import { updateFieldValue } from '../lib/document-editor/update-field-value';
+import { validateDocument } from '../lib/document-editor/validate-document';
 import {
   validateDesignQuality,
   validateProjectQuality,
-} from "../lib/validation/validate-design-quality";
-import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
-import type { ValidationItem } from "../types/validation";
+} from '../lib/validation/validate-design-quality';
+import { enrichValidation, convertDesignIssues } from '../utils/enrichValidation';
+import type { ValidationItem } from '../types/validation';
 
 /**
  * Build initial per-document editor states for all documents in a project.
  */
-function createProjectStates(
-  project: Project
-): Record<string, DocumentEditorState> {
+function createProjectStates(project: Project): Record<string, DocumentEditorState> {
   const states: Record<string, DocumentEditorState> = {};
   for (const doc of project.documents) {
     states[doc.id] = createDocumentState(doc);
@@ -46,13 +44,9 @@ function ensureUniqueDocumentTitle(
   documents: Document[]
 ): string {
   const normalized = requestedTitle.trim();
-  if (!normalized) return "";
+  if (!normalized) return '';
 
-  const used = new Set(
-    documents
-      .filter((doc) => doc.id !== documentId)
-      .map((doc) => doc.title)
-  );
+  const used = new Set(documents.filter((doc) => doc.id !== documentId).map((doc) => doc.title));
   if (!used.has(normalized)) return normalized;
 
   let suffix = 2;
@@ -77,8 +71,8 @@ export interface UseDocumentEditorReturn {
   focusFieldId: string | null;
   editingTitleDocId: string | null;
   editingProjectTitle: boolean;
-  centerMode: "edit" | "preview";
-  viewMode: "editor" | "health";
+  centerMode: 'edit' | 'preview';
+  viewMode: 'editor' | 'health';
   fieldRefs: React.MutableRefObject<Record<string, HTMLElement | null>>;
 
   // Validation
@@ -97,8 +91,8 @@ export interface UseDocumentEditorReturn {
   setFocusFieldId: (id: string | null) => void;
   setEditingTitleDocId: (id: string | null) => void;
   setEditingProjectTitle: (editing: boolean) => void;
-  setCenterMode: (mode: "edit" | "preview") => void;
-  setViewMode: (mode: "editor" | "health") => void;
+  setCenterMode: (mode: 'edit' | 'preview') => void;
+  setViewMode: (mode: 'editor' | 'health') => void;
 
   // Handlers
   handleFieldValueChange: (fieldId: string, value: FieldValue) => void;
@@ -113,16 +107,8 @@ export interface UseDocumentEditorReturn {
     rowIndex?: number
   ) => void;
   handleFocusHandled: () => void;
-  handleNavigateToReference: (
-    documentId: string,
-    sectionId?: string,
-    fieldId?: string
-  ) => void;
-  handleHealthNavigateToDocument: (
-    documentId: string,
-    sectionId: string,
-    fieldId: string
-  ) => void;
+  handleNavigateToReference: (documentId: string, sectionId?: string, fieldId?: string) => void;
+  handleHealthNavigateToDocument: (documentId: string, sectionId: string, fieldId: string) => void;
 }
 
 /**
@@ -131,9 +117,7 @@ export interface UseDocumentEditorReturn {
  * Extracts complex state management from DocumentEditor component
  * to improve testability and maintainability.
  */
-export function useDocumentEditor(
-  options: UseDocumentEditorOptions = {}
-): UseDocumentEditorReturn {
+export function useDocumentEditor(options: UseDocumentEditorOptions = {}): UseDocumentEditorReturn {
   const { initialProject } = options;
 
   // Core state
@@ -141,41 +125,36 @@ export function useDocumentEditor(
     normalizeProjectData(initialProject ?? sampleScreenSpecProject)
   );
 
-  const [documentStates, setDocumentStates] = useState<
-    Record<string, DocumentEditorState>
-  >(() => createProjectStates(projectState));
-
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
-    projectState.documents[0]?.id ?? ""
+  const [documentStates, setDocumentStates] = useState<Record<string, DocumentEditorState>>(() =>
+    createProjectStates(projectState)
   );
 
-  const [selectedSectionIdByDocument, setSelectedSectionIdByDocument] =
-    useState<Record<string, string>>(() =>
-      Object.fromEntries(
-        projectState.documents.map((document) => [
-          document.id,
-          document.sections[0]?.id ?? "",
-        ])
-      )
-    );
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
+    projectState.documents[0]?.id ?? ''
+  );
+
+  const [selectedSectionIdByDocument, setSelectedSectionIdByDocument] = useState<
+    Record<string, string>
+  >(() =>
+    Object.fromEntries(
+      projectState.documents.map((document) => [document.id, document.sections[0]?.id ?? ''])
+    )
+  );
 
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const [editingTitleDocId, setEditingTitleDocId] = useState<string | null>(null);
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
-  const [centerMode, setCenterMode] = useState<"edit" | "preview">("edit");
-  const [viewMode, setViewMode] = useState<"editor" | "health">("editor");
+  const [centerMode, setCenterMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<'editor' | 'health'>('editor');
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // Computed values
   const documentById = useMemo(
-    () =>
-      Object.fromEntries(
-        projectState.documents.map((document) => [document.id, document])
-      ),
+    () => Object.fromEntries(projectState.documents.map((document) => [document.id, document])),
     [projectState.documents]
   );
 
-  const fallbackDocumentId = projectState.documents[0]?.id ?? "";
+  const fallbackDocumentId = projectState.documents[0]?.id ?? '';
   const currentDocument =
     (selectedDocumentId ? documentById[selectedDocumentId] : undefined) ??
     (fallbackDocumentId ? documentById[fallbackDocumentId] : undefined);
@@ -186,16 +165,11 @@ export function useDocumentEditor(
       : createDocumentState(currentDocument!);
 
   const selectedSectionId = currentDocument
-    ? selectedSectionIdByDocument[currentDocument.id] ??
-      currentDocument.sections[0]?.id ??
-      ""
-    : "";
+    ? (selectedSectionIdByDocument[currentDocument.id] ?? currentDocument.sections[0]?.id ?? '')
+    : '';
 
   // Validation
-  const validation = useMemo(
-    () => validateDocument(currentDocumentState),
-    [currentDocumentState]
-  );
+  const validation = useMemo(() => validateDocument(currentDocumentState), [currentDocumentState]);
 
   const designQuality = useMemo(
     () => validateDesignQuality(currentDocumentState, projectState),
@@ -210,7 +184,7 @@ export function useDocumentEditor(
   const validationItems = useMemo(() => {
     if (!currentDocument) return [];
     const nonTableWarnings = validation.warnings.filter(
-      (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
+      (w) => !w.id.includes(':table-empty') && !w.id.includes(':row')
     );
     const basicItems = enrichValidation(nonTableWarnings).map((item) => ({
       ...item,
@@ -229,7 +203,7 @@ export function useDocumentEditor(
 
       const docValidation = validateDocument(state);
       const nonTableWarnings = docValidation.warnings.filter(
-        (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
+        (w) => !w.id.includes(':table-empty') && !w.id.includes(':row')
       );
       const basicItems = enrichValidation(nonTableWarnings).map((item) => ({
         ...item,
@@ -239,26 +213,19 @@ export function useDocumentEditor(
       items.push(...basicItems);
     }
 
-    const designItems = convertDesignIssues(projectQuality.issues).map(
-      (item) => ({
-        ...item,
-        documentTitle: documentById[item.documentId ?? ""]?.title ?? "",
-      })
-    );
+    const designItems = convertDesignIssues(projectQuality.issues).map((item) => ({
+      ...item,
+      documentTitle: documentById[item.documentId ?? '']?.title ?? '',
+    }));
     items.push(...designItems);
 
     return items;
-  }, [
-    projectState.documents,
-    documentStates,
-    projectQuality.issues,
-    documentById,
-  ]);
+  }, [projectState.documents, documentStates, projectQuality.issues, documentById]);
 
   const errorFieldIds = useMemo(() => {
     const ids = new Set<string>();
     for (const item of validationItems) {
-      if (item.severity === "error") {
+      if (item.severity === 'error') {
         ids.add(item.fieldId);
       }
     }
@@ -268,11 +235,7 @@ export function useDocumentEditor(
   const cellErrors = useMemo(() => {
     const keys = new Set<string>();
     for (const issue of designQuality.issues) {
-      if (
-        issue.severity === "error" &&
-        issue.rowIndex !== undefined &&
-        issue.columnKey
-      ) {
+      if (issue.severity === 'error' && issue.rowIndex !== undefined && issue.columnKey) {
         keys.add(`${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`);
       }
     }
@@ -282,11 +245,7 @@ export function useDocumentEditor(
   const cellWarnings = useMemo(() => {
     const keys = new Set<string>();
     for (const issue of designQuality.issues) {
-      if (
-        issue.severity === "warning" &&
-        issue.rowIndex !== undefined &&
-        issue.columnKey
-      ) {
+      if (issue.severity === 'warning' && issue.rowIndex !== undefined && issue.columnKey) {
         keys.add(`${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`);
       }
     }
@@ -333,7 +292,7 @@ export function useDocumentEditor(
 
       setSelectedSectionIdByDocument((prev) => ({
         ...prev,
-        [newDoc.id]: newDoc.sections[0]?.id ?? "",
+        [newDoc.id]: newDoc.sections[0]?.id ?? '',
       }));
 
       setSelectedDocumentId(newDoc.id);
@@ -343,11 +302,7 @@ export function useDocumentEditor(
 
   const handleDocumentTitleChange = useCallback(
     (documentId: string, newTitle: string) => {
-      const uniqueTitle = ensureUniqueDocumentTitle(
-        documentId,
-        newTitle,
-        projectState.documents
-      );
+      const uniqueTitle = ensureUniqueDocumentTitle(documentId, newTitle, projectState.documents);
       if (!uniqueTitle) return;
 
       setProjectState((prev) => ({
@@ -380,12 +335,7 @@ export function useDocumentEditor(
   }, []);
 
   const handleNavigateToField = useCallback(
-    (
-      documentId: string,
-      sectionId: string,
-      fieldId: string,
-      _rowIndex?: number
-    ) => {
+    (documentId: string, sectionId: string, fieldId: string, _rowIndex?: number) => {
       const isCrossDocument = documentId !== currentDocument?.id;
       if (isCrossDocument) {
         setSelectedDocumentId(documentId);
@@ -412,20 +362,18 @@ export function useDocumentEditor(
 
   const handleNavigateToReference = useCallback(
     (documentId: string, sectionId?: string, fieldId?: string) => {
-      const targetDoc = projectState.documents.find(
-        (doc) => doc.id === documentId
-      );
+      const targetDoc = projectState.documents.find((doc) => doc.id === documentId);
       if (!targetDoc) return;
 
-      const targetSectionId = sectionId || targetDoc.sections[0]?.id || "";
-      handleNavigateToField(documentId, targetSectionId, fieldId ?? "");
+      const targetSectionId = sectionId || targetDoc.sections[0]?.id || '';
+      handleNavigateToField(documentId, targetSectionId, fieldId ?? '');
     },
     [projectState.documents, handleNavigateToField]
   );
 
   const handleHealthNavigateToDocument = useCallback(
     (documentId: string, sectionId: string, fieldId: string) => {
-      setViewMode("editor");
+      setViewMode('editor');
       handleNavigateToField(documentId, sectionId, fieldId);
     },
     [handleNavigateToField]

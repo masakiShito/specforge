@@ -1,23 +1,28 @@
-import type { Document, DocumentKind } from "@specforge/document-schema";
-import { screenSpecPreset, apiSpecPreset, erSpecPreset, businessRulePreset } from "@specforge/document-schema";
+import type { Document, DocumentKind } from '@specforge/document-schema';
+import {
+  screenSpecPreset,
+  apiSpecPreset,
+  erSpecPreset,
+  businessRulePreset,
+} from '@specforge/document-schema';
 
 /**
  * Preset map keyed by document kind.
  * Add new presets here to support additional document types.
  */
 const PRESET_MAP: Record<string, Document> = {
-  "screen-spec": screenSpecPreset,
-  "api-spec": apiSpecPreset,
-  "er-spec": erSpecPreset,
-  "business-rule": businessRulePreset,
+  'screen-spec': screenSpecPreset,
+  'api-spec': apiSpecPreset,
+  'er-spec': erSpecPreset,
+  'business-rule': businessRulePreset,
 };
 
 /** Kinds available for document creation */
 export const creatableKinds: { kind: DocumentKind; label: string }[] = [
-  { kind: "screen-spec", label: "画面仕様書" },
-  { kind: "api-spec", label: "API仕様書" },
-  { kind: "er-spec", label: "ER設計書" },
-  { kind: "business-rule", label: "ビジネスルール" },
+  { kind: 'screen-spec', label: '画面仕様書' },
+  { kind: 'api-spec', label: 'API仕様書' },
+  { kind: 'er-spec', label: 'ER設計書' },
+  { kind: 'business-rule', label: 'ビジネスルール' },
 ];
 
 let idCounter = 0;
@@ -37,25 +42,25 @@ function cloneWithFreshIds(preset: Document, docId: string): Document {
     id: docId,
     key: `${preset.key}-${docId}`,
     sections: preset.sections.map((section) => {
-      const sectionId = nextId("sec");
+      const sectionId = nextId('sec');
       return {
         ...section,
         id: sectionId,
         fields: section.fields.map((field) => {
-          const fieldId = nextId("fld");
+          const fieldId = nextId('fld');
           return {
             ...field,
             id: fieldId,
             table: field.table
               ? {
                   ...field.table,
-                  id: nextId("tbl"),
+                  id: nextId('tbl'),
                   columns: field.table.columns.map((col) => ({
                     ...col,
-                    id: nextId("col"),
+                    id: nextId('col'),
                     options: col.options?.map((opt) => ({
                       ...opt,
-                      id: nextId("opt"),
+                      id: nextId('opt'),
                     })),
                   })),
                   // Clear defaultRows for new documents — start empty
@@ -64,13 +69,13 @@ function cloneWithFreshIds(preset: Document, docId: string): Document {
               : undefined,
             options: field.options?.map((opt) => ({
               ...opt,
-              id: nextId("opt"),
+              id: nextId('opt'),
             })),
           };
         }),
         references: section.references?.map((ref) => ({
           ...ref,
-          id: nextId("ref"),
+          id: nextId('ref'),
         })),
       };
     }),
@@ -78,17 +83,17 @@ function cloneWithFreshIds(preset: Document, docId: string): Document {
 }
 
 const DEFAULT_TITLES: Record<string, string> = {
-  "screen-spec": "新しい画面仕様書",
-  "api-spec": "新しいAPI仕様書",
-  "er-spec": "新しいER設計書",
-  "business-rule": "新しいビジネスルール",
+  'screen-spec': '新しい画面仕様書',
+  'api-spec': '新しいAPI仕様書',
+  'er-spec': '新しいER設計書',
+  'business-rule': '新しいビジネスルール',
 };
 
 function slugify(input: string): string {
   return input
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 function ensureUniqueTitle(baseTitle: string, existingDocs: Document[]): string {
@@ -127,12 +132,12 @@ export function createDocument(
     throw new Error(`Unknown document kind: ${kind}`);
   }
 
-  const docId = nextId("doc");
+  const docId = nextId('doc');
   const doc = cloneWithFreshIds(preset, docId);
   const baseTitle = title?.trim() || DEFAULT_TITLES[kind] || `新しい${kind}`;
   doc.title = ensureUniqueTitle(baseTitle, existingDocs);
   doc.key = ensureUniqueKey(slugify(doc.title) || `${kind}-doc`, existingDocs);
-  doc.version = "0.1.0";
+  doc.version = '0.1.0';
   doc.required = true;
 
   return doc;

@@ -1,29 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import { validateReferenceIntegrity } from "./reference-integrity";
+import { validateReferenceIntegrity } from './reference-integrity';
 
-describe("validateReferenceIntegrity", () => {
-  it("validates web editor project references after migration", () => {
+describe('validateReferenceIntegrity', () => {
+  it('validates web editor project references after migration', () => {
     const state = {
       document: {
-        id: "screen",
-        kind: "screen-spec",
-        title: "Screen",
+        id: 'screen',
+        kind: 'screen-spec',
+        title: 'Screen',
         sections: [
           {
-            id: "api-section",
-            key: "api-connections",
-            title: "API Connections",
+            id: 'api-section',
+            key: 'api-connections',
+            title: 'API Connections',
             fields: [
               {
-                id: "api-field",
-                key: "api-connections",
-                label: "API Connections",
-                valueType: "table",
+                id: 'api-field',
+                key: 'api-connections',
+                label: 'API Connections',
+                valueType: 'table',
                 table: {
                   columns: [
-                    { key: "apiRef", label: "API Reference", required: true },
-                    { key: "timing", label: "Timing", required: true },
+                    { key: 'apiRef', label: 'API Reference', required: true },
+                    { key: 'timing', label: 'Timing', required: true },
                   ],
                 },
               },
@@ -32,10 +32,10 @@ describe("validateReferenceIntegrity", () => {
         ],
       },
       fieldValues: {
-        "api-field": [
+        'api-field': [
           {
-            apiRef: { refId: "other", kind: "document", documentId: "other" },
-            timing: "on load",
+            apiRef: { refId: 'other', kind: 'document', documentId: 'other' },
+            timing: 'on load',
           },
         ],
       },
@@ -43,7 +43,7 @@ describe("validateReferenceIntegrity", () => {
     const project = {
       documents: [
         state.document,
-        { id: "other", kind: "screen-spec", title: "Other Screen", sections: [] },
+        { id: 'other', kind: 'screen-spec', title: 'Other Screen', sections: [] },
       ],
     };
 
@@ -51,25 +51,25 @@ describe("validateReferenceIntegrity", () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatchObject({
-      severity: "error",
-      columnKey: "apiRef",
-      reason: expect.stringContaining("Other Screen"),
+      severity: 'error',
+      columnKey: 'apiRef',
+      reason: expect.stringContaining('Other Screen'),
     });
   });
 
-  it("keeps legacy document map reference validation working", () => {
+  it('keeps legacy document map reference validation working', () => {
     const issues = validateReferenceIntegrity(
-      "doc",
-      "section",
-      "field",
+      'doc',
+      'section',
+      'field',
       [
         {
           ref: {
-            type: "reference",
-            referenceType: "screen-field",
-            targetDocumentId: "missing",
-            targetKey: "field",
-            displayValue: "Missing",
+            type: 'reference',
+            referenceType: 'screen-field',
+            targetDocumentId: 'missing',
+            targetKey: 'field',
+            displayValue: 'Missing',
           },
         },
       ],
@@ -78,10 +78,10 @@ describe("validateReferenceIntegrity", () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatchObject({
-      documentId: "doc",
-      sectionId: "section",
-      fieldId: "field",
-      severity: "error",
+      documentId: 'doc',
+      sectionId: 'section',
+      fieldId: 'field',
+      severity: 'error',
     });
   });
 });

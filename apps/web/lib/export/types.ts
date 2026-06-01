@@ -1,5 +1,9 @@
-import type { Project, Document, Field, TableRowValue as SchemaTableRowValue } from "@specforge/document-schema";
-import type { DocumentEditorState, FieldValue, TableRowValue } from "../document-editor/create-document-state";
+import type { Project, Document, Field } from '@specforge/document-schema';
+import type {
+  DocumentEditorState,
+  FieldValue,
+  TableRowValue,
+} from '../document-editor/create-document-state';
 
 // Export result type
 export interface ExportResult<T> {
@@ -29,7 +33,7 @@ export interface ImportError {
 export type ImportResponse<T> = ImportResult<T> | ImportError;
 
 // Export format options
-export type ExportFormat = "json" | "markdown" | "csv";
+export type ExportFormat = 'json' | 'markdown' | 'csv';
 
 // JSON export structure
 export interface ProjectExportData {

@@ -11,12 +11,12 @@ export type {
   SectionContext,
   FieldContext,
   ValidationResult,
-} from "./types";
+} from './types';
 
-export { isReferenceValue } from "./types";
+export { isReferenceValue } from './types';
 
 // Rules
-export * from "./rules";
+export * from './rules';
 
 // Validators
-export * from "./validators";
+export * from './validators';

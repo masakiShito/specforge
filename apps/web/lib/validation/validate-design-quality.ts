@@ -1,4 +1,4 @@
-import type { Field, Project } from "@specforge/document-schema";
+import type { Field, Project } from '@specforge/document-schema';
 import {
   validateScreenFields,
   validateEvents,
@@ -17,26 +17,29 @@ import {
   validateRules,
   validateExceptions,
   validateValidations,
-} from "@specforge/lint-rules";
+} from '@specforge/lint-rules';
 
-import type { DocumentEditorState, TableRowValue } from "../document-editor/create-document-state";
-import type { DesignValidationIssue, TableValidationContext, DesignValidationResult } from "./types";
+import type { DocumentEditorState, TableRowValue } from '../document-editor/create-document-state';
+import type { DesignValidationIssue, TableValidationContext } from './types';
 import {
   getCachedDocumentValidation,
   getCachedProjectValidation,
   hashProject,
-} from "./validation-cache";
+} from './validation-cache';
 
-const TABLE_VALIDATORS: Record<string, (rows: TableRowValue[], columns: Field[], ctx: TableValidationContext) => DesignValidationIssue[]> = {
+const TABLE_VALIDATORS: Record<
+  string,
+  (rows: TableRowValue[], columns: Field[], ctx: TableValidationContext) => DesignValidationIssue[]
+> = {
   // screen-spec tables
-  "screen-fields": validateScreenFields,
+  'screen-fields': validateScreenFields,
   events: validateEvents,
   messages: validateMessages,
-  "api-connections": validateApiConnections,
+  'api-connections': validateApiConnections,
   // api-spec tables
-  "request-parameters": validateRequestParameters,
-  "response-parameters": validateResponseParameters,
-  "error-responses": validateErrorResponses,
+  'request-parameters': validateRequestParameters,
+  'response-parameters': validateResponseParameters,
+  'error-responses': validateErrorResponses,
   // er-spec tables
   entities: validateEntities,
   attributes: validateAttributes,
@@ -70,12 +73,21 @@ function computeDesignQuality(state: DocumentEditorState, project?: Project): De
     const sectionCounts = { error: 0, warning: 0, info: 0 };
 
     for (const field of section.fields) {
-      if (field.valueType !== "table" || !field.table) continue;
-      const rows = Array.isArray(state.fieldValues[field.id]) ? (state.fieldValues[field.id] as TableRowValue[]) : [];
+      if (field.valueType !== 'table' || !field.table) continue;
+      const rows = Array.isArray(state.fieldValues[field.id])
+        ? (state.fieldValues[field.id] as TableRowValue[])
+        : [];
       const validator = TABLE_VALIDATORS[field.table.key];
       if (!validator) continue;
 
-      const ctx: TableValidationContext = { documentId: state.document.id, sectionId: section.id, sectionTitle: section.title, fieldId: field.id, fieldLabel: field.label, tableKey: field.table.key };
+      const ctx: TableValidationContext = {
+        documentId: state.document.id,
+        sectionId: section.id,
+        sectionTitle: section.title,
+        fieldId: field.id,
+        fieldLabel: field.label,
+        tableKey: field.table.key,
+      };
       const tableIssues = validator(rows, field.table.columns, ctx);
       issues.push(...tableIssues);
       tableIssues.forEach((issue) => sectionCounts[issue.severity]++);
@@ -109,7 +121,10 @@ function computeDesignQuality(state: DocumentEditorState, project?: Project): De
  * Validate design quality for a single document
  * Results are cached based on document state
  */
-export function validateDesignQuality(state: DocumentEditorState, project?: Project): DesignQualityResult {
+export function validateDesignQuality(
+  state: DocumentEditorState,
+  project?: Project
+): DesignQualityResult {
   const extraKey = project ? hashProject(project) : undefined;
   return getCachedDocumentValidation(state, () => computeDesignQuality(state, project), extraKey);
 }
@@ -117,7 +132,10 @@ export function validateDesignQuality(state: DocumentEditorState, project?: Proj
 /**
  * Internal project validation logic (uncached)
  */
-function computeProjectQuality(project: Project, states: Record<string, DocumentEditorState>): ProjectValidationResult {
+function computeProjectQuality(
+  project: Project,
+  states: Record<string, DocumentEditorState>
+): ProjectValidationResult {
   const issues: DesignValidationIssue[] = [];
   const issueCountByDocument: Record<string, { error: number; warning: number; info: number }> = {};
 
@@ -141,6 +159,9 @@ function computeProjectQuality(project: Project, states: Record<string, Document
  * Validate design quality for an entire project
  * Results are cached based on all document states
  */
-export function validateProjectQuality(project: Project, states: Record<string, DocumentEditorState>): ProjectValidationResult {
+export function validateProjectQuality(
+  project: Project,
+  states: Record<string, DocumentEditorState>
+): ProjectValidationResult {
   return getCachedProjectValidation(states, () => computeProjectQuality(project, states));
 }

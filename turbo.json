@@ -13,11 +13,18 @@
       "dependsOn": ["^lint"],
       "outputs": []
     },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"],
+      "outputs": []
+    },
     "test": {
       "dependsOn": ["^test"],
       "outputs": ["coverage/**"]
     },
     "format": {
+      "outputs": []
+    },
+    "format:check": {
       "outputs": []
     }
   }

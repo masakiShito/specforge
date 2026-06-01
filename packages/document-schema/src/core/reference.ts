@@ -1,5 +1,5 @@
-import type { DocumentKind } from "../enums/document-kind";
-import type { ReferenceKind } from "../enums/reference-kind";
+import type { DocumentKind } from '../enums/document-kind';
+import type { ReferenceKind } from '../enums/reference-kind';
 
 export interface ReferenceConstraint {
   kinds?: ReferenceKind[];

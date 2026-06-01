@@ -1,9 +1,9 @@
-import type { Field } from "@specforge/document-schema";
-import type { TableRowValue, TableRowCellValue } from "../document-editor/create-document-state";
-import type { ReferenceValue } from "../reference/model";
-import type { CsvExportOptions, ExportResponse, TableExportData } from "./types";
+import type { Field } from '@specforge/document-schema';
+import type { TableRowValue, TableRowCellValue } from '../document-editor/create-document-state';
+import type { ReferenceValue } from '../reference/model';
+import type { CsvExportOptions, ExportResponse, TableExportData } from './types';
 
-const DEFAULT_DELIMITER = ",";
+const DEFAULT_DELIMITER = ',';
 
 /**
  * Export table data to CSV format
@@ -36,11 +36,11 @@ export function exportTableToCsv(
       lines.push(cells.join(delimiter));
     }
 
-    return { success: true, data: lines.join("\n") };
+    return { success: true, data: lines.join('\n') };
   } catch (error) {
     return {
       success: false,
-      error: `Failed to export to CSV: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to export to CSV: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -63,7 +63,7 @@ export function exportMultipleTablesToCsv(
 
       // Table name as section header
       lines.push(`# ${table.tableName}`);
-      lines.push("");
+      lines.push('');
 
       // Header row
       if (includeHeader) {
@@ -75,35 +75,35 @@ export function exportMultipleTablesToCsv(
       for (const row of table.rows) {
         const cells = table.columns.map((col) => {
           const cellValue = row[col.key];
-          const formatted = String(cellValue ?? "");
+          const formatted = String(cellValue ?? '');
           return escapeCsvCell(formatted, delimiter);
         });
         lines.push(cells.join(delimiter));
       }
 
-      sections.push(lines.join("\n"));
+      sections.push(lines.join('\n'));
     }
 
-    return { success: true, data: sections.join("\n\n") };
+    return { success: true, data: sections.join('\n\n') };
   } catch (error) {
     return {
       success: false,
-      error: `Failed to export tables to CSV: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to export tables to CSV: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
 
 function formatCellValueForCsv(column: Field, value: TableRowCellValue): string {
   if (value === undefined || value === null) {
-    return "";
+    return '';
   }
 
   switch (column.valueType) {
-    case "boolean":
-      return value ? "true" : "false";
-    case "enum":
+    case 'boolean':
+      return value ? 'true' : 'false';
+    case 'enum':
       return getEnumLabel(column, value as string);
-    case "reference":
+    case 'reference':
       return formatReferenceValueForCsv(value as ReferenceValue);
     default:
       return String(value);
@@ -117,18 +117,15 @@ function getEnumLabel(field: Field, value: string): string {
 
 function formatReferenceValueForCsv(value: ReferenceValue): string {
   if (!value) {
-    return "";
+    return '';
   }
-  return value.refId ?? value.documentId ?? "";
+  return value.refId ?? value.documentId ?? '';
 }
 
 function escapeCsvCell(text: string, delimiter: string): string {
   // Check if escaping is needed
   const needsQuoting =
-    text.includes(delimiter) ||
-    text.includes('"') ||
-    text.includes("\n") ||
-    text.includes("\r");
+    text.includes(delimiter) || text.includes('"') || text.includes('\n') || text.includes('\r');
 
   if (!needsQuoting) {
     return text;
@@ -143,11 +140,11 @@ function escapeCsvCell(text: string, delimiter: string): string {
  * Generate filename for CSV export
  */
 export function generateCsvFilename(tableName: string, documentTitle?: string): string {
-  const sanitizedTable = tableName.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const sanitizedTable = tableName.replace(/[^a-zA-Z0-9_-]/g, '_');
   const timestamp = new Date().toISOString().slice(0, 10);
 
   if (documentTitle) {
-    const sanitizedDoc = documentTitle.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const sanitizedDoc = documentTitle.replace(/[^a-zA-Z0-9_-]/g, '_');
     return `${sanitizedDoc}_${sanitizedTable}_${timestamp}.csv`;
   }
 

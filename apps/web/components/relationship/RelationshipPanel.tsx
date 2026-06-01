@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useMemo, useState, type CSSProperties } from "react";
-import type { Project, Document } from "@specforge/document-schema";
+import { useMemo, useState, type CSSProperties } from 'react';
+import type { Project } from '@specforge/document-schema';
 
 import type {
   DocumentEditorState,
   TableRowValue,
-} from "../../lib/document-editor/create-document-state";
-import { isReferenceValue, type ReferenceValue } from "../../lib/reference/model";
+} from '../../lib/document-editor/create-document-state';
+import { isReferenceValue } from '../../lib/reference/model';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -36,19 +36,17 @@ interface RelationshipPanelProps {
 
 function extractRelations(
   project: Project,
-  documentStates: Record<string, DocumentEditorState>,
+  documentStates: Record<string, DocumentEditorState>
 ): ScreenApiRelation[] {
   const apiDocIds = new Set(
-    project.documents.filter((d) => d.kind === "api-spec").map((d) => d.id),
+    project.documents.filter((d) => d.kind === 'api-spec').map((d) => d.id)
   );
-  const docTitleById = Object.fromEntries(
-    project.documents.map((d) => [d.id, d.title]),
-  );
+  const docTitleById = Object.fromEntries(project.documents.map((d) => [d.id, d.title]));
 
   const relations: ScreenApiRelation[] = [];
 
   for (const doc of project.documents) {
-    if (doc.kind !== "screen-spec") continue;
+    if (doc.kind !== 'screen-spec') continue;
 
     const state = documentStates[doc.id];
     if (!state) continue;
@@ -56,7 +54,7 @@ function extractRelations(
     // Find the api-connections table field
     for (const section of doc.sections) {
       for (const field of section.fields) {
-        if (field.valueType !== "table" || field.table?.key !== "api-connections") continue;
+        if (field.valueType !== 'table' || field.table?.key !== 'api-connections') continue;
 
         const rows = Array.isArray(state.fieldValues[field.id])
           ? (state.fieldValues[field.id] as TableRowValue[])
@@ -71,9 +69,11 @@ function extractRelations(
             screenDocId: doc.id,
             screenDocTitle: doc.title,
             apiDocId: apiRef.documentId,
-            apiDocTitle: broken ? `(不明: ${apiRef.documentId.slice(0, 8)}...)` : docTitleById[apiRef.documentId] ?? "",
-            timing: typeof row.timing === "string" ? row.timing : "",
-            purpose: typeof row.purpose === "string" ? row.purpose : "",
+            apiDocTitle: broken
+              ? `(不明: ${apiRef.documentId.slice(0, 8)}...)`
+              : (docTitleById[apiRef.documentId] ?? ''),
+            timing: typeof row.timing === 'string' ? row.timing : '',
+            purpose: typeof row.purpose === 'string' ? row.purpose : '',
             broken,
           });
         }
@@ -89,25 +89,30 @@ function extractRelations(
 /* ------------------------------------------------------------------ */
 
 const KIND_BADGE: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  "screen-spec": { color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE", label: "Screen" },
-  "api-spec": { color: "#059669", bg: "#ECFDF5", border: "#A7F3D0", label: "API" },
+  'screen-spec': { color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE', label: 'Screen' },
+  'api-spec': { color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', label: 'API' },
 };
 
 function KindBadge({ kind }: { kind: string }) {
-  const cfg = KIND_BADGE[kind] ?? { color: "#64748B", bg: "#F8FAFC", border: "#E2E8F0", label: kind };
+  const cfg = KIND_BADGE[kind] ?? {
+    color: '#64748B',
+    bg: '#F8FAFC',
+    border: '#E2E8F0',
+    label: kind,
+  };
   return (
     <span
       style={{
-        display: "inline-block",
-        fontSize: "0.6rem",
+        display: 'inline-block',
+        fontSize: '0.6rem',
         fontWeight: 600,
         color: cfg.color,
         backgroundColor: cfg.bg,
         border: `1px solid ${cfg.border}`,
-        borderRadius: "4px",
-        padding: "0 5px",
-        lineHeight: "1.6",
-        whiteSpace: "nowrap",
+        borderRadius: '4px',
+        padding: '0 5px',
+        lineHeight: '1.6',
+        whiteSpace: 'nowrap',
       }}
     >
       {cfg.label}
@@ -119,16 +124,16 @@ function BrokenBadge() {
   return (
     <span
       style={{
-        display: "inline-block",
-        fontSize: "0.6rem",
+        display: 'inline-block',
+        fontSize: '0.6rem',
         fontWeight: 600,
-        color: "#DC2626",
-        backgroundColor: "#FEF2F2",
-        border: "1px solid #FECACA",
-        borderRadius: "4px",
-        padding: "0 5px",
-        lineHeight: "1.6",
-        whiteSpace: "nowrap",
+        color: '#DC2626',
+        backgroundColor: '#FEF2F2',
+        border: '1px solid #FECACA',
+        borderRadius: '4px',
+        padding: '0 5px',
+        lineHeight: '1.6',
+        whiteSpace: 'nowrap',
       }}
     >
       参照切れ
@@ -137,10 +142,10 @@ function BrokenBadge() {
 }
 
 const arrowStyle: CSSProperties = {
-  fontSize: "0.75rem",
-  color: "#94A3B8",
+  fontSize: '0.75rem',
+  color: '#94A3B8',
   flexShrink: 0,
-  padding: "0 2px",
+  padding: '0 2px',
 };
 
 function RelationCard({
@@ -150,37 +155,29 @@ function RelationCard({
   onClickApi,
 }: {
   relation: ScreenApiRelation;
-  highlight: "screen" | "api" | "none";
+  highlight: 'screen' | 'api' | 'none';
   onClickScreen?: () => void;
   onClickApi?: () => void;
 }) {
-  const bgColor = relation.broken
-    ? "#FEF2F2"
-    : highlight !== "none"
-      ? "#F0F9FF"
-      : "#F8FAFC";
-  const borderColor = relation.broken
-    ? "#FECACA"
-    : highlight !== "none"
-      ? "#BAE6FD"
-      : "#E2E8F0";
+  const bgColor = relation.broken ? '#FEF2F2' : highlight !== 'none' ? '#F0F9FF' : '#F8FAFC';
+  const borderColor = relation.broken ? '#FECACA' : highlight !== 'none' ? '#BAE6FD' : '#E2E8F0';
 
   return (
     <div
       style={{
-        padding: "8px 10px",
+        padding: '8px 10px',
         backgroundColor: bgColor,
         border: `1px solid ${borderColor}`,
-        borderRadius: "6px",
+        borderRadius: '6px',
       }}
     >
       {/* Relationship line */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          flexWrap: "wrap",
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          flexWrap: 'wrap',
         }}
       >
         <KindBadge kind="screen-spec" />
@@ -188,14 +185,16 @@ function RelationCard({
           role="button"
           tabIndex={0}
           onClick={onClickScreen}
-          onKeyDown={(e) => { if (e.key === "Enter") onClickScreen?.(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onClickScreen?.();
+          }}
           style={{
-            fontSize: "0.75rem",
-            fontWeight: highlight === "screen" ? 700 : 500,
-            color: "#0F172A",
-            cursor: onClickScreen ? "pointer" : "default",
-            textDecoration: onClickScreen ? "underline" : "none",
-            textDecorationColor: "#CBD5E1",
+            fontSize: '0.75rem',
+            fontWeight: highlight === 'screen' ? 700 : 500,
+            color: '#0F172A',
+            cursor: onClickScreen ? 'pointer' : 'default',
+            textDecoration: onClickScreen ? 'underline' : 'none',
+            textDecorationColor: '#CBD5E1',
           }}
         >
           {relation.screenDocTitle}
@@ -206,7 +205,7 @@ function RelationCard({
         <KindBadge kind="api-spec" />
         {relation.broken ? (
           <>
-            <span style={{ fontSize: "0.75rem", color: "#94A3B8", fontStyle: "italic" }}>
+            <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontStyle: 'italic' }}>
               {relation.apiDocTitle}
             </span>
             <BrokenBadge />
@@ -216,14 +215,16 @@ function RelationCard({
             role="button"
             tabIndex={0}
             onClick={onClickApi}
-            onKeyDown={(e) => { if (e.key === "Enter") onClickApi?.(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onClickApi?.();
+            }}
             style={{
-              fontSize: "0.75rem",
-              fontWeight: highlight === "api" ? 700 : 500,
-              color: "#0F172A",
-              cursor: onClickApi ? "pointer" : "default",
-              textDecoration: onClickApi ? "underline" : "none",
-              textDecorationColor: "#CBD5E1",
+              fontSize: '0.75rem',
+              fontWeight: highlight === 'api' ? 700 : 500,
+              color: '#0F172A',
+              cursor: onClickApi ? 'pointer' : 'default',
+              textDecoration: onClickApi ? 'underline' : 'none',
+              textDecorationColor: '#CBD5E1',
             }}
           >
             {relation.apiDocTitle}
@@ -233,17 +234,17 @@ function RelationCard({
 
       {/* Details */}
       {(relation.timing || relation.purpose) && (
-        <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#64748B" }}>
+        <div style={{ marginTop: '4px', fontSize: '0.68rem', color: '#64748B' }}>
           {relation.timing && (
             <span>
-              <span style={{ color: "#94A3B8" }}>タイミング: </span>
+              <span style={{ color: '#94A3B8' }}>タイミング: </span>
               {relation.timing}
             </span>
           )}
-          {relation.timing && relation.purpose && <span style={{ color: "#CBD5E1" }}> | </span>}
+          {relation.timing && relation.purpose && <span style={{ color: '#CBD5E1' }}> | </span>}
           {relation.purpose && (
             <span>
-              <span style={{ color: "#94A3B8" }}>目的: </span>
+              <span style={{ color: '#94A3B8' }}>目的: </span>
               {relation.purpose}
             </span>
           )}
@@ -257,12 +258,12 @@ function RelationCard({
 /*  Filter toggle                                                      */
 /* ------------------------------------------------------------------ */
 
-type FilterMode = "all" | "current" | "broken";
+type FilterMode = 'all' | 'current' | 'broken';
 
 const FILTER_OPTIONS: { id: FilterMode; label: string }[] = [
-  { id: "all", label: "すべて" },
-  { id: "current", label: "選択中" },
-  { id: "broken", label: "参照切れ" },
+  { id: 'all', label: 'すべて' },
+  { id: 'current', label: '選択中' },
+  { id: 'broken', label: '参照切れ' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -275,25 +276,22 @@ export function RelationshipPanel({
   currentDocumentId,
   onNavigateToDocument,
 }: RelationshipPanelProps) {
-  const [filterMode, setFilterMode] = useState<FilterMode>("all");
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
 
   const allRelations = useMemo(
     () => extractRelations(project, documentStates),
-    [project, documentStates],
+    [project, documentStates]
   );
 
-  const brokenCount = useMemo(
-    () => allRelations.filter((r) => r.broken).length,
-    [allRelations],
-  );
+  const brokenCount = useMemo(() => allRelations.filter((r) => r.broken).length, [allRelations]);
 
   const filtered = useMemo(() => {
     switch (filterMode) {
-      case "current":
+      case 'current':
         return allRelations.filter(
-          (r) => r.screenDocId === currentDocumentId || r.apiDocId === currentDocumentId,
+          (r) => r.screenDocId === currentDocumentId || r.apiDocId === currentDocumentId
         );
-      case "broken":
+      case 'broken':
         return allRelations.filter((r) => r.broken);
       default:
         return allRelations;
@@ -320,39 +318,35 @@ export function RelationshipPanel({
 
   // Orphan api-specs: api-specs not referenced by any screen-spec
   const orphanApiDocs = useMemo(() => {
-    const referencedApiIds = new Set(
-      allRelations.filter((r) => !r.broken).map((r) => r.apiDocId),
-    );
-    return project.documents.filter(
-      (d) => d.kind === "api-spec" && !referencedApiIds.has(d.id),
-    );
+    const referencedApiIds = new Set(allRelations.filter((r) => !r.broken).map((r) => r.apiDocId));
+    return project.documents.filter((d) => d.kind === 'api-spec' && !referencedApiIds.has(d.id));
   }, [project.documents, allRelations]);
 
   const handleNavigate = (docId: string) => {
     const doc = project.documents.find((d) => d.id === docId);
     if (!doc || !onNavigateToDocument) return;
-    onNavigateToDocument(docId, doc.sections[0]?.id ?? "", "");
+    onNavigateToDocument(docId, doc.sections[0]?.id ?? '', '');
   };
 
   /* Summary stats */
-  const screenCount = project.documents.filter((d) => d.kind === "screen-spec").length;
-  const apiCount = project.documents.filter((d) => d.kind === "api-spec").length;
+  const screenCount = project.documents.filter((d) => d.kind === 'screen-spec').length;
+  const apiCount = project.documents.filter((d) => d.kind === 'api-spec').length;
 
   return (
-    <div style={{ maxHeight: "calc(100vh - 320px)", overflow: "auto" }}>
+    <div style={{ maxHeight: 'calc(100vh - 320px)', overflow: 'auto' }}>
       {/* Summary */}
       <div
         style={{
-          padding: "8px 10px",
-          backgroundColor: "#F8FAFC",
-          border: "1px solid #E2E8F0",
-          borderRadius: "6px",
-          marginBottom: "10px",
-          fontSize: "0.72rem",
-          color: "#475569",
-          display: "flex",
-          gap: "12px",
-          flexWrap: "wrap",
+          padding: '8px 10px',
+          backgroundColor: '#F8FAFC',
+          border: '1px solid #E2E8F0',
+          borderRadius: '6px',
+          marginBottom: '10px',
+          fontSize: '0.72rem',
+          color: '#475569',
+          display: 'flex',
+          gap: '12px',
+          flexWrap: 'wrap',
         }}
       >
         <span>
@@ -365,14 +359,12 @@ export function RelationshipPanel({
           接続: <strong>{allRelations.length}</strong>
         </span>
         {brokenCount > 0 && (
-          <span style={{ color: "#DC2626", fontWeight: 600 }}>
-            参照切れ: {brokenCount}
-          </span>
+          <span style={{ color: '#DC2626', fontWeight: 600 }}>参照切れ: {brokenCount}</span>
         )}
       </div>
 
       {/* Filter */}
-      <div style={{ display: "flex", gap: "0", marginBottom: "10px" }}>
+      <div style={{ display: 'flex', gap: '0', marginBottom: '10px' }}>
         {FILTER_OPTIONS.map((opt) => {
           const isActive = filterMode === opt.id;
           return (
@@ -382,33 +374,29 @@ export function RelationshipPanel({
               onClick={() => setFilterMode(opt.id)}
               style={{
                 flex: 1,
-                padding: "4px 0",
-                fontSize: "0.7rem",
+                padding: '4px 0',
+                fontSize: '0.7rem',
                 fontWeight: isActive ? 600 : 400,
-                color: isActive
-                  ? opt.id === "broken"
-                    ? "#DC2626"
-                    : "#3B82F6"
-                  : "#64748B",
-                backgroundColor: "transparent",
-                border: "none",
+                color: isActive ? (opt.id === 'broken' ? '#DC2626' : '#3B82F6') : '#64748B',
+                backgroundColor: 'transparent',
+                border: 'none',
                 borderBottom: isActive
-                  ? `2px solid ${opt.id === "broken" ? "#DC2626" : "#3B82F6"}`
-                  : "2px solid transparent",
-                cursor: "pointer",
+                  ? `2px solid ${opt.id === 'broken' ? '#DC2626' : '#3B82F6'}`
+                  : '2px solid transparent',
+                cursor: 'pointer',
               }}
             >
               {opt.label}
-              {opt.id === "broken" && brokenCount > 0 && (
+              {opt.id === 'broken' && brokenCount > 0 && (
                 <span
                   style={{
-                    marginLeft: "3px",
-                    fontSize: "0.6rem",
+                    marginLeft: '3px',
+                    fontSize: '0.6rem',
                     fontWeight: 600,
-                    color: "#FFFFFF",
-                    backgroundColor: "#EF4444",
-                    borderRadius: "9999px",
-                    padding: "0 4px",
+                    color: '#FFFFFF',
+                    backgroundColor: '#EF4444',
+                    borderRadius: '9999px',
+                    padding: '0 4px',
                   }}
                 >
                   {brokenCount}
@@ -423,41 +411,41 @@ export function RelationshipPanel({
       {filtered.length === 0 && orphanApiDocs.length === 0 && (
         <div
           style={{
-            padding: "16px",
-            textAlign: "center",
-            color: "#94A3B8",
-            fontSize: "0.78rem",
+            padding: '16px',
+            textAlign: 'center',
+            color: '#94A3B8',
+            fontSize: '0.78rem',
           }}
         >
-          {filterMode === "current"
-            ? "選択中のドキュメントに関連する接続はありません"
-            : filterMode === "broken"
-              ? "参照切れはありません"
-              : "Screen → API の接続はまだありません"}
+          {filterMode === 'current'
+            ? '選択中のドキュメントに関連する接続はありません'
+            : filterMode === 'broken'
+              ? '参照切れはありません'
+              : 'Screen → API の接続はまだありません'}
         </div>
       )}
 
       {grouped.map(([screenDocId, relations]) => (
-        <div key={screenDocId} style={{ marginBottom: "10px" }}>
+        <div key={screenDocId} style={{ marginBottom: '10px' }}>
           <div
             style={{
-              fontSize: "0.7rem",
+              fontSize: '0.7rem',
               fontWeight: 600,
-              color: screenDocId === currentDocumentId ? "#7C3AED" : "#475569",
-              marginBottom: "4px",
-              paddingLeft: "2px",
+              color: screenDocId === currentDocumentId ? '#7C3AED' : '#475569',
+              marginBottom: '4px',
+              paddingLeft: '2px',
             }}
           >
             {relations[0].screenDocTitle}
             {screenDocId === currentDocumentId && (
               <span
                 style={{
-                  marginLeft: "4px",
-                  fontSize: "0.6rem",
-                  color: "#3B82F6",
-                  backgroundColor: "#DBEAFE",
-                  borderRadius: "4px",
-                  padding: "0 4px",
+                  marginLeft: '4px',
+                  fontSize: '0.6rem',
+                  color: '#3B82F6',
+                  backgroundColor: '#DBEAFE',
+                  borderRadius: '4px',
+                  padding: '0 4px',
                   fontWeight: 500,
                 }}
               >
@@ -465,14 +453,14 @@ export function RelationshipPanel({
               </span>
             )}
           </div>
-          <div style={{ display: "grid", gap: "4px" }}>
+          <div style={{ display: 'grid', gap: '4px' }}>
             {relations.map((rel, i) => {
               const highlight =
                 rel.screenDocId === currentDocumentId
-                  ? "screen" as const
+                  ? ('screen' as const)
                   : rel.apiDocId === currentDocumentId
-                    ? "api" as const
-                    : "none" as const;
+                    ? ('api' as const)
+                    : ('none' as const);
               return (
                 <RelationCard
                   key={`${rel.screenDocId}-${rel.apiDocId}-${i}`}
@@ -496,50 +484,52 @@ export function RelationshipPanel({
       ))}
 
       {/* Orphan API specs (unreferenced) */}
-      {filterMode !== "broken" && orphanApiDocs.length > 0 && (
-        <div style={{ marginTop: "12px" }}>
+      {filterMode !== 'broken' && orphanApiDocs.length > 0 && (
+        <div style={{ marginTop: '12px' }}>
           <div
             style={{
-              fontSize: "0.7rem",
+              fontSize: '0.7rem',
               fontWeight: 600,
-              color: "#D97706",
-              marginBottom: "6px",
-              paddingLeft: "2px",
+              color: '#D97706',
+              marginBottom: '6px',
+              paddingLeft: '2px',
             }}
           >
             未参照の API 仕様書
           </div>
-          <div style={{ display: "grid", gap: "4px" }}>
+          <div style={{ display: 'grid', gap: '4px' }}>
             {orphanApiDocs.map((doc) => (
               <div
                 key={doc.id}
                 role="button"
                 tabIndex={0}
                 onClick={() => handleNavigate(doc.id)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleNavigate(doc.id); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleNavigate(doc.id);
+                }}
                 style={{
-                  padding: "6px 10px",
-                  backgroundColor: "#FFFBEB",
-                  border: "1px solid #FDE68A",
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  cursor: "pointer",
+                  padding: '6px 10px',
+                  backgroundColor: '#FFFBEB',
+                  border: '1px solid #FDE68A',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
                 }}
               >
                 <KindBadge kind="api-spec" />
                 <span
                   style={{
-                    fontSize: "0.75rem",
+                    fontSize: '0.75rem',
                     fontWeight: doc.id === currentDocumentId ? 700 : 500,
-                    color: "#0F172A",
+                    color: '#0F172A',
                     flex: 1,
                   }}
                 >
                   {doc.title}
                 </span>
-                <span style={{ fontSize: "0.65rem", color: "#D97706" }}>未参照</span>
+                <span style={{ fontSize: '0.65rem', color: '#D97706' }}>未参照</span>
               </div>
             ))}
           </div>

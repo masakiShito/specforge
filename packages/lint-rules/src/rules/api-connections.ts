@@ -1,13 +1,17 @@
-import type { DesignValidationIssue, TableColumnDefinition, TableRowValue, TableValidationContext } from "../types";
+import type {
+  DesignValidationIssue,
+  TableColumnDefinition,
+  TableRowValue,
+  TableValidationContext,
+} from '../types';
 import {
-  findDuplicateKeys,
   findEmptyRows,
   findMissingRequiredCells,
   getCellReferenceId,
   getCellString,
   isRowEmpty,
   normalizeTableValidationArgs,
-} from "./common";
+} from './common';
 
 type Field = TableColumnDefinition;
 
@@ -40,19 +44,19 @@ export function validateApiConnections(
   rows.forEach((row, rowIndex) => {
     if (isRowEmpty(row, columns)) return;
 
-    const refId = getCellReferenceId(row, "apiRef");
+    const refId = getCellReferenceId(row, 'apiRef');
     if (refId) {
       if (seenRefIds.has(refId)) {
         issues.push({
           id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:apiRef:duplicate`,
-          severity: "error",
+          severity: 'error',
           documentId: ctx.documentId,
           sectionId: ctx.sectionId,
           sectionTitle: ctx.sectionTitle,
           fieldId: ctx.fieldId,
           fieldLabel: ctx.fieldLabel,
           rowIndex,
-          columnKey: "apiRef",
+          columnKey: 'apiRef',
           message: `API参照が重複しています`,
           reason: `同じAPI仕様書への参照が行 ${seenRefIds.get(refId)! + 1} と重複しています。`,
           fix: `行 ${rowIndex + 1} のAPI参照を別のAPI仕様書に変更するか、重複する行を削除してください。`,
@@ -67,24 +71,24 @@ export function validateApiConnections(
   rows.forEach((row, rowIndex) => {
     if (isRowEmpty(row, columns)) return;
 
-    const inputSummary = getCellString(row, "inputSummary");
-    const outputSummary = getCellString(row, "outputSummary");
+    const inputSummary = getCellString(row, 'inputSummary');
+    const outputSummary = getCellString(row, 'outputSummary');
 
     // Both input and output summary empty → warning
     if (!inputSummary && !outputSummary) {
       issues.push({
         id: `${ctx.sectionId}:${ctx.fieldId}:row${rowIndex}:no-io-summary`,
-        severity: "warning",
+        severity: 'warning',
         documentId: ctx.documentId,
         sectionId: ctx.sectionId,
         sectionTitle: ctx.sectionTitle,
         fieldId: ctx.fieldId,
         fieldLabel: ctx.fieldLabel,
         rowIndex,
-        columnKey: "inputSummary",
+        columnKey: 'inputSummary',
         message: `行 ${rowIndex + 1}: 主な入力・主な出力がどちらも未記載です`,
-        reason: "APIの入出力が不明だと、実装者が画面とAPI間のデータフローを把握できません。",
-        fix: "「主な入力」「主な出力」の少なくとも一方にデータの概要を記載してください。",
+        reason: 'APIの入出力が不明だと、実装者が画面とAPI間のデータフローを把握できません。',
+        fix: '「主な入力」「主な出力」の少なくとも一方にデータの概要を記載してください。',
       });
     }
   });
@@ -93,5 +97,5 @@ export function validateApiConnections(
 }
 
 export function isApiConnectionsTable(fieldKey: string): boolean {
-  return fieldKey === "api-connections" || fieldKey === "apiConnections";
+  return fieldKey === 'api-connections' || fieldKey === 'apiConnections';
 }

@@ -1,4 +1,4 @@
-import type { ValidationSeverity } from "../../types/validation";
+import type { ValidationSeverity } from '../../types/validation';
 
 export interface DesignValidationIssue {
   id: string;

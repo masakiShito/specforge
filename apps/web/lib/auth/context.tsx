@@ -1,28 +1,10 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import type {
-  AuthContextValue,
-  AuthState,
-  LoginCredentials,
-  RegisterData,
-  User,
-} from "./types";
-import * as api from "./api";
-import {
-  clearTokens,
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-} from "./storage";
+import type { AuthContextValue, AuthState, LoginCredentials, RegisterData } from './types';
+import * as api from './api';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './storage';
 
 const initialState: AuthState = {
   user: null,
@@ -104,9 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
     } catch (error) {
       const message =
-        error instanceof api.AuthApiError
-          ? error.message
-          : "Login failed. Please try again.";
+        error instanceof api.AuthApiError ? error.message : 'Login failed. Please try again.';
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -141,7 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const message =
         error instanceof api.AuthApiError
           ? error.message
-          : "Registration failed. Please try again.";
+          : 'Registration failed. Please try again.';
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -203,7 +183,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

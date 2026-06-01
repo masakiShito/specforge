@@ -4,7 +4,7 @@
  * ドキュメント種別に応じて適切なガイドを表示する。
  */
 
-import type { DocumentKind } from "@specforge/document-schema";
+import type { DocumentKind } from '@specforge/document-schema';
 
 export const screenSpecGuide = `# 画面仕様書ガイド
 
@@ -131,8 +131,8 @@ APIから返却されるパラメータを定義します。
 `;
 
 const GUIDE_MAP: Record<string, string> = {
-  "screen-spec": screenSpecGuide,
-  "api-spec": apiSpecGuide,
+  'screen-spec': screenSpecGuide,
+  'api-spec': apiSpecGuide,
 };
 
 /**

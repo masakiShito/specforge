@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { Document, DocumentKind, Project } from "@specforge/document-schema";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Document, DocumentKind, Project } from '@specforge/document-schema';
 
-import type { DocumentEditorState, FieldValue } from "../lib/document-editor/create-document-state";
-import { createDocumentState } from "../lib/document-editor/create-document-state";
-import { updateFieldValue } from "../lib/document-editor/update-field-value";
-import { createDocument } from "../lib/document-editor/create-document";
+import type { DocumentEditorState, FieldValue } from '../lib/document-editor/create-document-state';
+import { createDocumentState } from '../lib/document-editor/create-document-state';
+import { updateFieldValue } from '../lib/document-editor/update-field-value';
+import { createDocument } from '../lib/document-editor/create-document';
 import {
   getProject,
   updateProject as apiUpdateProject,
@@ -15,7 +15,7 @@ import {
   deleteDocument as apiDeleteDocument,
   apiProjectToFullState,
   ApiError,
-} from "../lib/api";
+} from '../lib/api';
 
 // =============================================================================
 // Types
@@ -83,7 +83,8 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         const apiProject = await getProject(projectId);
         if (isCancelled) return;
 
-        const { project: loadedProject, documentStates: loadedStates } = apiProjectToFullState(apiProject);
+        const { project: loadedProject, documentStates: loadedStates } =
+          apiProjectToFullState(apiProject);
         setProject(loadedProject);
         setDocumentStates(loadedStates);
       } catch (err) {
@@ -91,7 +92,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         if (err instanceof ApiError) {
           setError(err.message);
         } else {
-          setError("プロジェクトの読み込みに失敗しました");
+          setError('プロジェクトの読み込みに失敗しました');
         }
       } finally {
         if (!isCancelled) {
@@ -137,7 +138,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("保存に失敗しました");
+        setError('保存に失敗しました');
       }
     } finally {
       setIsSaving(false);
@@ -178,107 +179,101 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
   );
 
   // Handle add document with sync
-  const handleAddDocumentWithSync = useCallback(
-    async (kind: DocumentKind) => {
-      const currentProject = projectRef.current;
-      if (!currentProject) return;
+  const handleAddDocumentWithSync = useCallback(async (kind: DocumentKind) => {
+    const currentProject = projectRef.current;
+    if (!currentProject) return;
 
-      const existingDocs = currentProject.documents;
-      const newDoc = createDocument(kind, existingDocs);
+    const existingDocs = currentProject.documents;
+    const newDoc = createDocument(kind, existingDocs);
 
-      try {
-        setIsSaving(true);
-        const apiDoc = await apiCreateDocument(currentProject.id, {
-          title: newDoc.title,
-          key: newDoc.key,
-          kind: newDoc.kind,
-          version: newDoc.version,
-          content: {},
-        });
+    try {
+      setIsSaving(true);
+      const apiDoc = await apiCreateDocument(currentProject.id, {
+        title: newDoc.title,
+        key: newDoc.key,
+        kind: newDoc.kind,
+        version: newDoc.version,
+        content: {},
+      });
 
-        // Update document with API-assigned ID
-        const syncedDoc: Document = {
-          ...newDoc,
-          id: apiDoc.id,
-          key: apiDoc.key,
-        };
+      // Update document with API-assigned ID
+      const syncedDoc: Document = {
+        ...newDoc,
+        id: apiDoc.id,
+        key: apiDoc.key,
+      };
 
-        // Update project state
-        setProject((prev) =>
-          prev
-            ? {
-                ...prev,
-                documents: [...prev.documents, syncedDoc],
-              }
-            : null
-        );
+      // Update project state
+      setProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              documents: [...prev.documents, syncedDoc],
+            }
+          : null
+      );
 
-        // Create editor state for new document
-        setDocumentStates((prev) => ({
-          ...prev,
-          [syncedDoc.id]: createDocumentState(syncedDoc),
-        }));
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError("ドキュメントの作成に失敗しました");
-        }
-      } finally {
-        setIsSaving(false);
+      // Create editor state for new document
+      setDocumentStates((prev) => ({
+        ...prev,
+        [syncedDoc.id]: createDocumentState(syncedDoc),
+      }));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('ドキュメントの作成に失敗しました');
       }
-    },
-    []
-  );
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   // Handle delete document with sync
-  const handleDeleteDocumentWithSync = useCallback(
-    async (documentId: string) => {
-      const currentProject = projectRef.current;
-      if (!currentProject) return;
+  const handleDeleteDocumentWithSync = useCallback(async (documentId: string) => {
+    const currentProject = projectRef.current;
+    if (!currentProject) return;
 
-      // Don't delete if it's the last document
-      if (currentProject.documents.length <= 1) return;
+    // Don't delete if it's the last document
+    if (currentProject.documents.length <= 1) return;
 
-      try {
-        setIsSaving(true);
-        await apiDeleteDocument(documentId);
+    try {
+      setIsSaving(true);
+      await apiDeleteDocument(documentId);
 
-        // Update project state
-        setProject((prev) =>
-          prev
-            ? {
-                ...prev,
-                documents: prev.documents.filter((doc) => doc.id !== documentId),
-              }
-            : null
-        );
+      // Update project state
+      setProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              documents: prev.documents.filter((doc) => doc.id !== documentId),
+            }
+          : null
+      );
 
-        // Remove editor state
-        setDocumentStates((prev) => {
-          const newStates = { ...prev };
-          delete newStates[documentId];
-          return newStates;
-        });
+      // Remove editor state
+      setDocumentStates((prev) => {
+        const newStates = { ...prev };
+        delete newStates[documentId];
+        return newStates;
+      });
 
-        // Clear any pending updates
-        delete pendingUpdates.current[documentId];
-        if (debounceTimers.current[documentId]) {
-          clearTimeout(debounceTimers.current[documentId]);
-          delete debounceTimers.current[documentId];
-        }
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError("ドキュメントの削除に失敗しました");
-        }
-      } finally {
-        setIsSaving(false);
+      // Clear any pending updates
+      delete pendingUpdates.current[documentId];
+      if (debounceTimers.current[documentId]) {
+        clearTimeout(debounceTimers.current[documentId]);
+        delete debounceTimers.current[documentId];
       }
-    },
-    []
-  );
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('ドキュメントの削除に失敗しました');
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   // Handle document title change with sync
   const handleDocumentTitleChangeWithSync = useCallback(
@@ -335,7 +330,7 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
         if (err instanceof ApiError) {
           setError(err.message);
         } else {
-          setError("タイトルの更新に失敗しました");
+          setError('タイトルの更新に失敗しました');
         }
       } finally {
         setIsSaving(false);
@@ -345,33 +340,30 @@ export function useProjectSync({ projectId }: UseProjectSyncOptions): UseProject
   );
 
   // Handle project title change with sync
-  const handleProjectTitleChangeWithSync = useCallback(
-    async (title: string) => {
-      const currentProject = projectRef.current;
-      if (!currentProject) return;
+  const handleProjectTitleChangeWithSync = useCallback(async (title: string) => {
+    const currentProject = projectRef.current;
+    if (!currentProject) return;
 
-      const trimmedTitle = title.trim();
-      if (!trimmedTitle) return;
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return;
 
-      // Update local state immediately
-      setProject((prev) => (prev ? { ...prev, title: trimmedTitle } : null));
+    // Update local state immediately
+    setProject((prev) => (prev ? { ...prev, title: trimmedTitle } : null));
 
-      // Sync to API
-      try {
-        setIsSaving(true);
-        await apiUpdateProject(currentProject.id, { title: trimmedTitle });
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError("プロジェクト名の更新に失敗しました");
-        }
-      } finally {
-        setIsSaving(false);
+    // Sync to API
+    try {
+      setIsSaving(true);
+      await apiUpdateProject(currentProject.id, { title: trimmedTitle });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('プロジェクト名の更新に失敗しました');
       }
-    },
-    []
-  );
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   return {
     project,

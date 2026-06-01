@@ -1,5 +1,5 @@
-import type { DocumentKind } from "../enums/document-kind";
-import type { Section } from "./section";
+import type { DocumentKind } from '../enums/document-kind';
+import type { Section } from './section';
 
 export interface Document {
   id: string;

@@ -4,11 +4,11 @@ export {
   type ValidatableDocument,
   type ValidatableSection,
   type ValidatableField,
-} from "./document-validator";
+} from './document-validator';
 
 export {
   validateProject,
   calculateProjectQualityScore,
   getQualityStatus,
   type ValidatableProject,
-} from "./project-validator";
+} from './project-validator';

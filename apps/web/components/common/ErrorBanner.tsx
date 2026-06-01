@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 interface ErrorBannerProps {
   message: string | null;
@@ -13,14 +13,14 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
   return (
     <div
       style={{
-        backgroundColor: "#FEE2E2",
-        border: "1px solid #FECACA",
-        borderRadius: "8px",
-        padding: "12px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        marginBottom: "16px",
+        backgroundColor: '#FEE2E2',
+        border: '1px solid #FECACA',
+        borderRadius: '8px',
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        marginBottom: '16px',
       }}
     >
       <svg
@@ -40,8 +40,8 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
       </svg>
       <span
         style={{
-          color: "#991B1B",
-          fontSize: "0.875rem",
+          color: '#991B1B',
+          fontSize: '0.875rem',
           flex: 1,
         }}
       >
@@ -51,14 +51,14 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
         type="button"
         onClick={onDismiss}
         style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#991B1B",
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#991B1B',
         }}
         aria-label="閉じる"
       >

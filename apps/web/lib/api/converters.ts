@@ -3,26 +3,26 @@
  * Convert between API response types and frontend Document/Project types
  */
 
-import type { Document, Project, DocumentKind } from "@specforge/document-schema";
+import type { Document, Project, DocumentKind } from '@specforge/document-schema';
 import {
   screenSpecPreset,
   apiSpecPreset,
   erSpecPreset,
   businessRulePreset,
-} from "@specforge/document-schema";
+} from '@specforge/document-schema';
 
-import type { DocumentEditorState, FieldValue } from "../document-editor/create-document-state";
-import type { ApiDocument, ApiProject } from "./projects";
+import type { DocumentEditorState, FieldValue } from '../document-editor/create-document-state';
+import type { ApiDocument, ApiProject } from './projects';
 
 // =============================================================================
 // Preset Map
 // =============================================================================
 
 const PRESET_MAP: Record<string, Document> = {
-  "screen-spec": screenSpecPreset,
-  "api-spec": apiSpecPreset,
-  "er-spec": erSpecPreset,
-  "business-rule": businessRulePreset,
+  'screen-spec': screenSpecPreset,
+  'api-spec': apiSpecPreset,
+  'er-spec': erSpecPreset,
+  'business-rule': businessRulePreset,
 };
 
 // =============================================================================
@@ -49,25 +49,25 @@ function clonePresetWithFreshIds(preset: Document, docId: string): Document {
     id: docId,
     key: `${preset.key}-${docId}`,
     sections: preset.sections.map((section) => {
-      const sectionId = nextId("sec");
+      const sectionId = nextId('sec');
       return {
         ...section,
         id: sectionId,
         fields: section.fields.map((field) => {
-          const fieldId = nextId("fld");
+          const fieldId = nextId('fld');
           return {
             ...field,
             id: fieldId,
             table: field.table
               ? {
                   ...field.table,
-                  id: nextId("tbl"),
+                  id: nextId('tbl'),
                   columns: field.table.columns.map((col) => ({
                     ...col,
-                    id: nextId("col"),
+                    id: nextId('col'),
                     options: col.options?.map((opt) => ({
                       ...opt,
-                      id: nextId("opt"),
+                      id: nextId('opt'),
                     })),
                   })),
                   defaultRows: [],
@@ -75,13 +75,13 @@ function clonePresetWithFreshIds(preset: Document, docId: string): Document {
               : undefined,
             options: field.options?.map((opt) => ({
               ...opt,
-              id: nextId("opt"),
+              id: nextId('opt'),
             })),
           };
         }),
         references: section.references?.map((ref) => ({
           ...ref,
-          id: nextId("ref"),
+          id: nextId('ref'),
         })),
       };
     }),

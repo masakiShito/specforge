@@ -10,10 +10,12 @@
   },
   "scripts": {
     "build": "tsc --noEmit",
-    "lint": "echo 'lint-rules lint is not initialized yet'",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "echo 'lint-rules format is not initialized yet'"
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "dependencies": {
     "@specforge/document-schema": "workspace:*"

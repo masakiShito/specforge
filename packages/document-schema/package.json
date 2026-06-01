@@ -10,10 +10,12 @@
   },
   "scripts": {
     "build": "tsc --noEmit",
-    "lint": "echo 'document-schema lint is not initialized yet'",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "echo 'document-schema format is not initialized yet'"
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "devDependencies": {
     "typescript": "^5.8.2",

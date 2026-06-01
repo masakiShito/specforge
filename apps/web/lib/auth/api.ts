@@ -2,16 +2,16 @@
  * Authentication API client
  */
 
-import type { AuthTokens, LoginCredentials, RegisterData, User } from "./types";
+import type { AuthTokens, LoginCredentials, RegisterData, User } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 class AuthApiError extends Error {
   status: number;
 
   constructor(message: string, status: number) {
     super(message);
-    this.name = "AuthApiError";
+    this.name = 'AuthApiError';
     this.status = status;
   }
 }
@@ -20,21 +20,21 @@ async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     // Handle validation errors (422) with detailed messages
-    let errorMessage = "An error occurred";
+    let errorMessage = 'An error occurred';
     if (data.detail) {
       if (Array.isArray(data.detail)) {
         // Pydantic validation errors return an array
         errorMessage = data.detail
           .map((err: { loc?: string[]; msg?: string }) => {
-            const field = err.loc?.slice(-1)[0] || "field";
-            return `${field}: ${err.msg || "invalid"}`;
+            const field = err.loc?.slice(-1)[0] || 'field';
+            return `${field}: ${err.msg || 'invalid'}`;
           })
-          .join(", ");
+          .join(', ');
       } else {
         errorMessage = data.detail;
       }
     }
-    console.error("API Error:", response.status, data);
+    console.error('API Error:', response.status, data);
     throw new AuthApiError(errorMessage, response.status);
   }
   return response.json();
@@ -45,9 +45,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function register(data: RegisterData): Promise<User> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
@@ -60,9 +60,9 @@ export async function register(data: RegisterData): Promise<User> {
  */
 export async function login(credentials: LoginCredentials): Promise<AuthTokens> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(credentials),
   });
@@ -75,9 +75,9 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens> 
  */
 export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
@@ -90,7 +90,7 @@ export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
  */
 export async function getCurrentUser(accessToken: string): Promise<User> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-    method: "GET",
+    method: 'GET',
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -108,9 +108,9 @@ export async function changePassword(
   newPassword: string
 ): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({

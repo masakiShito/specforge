@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import type { CSSProperties } from "react";
+import { useState } from 'react';
+import type { CSSProperties } from 'react';
 
 interface FieldDescriptionProps {
   description?: string;
@@ -10,10 +10,10 @@ interface FieldDescriptionProps {
 const TRUNCATE_THRESHOLD = 80;
 
 const baseStyle: CSSProperties = {
-  margin: "4px 0 0",
-  fontSize: "0.75rem",
-  lineHeight: "1.5",
-  color: "#64748B",
+  margin: '4px 0 0',
+  fontSize: '0.75rem',
+  lineHeight: '1.5',
+  color: '#64748B',
 };
 
 export function FieldDescription({ description }: FieldDescriptionProps) {
@@ -29,7 +29,7 @@ export function FieldDescription({ description }: FieldDescriptionProps) {
     return <p style={baseStyle}>{description}</p>;
   }
 
-  const truncated = description.slice(0, TRUNCATE_THRESHOLD) + "…";
+  const truncated = description.slice(0, TRUNCATE_THRESHOLD) + '…';
 
   return (
     <div style={baseStyle}>
@@ -38,16 +38,16 @@ export function FieldDescription({ description }: FieldDescriptionProps) {
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         style={{
-          background: "none",
-          border: "none",
+          background: 'none',
+          border: 'none',
           padding: 0,
-          marginTop: "2px",
-          fontSize: "0.7rem",
-          color: "#3B82F6",
-          cursor: "pointer",
+          marginTop: '2px',
+          fontSize: '0.7rem',
+          color: '#3B82F6',
+          cursor: 'pointer',
         }}
       >
-        {expanded ? "閉じる" : "詳細"}
+        {expanded ? '閉じる' : '詳細'}
       </button>
     </div>
   );

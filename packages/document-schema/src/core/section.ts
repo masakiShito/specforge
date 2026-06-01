@@ -1,5 +1,5 @@
-import type { Field } from "./field";
-import type { Reference } from "./reference";
+import type { Field } from './field';
+import type { Reference } from './reference';
 
 export interface Section {
   id: string;

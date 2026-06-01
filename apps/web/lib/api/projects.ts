@@ -3,7 +3,7 @@
  * Functions for managing projects and documents via the backend API
  */
 
-import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "./client";
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from './client';
 
 // =============================================================================
 // API Response Types (matching backend Pydantic models)
@@ -81,7 +81,7 @@ export interface DocumentReorderRequest {
  * List all projects
  */
 export async function listProjects(): Promise<ApiProjectListItem[]> {
-  return apiGet<ApiProjectListItem[]>("/api/v1/projects");
+  return apiGet<ApiProjectListItem[]>('/api/v1/projects');
 }
 
 /**
@@ -95,7 +95,7 @@ export async function getProject(id: string): Promise<ApiProject> {
  * Create a new project
  */
 export async function createProject(data: ProjectCreateRequest): Promise<ApiProject> {
-  return apiPost<ApiProject>("/api/v1/projects", data);
+  return apiPost<ApiProject>('/api/v1/projects', data);
 }
 
 /**

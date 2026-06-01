@@ -1,9 +1,9 @@
-import type { Project, Document } from "@specforge/document-schema";
-import { isProject, isDocument } from "@specforge/document-schema";
-import type { DocumentEditorState, FieldValue } from "../document-editor/create-document-state";
-import type { ProjectExportData, DocumentExportData, ImportResponse } from "./types";
+import type { Project, Document } from '@specforge/document-schema';
+import { isProject, isDocument } from '@specforge/document-schema';
+import type { DocumentEditorState, FieldValue } from '../document-editor/create-document-state';
+import type { ProjectExportData, DocumentExportData, ImportResponse } from './types';
 
-const SUPPORTED_VERSIONS = ["1.0.0"];
+const SUPPORTED_VERSIONS = ['1.0.0'];
 
 /**
  * Import project from JSON string
@@ -18,8 +18,8 @@ export function importProjectFromJson(
     if (!validation.valid) {
       return {
         success: false,
-        error: "Invalid project data",
-        details: validation.errors
+        error: 'Invalid project data',
+        details: validation.errors,
       };
     }
 
@@ -33,12 +33,12 @@ export function importProjectFromJson(
 
     return {
       success: true,
-      data: { project, documentStates }
+      data: { project, documentStates },
     };
   } catch (error) {
     return {
       success: false,
-      error: `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -56,8 +56,8 @@ export function importDocumentFromJson(
     if (!validation.valid) {
       return {
         success: false,
-        error: "Invalid document data",
-        details: validation.errors
+        error: 'Invalid document data',
+        details: validation.errors,
       };
     }
 
@@ -71,12 +71,12 @@ export function importDocumentFromJson(
 
     return {
       success: true,
-      data: { document, fieldValues }
+      data: { document, fieldValues },
     };
   } catch (error) {
     return {
       success: false,
-      error: `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`
+      error: `Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -92,23 +92,23 @@ interface ValidationResult {
 export function validateImportData(data: unknown): ValidationResult {
   const errors: string[] = [];
 
-  if (!data || typeof data !== "object") {
-    return { valid: false, errors: ["Data must be an object"] };
+  if (!data || typeof data !== 'object') {
+    return { valid: false, errors: ['Data must be an object'] };
   }
 
   const obj = data as Record<string, unknown>;
 
   // Check version
-  if (!obj.version || typeof obj.version !== "string") {
-    errors.push("Missing or invalid version");
+  if (!obj.version || typeof obj.version !== 'string') {
+    errors.push('Missing or invalid version');
   } else if (!SUPPORTED_VERSIONS.includes(obj.version)) {
-    errors.push(`Unsupported version: ${obj.version}. Supported: ${SUPPORTED_VERSIONS.join(", ")}`);
+    errors.push(`Unsupported version: ${obj.version}. Supported: ${SUPPORTED_VERSIONS.join(', ')}`);
   }
 
   // Check if it's a project or document export
-  if ("project" in obj) {
+  if ('project' in obj) {
     return validateProjectImportData(data);
-  } else if ("document" in obj) {
+  } else if ('document' in obj) {
     return validateDocumentImportData(data);
   }
 
@@ -119,33 +119,33 @@ export function validateImportData(data: unknown): ValidationResult {
 function validateProjectImportData(data: unknown): ValidationResult {
   const errors: string[] = [];
 
-  if (!data || typeof data !== "object") {
-    return { valid: false, errors: ["Data must be an object"] };
+  if (!data || typeof data !== 'object') {
+    return { valid: false, errors: ['Data must be an object'] };
   }
 
   const obj = data as Record<string, unknown>;
 
   // Check version
-  if (!obj.version || typeof obj.version !== "string") {
-    errors.push("Missing or invalid version");
+  if (!obj.version || typeof obj.version !== 'string') {
+    errors.push('Missing or invalid version');
   } else if (!SUPPORTED_VERSIONS.includes(obj.version)) {
     errors.push(`Unsupported version: ${obj.version}`);
   }
 
   // Check project
   if (!obj.project) {
-    errors.push("Missing project data");
+    errors.push('Missing project data');
   } else if (!isProject(obj.project)) {
-    errors.push("Invalid project structure");
+    errors.push('Invalid project structure');
   }
 
   // Check documentStates
   if (!Array.isArray(obj.documentStates)) {
-    errors.push("Missing or invalid documentStates array");
+    errors.push('Missing or invalid documentStates array');
   } else {
     for (let i = 0; i < obj.documentStates.length; i++) {
       const state = obj.documentStates[i];
-      if (!state || typeof state !== "object") {
+      if (!state || typeof state !== 'object') {
         errors.push(`documentStates[${i}] is not an object`);
       } else if (!isDocument((state as Record<string, unknown>).document)) {
         errors.push(`documentStates[${i}].document is invalid`);
@@ -159,29 +159,29 @@ function validateProjectImportData(data: unknown): ValidationResult {
 function validateDocumentImportData(data: unknown): ValidationResult {
   const errors: string[] = [];
 
-  if (!data || typeof data !== "object") {
-    return { valid: false, errors: ["Data must be an object"] };
+  if (!data || typeof data !== 'object') {
+    return { valid: false, errors: ['Data must be an object'] };
   }
 
   const obj = data as Record<string, unknown>;
 
   // Check version
-  if (!obj.version || typeof obj.version !== "string") {
-    errors.push("Missing or invalid version");
+  if (!obj.version || typeof obj.version !== 'string') {
+    errors.push('Missing or invalid version');
   } else if (!SUPPORTED_VERSIONS.includes(obj.version)) {
     errors.push(`Unsupported version: ${obj.version}`);
   }
 
   // Check document
   if (!obj.document) {
-    errors.push("Missing document data");
+    errors.push('Missing document data');
   } else if (!isDocument(obj.document)) {
-    errors.push("Invalid document structure");
+    errors.push('Invalid document structure');
   }
 
   // Check fieldValues
-  if (obj.fieldValues && typeof obj.fieldValues !== "object") {
-    errors.push("Invalid fieldValues structure");
+  if (obj.fieldValues && typeof obj.fieldValues !== 'object') {
+    errors.push('Invalid fieldValues structure');
   }
 
   return { valid: errors.length === 0, errors };
@@ -234,7 +234,7 @@ function regenerateIds(
 
     return {
       document: newDoc,
-      fieldValues: newFieldValues
+      fieldValues: newFieldValues,
     };
   });
 
@@ -242,9 +242,9 @@ function regenerateIds(
     project: {
       ...project,
       id: newProjectId,
-      documents: newDocuments
+      documents: newDocuments,
     },
-    documentStates: newDocumentStates
+    documentStates: newDocumentStates,
   };
 }
 
@@ -264,9 +264,10 @@ function regenerateDocumentIds(
   return { document: newDoc, fieldValues: newFieldValues };
 }
 
-function regenerateDocumentIdsInternal(
-  document: Document
-): { document: Document; fieldIdMap: Map<string, string> } {
+function regenerateDocumentIdsInternal(document: Document): {
+  document: Document;
+  fieldIdMap: Map<string, string>;
+} {
   const fieldIdMap = new Map<string, string>();
   const newDocId = generateId();
 
@@ -291,8 +292,8 @@ function regenerateDocumentIdsInternal(
           table: {
             ...field.table,
             id: newTableId,
-            columns: newColumns
-          }
+            columns: newColumns,
+          },
         };
       }
 
@@ -306,8 +307,8 @@ function regenerateDocumentIdsInternal(
     document: {
       ...document,
       id: newDocId,
-      sections: newSections
+      sections: newSections,
     },
-    fieldIdMap
+    fieldIdMap,
   };
 }

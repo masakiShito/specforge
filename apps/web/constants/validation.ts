@@ -22,14 +22,14 @@ export const QUALITY_SCORE_PENALTIES = {
  * Categories are determined by issue ID prefix.
  */
 export const QUALITY_SCORE_CATEGORY_CAPS = {
-  duplicate: 20,      // 重複キー
-  required: 30,       // 必須フィールド未入力
-  "empty-row": 10,    // 空行
-  "invalid-path": 15, // パス形式エラー
-  "invalid-api": 15,  // API関連エラー
-  "missing-options": 15, // 選択肢未設定
-  reference: 20,      // 参照エラー
-  default: 40,        // その他（カテゴリ未定義）
+  duplicate: 20, // 重複キー
+  required: 30, // 必須フィールド未入力
+  'empty-row': 10, // 空行
+  'invalid-path': 15, // パス形式エラー
+  'invalid-api': 15, // API関連エラー
+  'missing-options': 15, // 選択肢未設定
+  reference: 20, // 参照エラー
+  default: 40, // その他（カテゴリ未定義）
 } as const;
 
 /**
@@ -44,9 +44,9 @@ export const QUALITY_SCORE_THRESHOLDS = {
  * Status labels for quality score display.
  */
 export const QUALITY_STATUS_LABELS = {
-  good: "良好",
-  caution: "注意",
-  "needs-improvement": "要改善",
+  good: '良好',
+  caution: '注意',
+  'needs-improvement': '要改善',
 } as const;
 
 /**
@@ -54,19 +54,19 @@ export const QUALITY_STATUS_LABELS = {
  */
 export const QUALITY_STATUS_COLORS = {
   good: {
-    color: "#22C55E",
-    bg: "#F0FDF4",
-    border: "#BBF7D0",
+    color: '#22C55E',
+    bg: '#F0FDF4',
+    border: '#BBF7D0',
   },
   caution: {
-    color: "#D97706",
-    bg: "#FFFBEB",
-    border: "#FDE68A",
+    color: '#D97706',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
   },
-  "needs-improvement": {
-    color: "#EF4444",
-    bg: "#FEF2F2",
-    border: "#FECACA",
+  'needs-improvement': {
+    color: '#EF4444',
+    bg: '#FEF2F2',
+    border: '#FECACA',
   },
 } as const;
 
@@ -83,9 +83,9 @@ export const MAX_VISIBLE_CONDITION_LENGTH = 120;
  * Severity levels for validation issues.
  */
 export const SEVERITY_LEVELS = {
-  error: "error",
-  warning: "warning",
-  info: "info",
+  error: 'error',
+  warning: 'warning',
+  info: 'info',
 } as const;
 
 export type SeverityLevel = keyof typeof SEVERITY_LEVELS;
@@ -98,35 +98,35 @@ export type SeverityLevel = keyof typeof SEVERITY_LEVELS;
  * Labels and colors for unconnected reference types.
  */
 export const REFERENCE_TYPE_CONFIG = {
-  "broken-ref": {
-    label: "参照切れ",
-    color: "#DC2626",
-    bg: "#FEF2F2",
-    border: "#FECACA",
+  'broken-ref': {
+    label: '参照切れ',
+    color: '#DC2626',
+    bg: '#FEF2F2',
+    border: '#FECACA',
   },
-  "orphan-api": {
-    label: "未参照",
-    color: "#D97706",
-    bg: "#FFFBEB",
-    border: "#FDE68A",
+  'orphan-api': {
+    label: '未参照',
+    color: '#D97706',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
   },
-  "orphan-screen": {
-    label: "未接続",
-    color: "#D97706",
-    bg: "#FFFBEB",
-    border: "#FDE68A",
+  'orphan-screen': {
+    label: '未接続',
+    color: '#D97706',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
   },
-  "missing-event-target": {
-    label: "対象不明",
-    color: "#D97706",
-    bg: "#FFFBEB",
-    border: "#FDE68A",
+  'missing-event-target': {
+    label: '対象不明',
+    color: '#D97706',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
   },
-  "missing-api-connection": {
-    label: "API未接続",
-    color: "#D97706",
-    bg: "#FFFBEB",
-    border: "#FDE68A",
+  'missing-api-connection': {
+    label: 'API未接続',
+    color: '#D97706',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
   },
 } as const;
 
@@ -140,29 +140,29 @@ export type ReferenceType = keyof typeof REFERENCE_TYPE_CONFIG;
  * Display configuration for document kinds.
  */
 export const DOCUMENT_KIND_CONFIG = {
-  "screen-spec": {
-    label: "Screen",
-    color: "#7C3AED",
-    bg: "#F5F3FF",
-    border: "#DDD6FE",
+  'screen-spec': {
+    label: 'Screen',
+    color: '#7C3AED',
+    bg: '#F5F3FF',
+    border: '#DDD6FE',
   },
-  "api-spec": {
-    label: "API",
-    color: "#059669",
-    bg: "#ECFDF5",
-    border: "#A7F3D0",
+  'api-spec': {
+    label: 'API',
+    color: '#059669',
+    bg: '#ECFDF5',
+    border: '#A7F3D0',
   },
-  "er-spec": {
-    label: "ER",
-    color: "#2563EB",
-    bg: "#EFF6FF",
-    border: "#BFDBFE",
+  'er-spec': {
+    label: 'ER',
+    color: '#2563EB',
+    bg: '#EFF6FF',
+    border: '#BFDBFE',
   },
-  "business-rule": {
-    label: "Rule",
-    color: "#D97706",
-    bg: "#FFFBEB",
-    border: "#FDE68A",
+  'business-rule': {
+    label: 'Rule',
+    color: '#D97706',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
   },
 } as const;
 

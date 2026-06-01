@@ -1,7 +1,7 @@
 /**
  * Validation severity levels.
  */
-export type ValidationSeverity = "error" | "warning" | "info";
+export type ValidationSeverity = 'error' | 'warning' | 'info';
 
 /**
  * Reference value used by the web editor.
@@ -13,7 +13,7 @@ export interface ReferenceValue {
   sectionId?: string;
   fieldId?: string;
   rowKey?: string;
-  type?: "reference";
+  type?: 'reference';
   referenceType?: string;
   targetDocumentId?: string;
   targetKey?: string;
@@ -34,20 +34,20 @@ export type TableRowValue = any;
  * Type guard to check if a value is a supported reference value.
  */
 export function isReferenceValue(value: unknown): value is AnyReferenceValue {
-  if (typeof value !== "object" || value === null) {
+  if (typeof value !== 'object' || value === null) {
     return false;
   }
   const obj = value as Record<string, unknown>;
   const isWebReference =
-    typeof obj["refId"] === "string" &&
-    typeof obj["kind"] === "string" &&
-    typeof obj["documentId"] === "string";
+    typeof obj['refId'] === 'string' &&
+    typeof obj['kind'] === 'string' &&
+    typeof obj['documentId'] === 'string';
   const isLegacyReference =
-    obj["type"] === "reference" &&
-    typeof obj["referenceType"] === "string" &&
-    typeof obj["targetDocumentId"] === "string" &&
-    typeof obj["targetKey"] === "string" &&
-    typeof obj["displayValue"] === "string";
+    obj['type'] === 'reference' &&
+    typeof obj['referenceType'] === 'string' &&
+    typeof obj['targetDocumentId'] === 'string' &&
+    typeof obj['targetKey'] === 'string' &&
+    typeof obj['displayValue'] === 'string';
   return isWebReference || isLegacyReference;
 }
 

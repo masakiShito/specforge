@@ -1,8 +1,8 @@
-import type { Section } from "@specforge/document-schema";
+import type { Section } from '@specforge/document-schema';
 
-import type { FieldValue } from "../lib/document-editor/create-document-state";
+import type { FieldValue } from '../lib/document-editor/create-document-state';
 
-export type SectionStatus = "not-started" | "in-progress" | "needs-fix" | "complete";
+export type SectionStatus = 'not-started' | 'in-progress' | 'needs-fix' | 'complete';
 
 export interface SectionStatusInfo {
   status: SectionStatus;
@@ -11,26 +11,26 @@ export interface SectionStatusInfo {
   backgroundColor: string;
 }
 
-const STATUS_MAP: Record<SectionStatus, Omit<SectionStatusInfo, "status">> = {
-  "not-started": {
-    statusLabel: "未着手",
-    color: "#94A3B8",
-    backgroundColor: "#F1F5F9",
+const STATUS_MAP: Record<SectionStatus, Omit<SectionStatusInfo, 'status'>> = {
+  'not-started': {
+    statusLabel: '未着手',
+    color: '#94A3B8',
+    backgroundColor: '#F1F5F9',
   },
-  "in-progress": {
-    statusLabel: "入力中",
-    color: "#3B82F6",
-    backgroundColor: "#EFF6FF",
+  'in-progress': {
+    statusLabel: '入力中',
+    color: '#3B82F6',
+    backgroundColor: '#EFF6FF',
   },
-  "needs-fix": {
-    statusLabel: "要修正",
-    color: "#EF4444",
-    backgroundColor: "#FEF2F2",
+  'needs-fix': {
+    statusLabel: '要修正',
+    color: '#EF4444',
+    backgroundColor: '#FEF2F2',
   },
   complete: {
-    statusLabel: "完了",
-    color: "#22C55E",
-    backgroundColor: "#F0FDF4",
+    statusLabel: '完了',
+    color: '#22C55E',
+    backgroundColor: '#F0FDF4',
   },
 };
 
@@ -50,16 +50,16 @@ function determineSectionStatus(
 ): SectionStatus {
   // Error exists → needs fix
   if (missingRequiredCount > 0) {
-    return "needs-fix";
+    return 'needs-fix';
   }
 
   const hasAnyInput = section.fields.some((field) => {
     const value = fieldValues[field.id];
-    return value !== undefined && value !== null && value !== "";
+    return value !== undefined && value !== null && value !== '';
   });
 
   if (!hasAnyInput) {
-    return "not-started";
+    return 'not-started';
   }
 
   // All required fields filled + has input → complete
@@ -67,12 +67,12 @@ function determineSectionStatus(
     .filter((f) => f.required)
     .every((f) => {
       const v = fieldValues[f.id];
-      return v !== undefined && v !== null && v !== "";
+      return v !== undefined && v !== null && v !== '';
     });
 
   if (allRequiredFilled) {
-    return "complete";
+    return 'complete';
   }
 
-  return "in-progress";
+  return 'in-progress';
 }

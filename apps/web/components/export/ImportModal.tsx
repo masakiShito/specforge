@@ -1,14 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useRef } from "react";
-import type { Project, Document } from "@specforge/document-schema";
-import type { DocumentEditorState, FieldValue } from "../../lib/document-editor/create-document-state";
+import { useState, useCallback, useRef } from 'react';
+import type { Project, Document } from '@specforge/document-schema';
+import type {
+  DocumentEditorState,
+  FieldValue,
+} from '../../lib/document-editor/create-document-state';
 import {
   importProjectFromJson,
   importDocumentFromJson,
   validateImportData,
   readFileAsText,
-} from "../../lib/export";
+} from '../../lib/export';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -17,7 +20,7 @@ interface ImportModalProps {
   onImportDocument: (document: Document, fieldValues: Record<string, FieldValue>) => void;
 }
 
-type ImportTarget = "project" | "document";
+type ImportTarget = 'project' | 'document';
 
 interface ImportPreview {
   type: ImportTarget;
@@ -33,7 +36,7 @@ export function ImportModal({
   onImportProject,
   onImportDocument,
 }: ImportModalProps) {
-  const [target, setTarget] = useState<ImportTarget>("project");
+  const [target, setTarget] = useState<ImportTarget>('project');
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
@@ -64,29 +67,31 @@ export function ImportModal({
         const validation = validateImportData(parsed);
 
         if (!validation.valid) {
-          setError("ファイル形式が正しくありません");
+          setError('ファイル形式が正しくありません');
           setValidationErrors(validation.errors);
           return;
         }
 
         // Determine type and create preview
-        if ("project" in parsed) {
-          setTarget("project");
+        if ('project' in parsed) {
+          setTarget('project');
           setPreview({
-            type: "project",
+            type: 'project',
             projectTitle: parsed.project?.title,
             documentCount: parsed.project?.documents?.length ?? 0,
           });
-        } else if ("document" in parsed) {
-          setTarget("document");
+        } else if ('document' in parsed) {
+          setTarget('document');
           setPreview({
-            type: "document",
+            type: 'document',
             documentTitle: parsed.document?.title,
             documentKind: parsed.document?.kind,
           });
         }
       } catch (err) {
-        setError(`ファイルの読み込みに失敗しました: ${err instanceof Error ? err.message : String(err)}`);
+        setError(
+          `ファイルの読み込みに失敗しました: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     },
     [resetState]
@@ -96,10 +101,10 @@ export function ImportModal({
     (e: React.DragEvent) => {
       e.preventDefault();
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile && droppedFile.name.endsWith(".json")) {
+      if (droppedFile && droppedFile.name.endsWith('.json')) {
         handleFileSelect(droppedFile);
       } else {
-        setError("JSON ファイルのみインポートできます");
+        setError('JSON ファイルのみインポートできます');
       }
     },
     [handleFileSelect]
@@ -116,7 +121,7 @@ export function ImportModal({
     setError(null);
 
     try {
-      if (target === "project") {
+      if (target === 'project') {
         const result = importProjectFromJson(fileContent);
         if (!result.success) {
           setError(result.error);
@@ -156,33 +161,33 @@ export function ImportModal({
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         zIndex: 1000,
       }}
       onClick={handleClose}
     >
       <div
         style={{
-          backgroundColor: "#FFFFFF",
-          borderRadius: "12px",
-          padding: "24px",
-          width: "480px",
-          maxWidth: "90vw",
-          maxHeight: "80vh",
-          overflow: "auto",
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+          backgroundColor: '#FFFFFF',
+          borderRadius: '12px',
+          padding: '24px',
+          width: '480px',
+          maxWidth: '90vw',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ margin: "0 0 20px", fontSize: "1.25rem", fontWeight: 600, color: "#0F172A" }}>
+        <h2 style={{ margin: '0 0 20px', fontSize: '1.25rem', fontWeight: 600, color: '#0F172A' }}>
           インポート
         </h2>
 
@@ -192,21 +197,21 @@ export function ImportModal({
           onDragOver={handleDragOver}
           onClick={() => fileInputRef.current?.click()}
           style={{
-            border: "2px dashed #E2E8F0",
-            borderRadius: "8px",
-            padding: "32px",
-            textAlign: "center",
-            cursor: "pointer",
-            backgroundColor: file ? "#F0FDF4" : "#F8FAFC",
-            marginBottom: "16px",
-            transition: "all 0.15s",
+            border: '2px dashed #E2E8F0',
+            borderRadius: '8px',
+            padding: '32px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            backgroundColor: file ? '#F0FDF4' : '#F8FAFC',
+            marginBottom: '16px',
+            transition: 'all 0.15s',
           }}
         >
           <input
             ref={fileInputRef}
             type="file"
             accept=".json"
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
             onChange={(e) => {
               const selectedFile = e.target.files?.[0];
               if (selectedFile) {
@@ -218,22 +223,22 @@ export function ImportModal({
             <>
               <div
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  backgroundColor: "#22C55E",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 12px",
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: '#22C55E',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 12px',
                 }}
               >
-                <span style={{ color: "#FFFFFF", fontSize: "1.5rem" }}>✓</span>
+                <span style={{ color: '#FFFFFF', fontSize: '1.5rem' }}>✓</span>
               </div>
-              <p style={{ margin: 0, fontSize: "0.875rem", fontWeight: 500, color: "#0F172A" }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500, color: '#0F172A' }}>
                 {file.name}
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+              <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#64748B' }}>
                 クリックして別のファイルを選択
               </p>
             </>
@@ -241,22 +246,22 @@ export function ImportModal({
             <>
               <div
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  backgroundColor: "#E2E8F0",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 12px",
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: '#E2E8F0',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 12px',
                 }}
               >
-                <span style={{ fontSize: "1.5rem" }}>📁</span>
+                <span style={{ fontSize: '1.5rem' }}>📁</span>
               </div>
-              <p style={{ margin: 0, fontSize: "0.875rem", fontWeight: 500, color: "#475569" }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500, color: '#475569' }}>
                 クリックまたはドラッグ&ドロップ
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "#94A3B8" }}>
+              <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#94A3B8' }}>
                 JSON ファイル (.json)
               </p>
             </>
@@ -267,38 +272,40 @@ export function ImportModal({
         {preview && (
           <div
             style={{
-              padding: "12px",
-              backgroundColor: "#F0FDF4",
-              border: "1px solid #BBF7D0",
-              borderRadius: "8px",
-              marginBottom: "16px",
+              padding: '12px',
+              backgroundColor: '#F0FDF4',
+              border: '1px solid #BBF7D0',
+              borderRadius: '8px',
+              marginBottom: '16px',
             }}
           >
-            <h3 style={{ margin: "0 0 8px", fontSize: "0.875rem", fontWeight: 600, color: "#166534" }}>
+            <h3
+              style={{ margin: '0 0 8px', fontSize: '0.875rem', fontWeight: 600, color: '#166534' }}
+            >
               インポート内容
             </h3>
-            {preview.type === "project" ? (
-              <div style={{ fontSize: "0.8rem", color: "#15803D" }}>
-                <p style={{ margin: "0 0 4px" }}>
+            {preview.type === 'project' ? (
+              <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                <p style={{ margin: '0 0 4px' }}>
                   <strong>種別:</strong> プロジェクト
                 </p>
-                <p style={{ margin: "0 0 4px" }}>
-                  <strong>タイトル:</strong> {preview.projectTitle ?? "(不明)"}
+                <p style={{ margin: '0 0 4px' }}>
+                  <strong>タイトル:</strong> {preview.projectTitle ?? '(不明)'}
                 </p>
                 <p style={{ margin: 0 }}>
                   <strong>ドキュメント数:</strong> {preview.documentCount}
                 </p>
               </div>
             ) : (
-              <div style={{ fontSize: "0.8rem", color: "#15803D" }}>
-                <p style={{ margin: "0 0 4px" }}>
+              <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                <p style={{ margin: '0 0 4px' }}>
                   <strong>種別:</strong> ドキュメント
                 </p>
-                <p style={{ margin: "0 0 4px" }}>
-                  <strong>タイトル:</strong> {preview.documentTitle ?? "(不明)"}
+                <p style={{ margin: '0 0 4px' }}>
+                  <strong>タイトル:</strong> {preview.documentTitle ?? '(不明)'}
                 </p>
                 <p style={{ margin: 0 }}>
-                  <strong>タイプ:</strong> {preview.documentKind ?? "(不明)"}
+                  <strong>タイプ:</strong> {preview.documentKind ?? '(不明)'}
                 </p>
               </div>
             )}
@@ -309,18 +316,25 @@ export function ImportModal({
         {error && (
           <div
             style={{
-              padding: "12px",
-              backgroundColor: "#FEF2F2",
-              border: "1px solid #FECACA",
-              borderRadius: "8px",
-              marginBottom: "16px",
+              padding: '12px',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: '8px',
+              marginBottom: '16px',
             }}
           >
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#DC2626", fontWeight: 500 }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: '#DC2626', fontWeight: 500 }}>
               {error}
             </p>
             {validationErrors.length > 0 && (
-              <ul style={{ margin: "8px 0 0", paddingLeft: "20px", fontSize: "0.75rem", color: "#B91C1C" }}>
+              <ul
+                style={{
+                  margin: '8px 0 0',
+                  paddingLeft: '20px',
+                  fontSize: '0.75rem',
+                  color: '#B91C1C',
+                }}
+              >
                 {validationErrors.map((err, index) => (
                   <li key={index}>{err}</li>
                 ))}
@@ -333,35 +347,35 @@ export function ImportModal({
         {preview && (
           <div
             style={{
-              padding: "12px",
-              backgroundColor: "#FFFBEB",
-              border: "1px solid #FDE68A",
-              borderRadius: "8px",
-              marginBottom: "16px",
+              padding: '12px',
+              backgroundColor: '#FFFBEB',
+              border: '1px solid #FDE68A',
+              borderRadius: '8px',
+              marginBottom: '16px',
             }}
           >
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "#92400E" }}>
-              {preview.type === "project"
-                ? "プロジェクトをインポートすると、現在のプロジェクトは置き換えられます。"
-                : "ドキュメントは現在のプロジェクトに追加されます。"}
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#92400E' }}>
+              {preview.type === 'project'
+                ? 'プロジェクトをインポートすると、現在のプロジェクトは置き換えられます。'
+                : 'ドキュメントは現在のプロジェクトに追加されます。'}
             </p>
           </div>
         )}
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
           <button
             type="button"
             onClick={handleClose}
             style={{
-              padding: "8px 16px",
-              fontSize: "0.875rem",
+              padding: '8px 16px',
+              fontSize: '0.875rem',
               fontWeight: 500,
-              color: "#475569",
-              backgroundColor: "#F1F5F9",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
+              color: '#475569',
+              backgroundColor: '#F1F5F9',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
             }}
           >
             キャンセル
@@ -371,17 +385,17 @@ export function ImportModal({
             onClick={handleImport}
             disabled={isImporting || !preview || !!error}
             style={{
-              padding: "8px 16px",
-              fontSize: "0.875rem",
+              padding: '8px 16px',
+              fontSize: '0.875rem',
               fontWeight: 500,
-              color: "#FFFFFF",
-              backgroundColor: isImporting || !preview || !!error ? "#94A3B8" : "#3B82F6",
-              border: "none",
-              borderRadius: "6px",
-              cursor: isImporting || !preview || !!error ? "not-allowed" : "pointer",
+              color: '#FFFFFF',
+              backgroundColor: isImporting || !preview || !!error ? '#94A3B8' : '#3B82F6',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: isImporting || !preview || !!error ? 'not-allowed' : 'pointer',
             }}
           >
-            {isImporting ? "インポート中..." : "インポート"}
+            {isImporting ? 'インポート中...' : 'インポート'}
           </button>
         </div>
       </div>

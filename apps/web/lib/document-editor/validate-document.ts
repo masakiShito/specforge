@@ -1,6 +1,6 @@
-import type { Field } from "@specforge/document-schema";
+import type { Field } from '@specforge/document-schema';
 
-import type { DocumentEditorState, FieldValue, TableRowValue } from "./create-document-state";
+import type { DocumentEditorState, FieldValue, TableRowValue } from './create-document-state';
 
 export interface ValidationWarning {
   id: string;
@@ -27,11 +27,19 @@ function isRequiredFieldMissing(field: Field, value: FieldValue): boolean {
     return true;
   }
 
-  if ((field.valueType === "text" || field.valueType === "textarea" || field.valueType === "enum") && value === "") {
+  if (
+    (field.valueType === 'text' || field.valueType === 'textarea' || field.valueType === 'enum') &&
+    value === ''
+  ) {
     return true;
   }
 
-  if (field.valueType === "reference" && typeof value === "object" && value !== null && !("refId" in value)) {
+  if (
+    field.valueType === 'reference' &&
+    typeof value === 'object' &&
+    value !== null &&
+    !('refId' in value)
+  ) {
     return true;
   }
 
@@ -39,7 +47,7 @@ function isRequiredFieldMissing(field: Field, value: FieldValue): boolean {
 }
 
 function isCellEmpty(value: FieldValue | TableRowValue[string]): boolean {
-  return value === undefined || value === null || value === "";
+  return value === undefined || value === null || value === '';
 }
 
 function isRowEmpty(row: TableRowValue, columns: Field[]): boolean {
@@ -66,7 +74,7 @@ function validateTableField(
       sectionTitle,
       fieldId: field.id,
       fieldLabel: field.label,
-      message: "テーブルに行が追加されていません",
+      message: 'テーブルに行が追加されていません',
     });
     return warnings;
   }
@@ -116,7 +124,7 @@ export function validateDocument(state: DocumentEditorState): DocumentValidation
       const value = state.fieldValues[field.id];
 
       // Table field validation
-      if (field.valueType === "table" && field.table) {
+      if (field.valueType === 'table' && field.table) {
         const rows = Array.isArray(value) ? (value as TableRowValue[]) : [];
         const tableWarnings = validateTableField(field, rows, section.id, section.title);
         if (tableWarnings.length > 0) {
@@ -138,7 +146,7 @@ export function validateDocument(state: DocumentEditorState): DocumentValidation
         sectionTitle: section.title,
         fieldId: field.id,
         fieldLabel: field.label,
-        message: "Required field is empty"
+        message: 'Required field is empty',
       });
     });
 
@@ -147,6 +155,6 @@ export function validateDocument(state: DocumentEditorState): DocumentValidation
 
   return {
     warnings,
-    missingRequiredBySection
+    missingRequiredBySection,
   };
 }

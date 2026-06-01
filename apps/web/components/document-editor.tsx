@@ -1,33 +1,36 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   sampleScreenSpecProject,
   normalizeProjectData,
   type Project,
   type Document,
   type DocumentKind,
-} from "@specforge/document-schema";
+} from '@specforge/document-schema';
 
 import {
   createDocumentState,
   type DocumentEditorState,
   type FieldValue,
-} from "../lib/document-editor/create-document-state";
-import { createDocument } from "../lib/document-editor/create-document";
-import { updateFieldValue } from "../lib/document-editor/update-field-value";
-import { validateDocument } from "../lib/document-editor/validate-document";
-import { validateDesignQuality, validateProjectQuality } from "../lib/validation/validate-design-quality";
-import { enrichValidation, convertDesignIssues } from "../utils/enrichValidation";
+} from '../lib/document-editor/create-document-state';
+import { createDocument } from '../lib/document-editor/create-document';
+import { updateFieldValue } from '../lib/document-editor/update-field-value';
+import { validateDocument } from '../lib/document-editor/validate-document';
+import {
+  validateDesignQuality,
+  validateProjectQuality,
+} from '../lib/validation/validate-design-quality';
+import { enrichValidation, convertDesignIssues } from '../utils/enrichValidation';
 
-import { SectionForm } from "./section-form";
-import { SectionList } from "./section-list";
-import { DocumentList } from "./document-list";
-import { RightPanel } from "./right-panel";
-import { DocumentPreview } from "./document-preview";
-import { ProjectHealthDashboard } from "./health/ProjectHealthDashboard";
-import { ExportModal, ImportModal } from "./export";
-import { UserMenu } from "./auth";
+import { SectionForm } from './section-form';
+import { SectionList } from './section-list';
+import { DocumentList } from './document-list';
+import { RightPanel } from './right-panel';
+import { DocumentPreview } from './document-preview';
+import { ProjectHealthDashboard } from './health/ProjectHealthDashboard';
+import { ExportModal, ImportModal } from './export';
+import { UserMenu } from './auth';
 
 /**
  * Build initial per-document editor states for all documents in a project.
@@ -46,13 +49,9 @@ function ensureUniqueDocumentTitle(
   documents: Document[]
 ): string {
   const normalized = requestedTitle.trim();
-  if (!normalized) return "";
+  if (!normalized) return '';
 
-  const used = new Set(
-    documents
-      .filter((doc) => doc.id !== documentId)
-      .map((doc) => doc.title)
-  );
+  const used = new Set(documents.filter((doc) => doc.id !== documentId).map((doc) => doc.title));
   if (!used.has(normalized)) return normalized;
 
   let suffix = 2;
@@ -75,7 +74,9 @@ interface DocumentEditorProps {
   externalProject?: Project;
   externalDocumentStates?: Record<string, DocumentEditorState>;
   setExternalProject?: React.Dispatch<React.SetStateAction<Project | null>>;
-  setExternalDocumentStates?: React.Dispatch<React.SetStateAction<Record<string, DocumentEditorState>>>;
+  setExternalDocumentStates?: React.Dispatch<
+    React.SetStateAction<Record<string, DocumentEditorState>>
+  >;
 }
 
 export function DocumentEditor({
@@ -100,9 +101,10 @@ export function DocumentEditor({
 
   // Determine which state to use
   const projectState = useExternal ? externalProject : internalProjectState;
-  const setProjectState = useExternal && setExternalProject
-    ? (setExternalProject as React.Dispatch<React.SetStateAction<Project>>)
-    : setInternalProjectState;
+  const setProjectState =
+    useExternal && setExternalProject
+      ? (setExternalProject as React.Dispatch<React.SetStateAction<Project>>)
+      : setInternalProjectState;
 
   const documentById = useMemo(
     () => Object.fromEntries(projectState.documents.map((document) => [document.id, document])),
@@ -110,34 +112,36 @@ export function DocumentEditor({
   );
 
   // Per-document editor states keyed by document id
-  const [internalDocumentStates, setInternalDocumentStates] = useState<Record<string, DocumentEditorState>>(
-    () => createProjectStates(projectState)
-  );
+  const [internalDocumentStates, setInternalDocumentStates] = useState<
+    Record<string, DocumentEditorState>
+  >(() => createProjectStates(projectState));
 
   // Use external document states if provided
   const documentStates = useExternal ? externalDocumentStates : internalDocumentStates;
-  const setDocumentStates = useExternal && setExternalDocumentStates
-    ? setExternalDocumentStates
-    : setInternalDocumentStates;
+  const setDocumentStates =
+    useExternal && setExternalDocumentStates
+      ? setExternalDocumentStates
+      : setInternalDocumentStates;
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>(
-    projectState.documents[0]?.id ?? ""
+    projectState.documents[0]?.id ?? ''
   );
-  const [selectedSectionIdByDocument, setSelectedSectionIdByDocument] = useState<Record<string, string>>(
-    () =>
-      Object.fromEntries(
-        projectState.documents.map((document) => [document.id, document.sections[0]?.id ?? ""])
-      )
+  const [selectedSectionIdByDocument, setSelectedSectionIdByDocument] = useState<
+    Record<string, string>
+  >(() =>
+    Object.fromEntries(
+      projectState.documents.map((document) => [document.id, document.sections[0]?.id ?? ''])
+    )
   );
   const [focusFieldId, setFocusFieldId] = useState<string | null>(null);
   const [editingTitleDocId, setEditingTitleDocId] = useState<string | null>(null);
   const [editingProjectTitle, setEditingProjectTitle] = useState(false);
-  const [centerMode, setCenterMode] = useState<"edit" | "preview">("edit");
-  const [viewMode, setViewMode] = useState<"editor" | "health">("editor");
+  const [centerMode, setCenterMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<'editor' | 'health'>('editor');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
-  const fallbackDocumentId = projectState.documents[0]?.id ?? "";
+  const fallbackDocumentId = projectState.documents[0]?.id ?? '';
   const currentDocument =
     (selectedDocumentId ? documentById[selectedDocumentId] : undefined) ??
     (fallbackDocumentId ? documentById[fallbackDocumentId] : undefined);
@@ -156,7 +160,7 @@ export function DocumentEditor({
         setSelectedDocumentId(latestDoc.id);
         setSelectedSectionIdByDocument((prev) => ({
           ...prev,
-          [latestDoc.id]: latestDoc.sections[0]?.id ?? "",
+          [latestDoc.id]: latestDoc.sections[0]?.id ?? '',
         }));
       }
     }
@@ -178,15 +182,21 @@ export function DocumentEditor({
     : { document: null as unknown as Document, fieldValues: {} };
 
   const selectedSectionId = currentDocument
-    ? (selectedSectionIdByDocument[currentDocument.id] ?? currentDocument.sections[0]?.id ?? "")
-    : "";
+    ? (selectedSectionIdByDocument[currentDocument.id] ?? currentDocument.sections[0]?.id ?? '')
+    : '';
 
   const validation = useMemo(
-    () => currentDocument ? validateDocument(currentDocumentState) : { errors: [], warnings: [], missingRequiredBySection: {} },
+    () =>
+      currentDocument
+        ? validateDocument(currentDocumentState)
+        : { errors: [], warnings: [], missingRequiredBySection: {} },
     [currentDocument, currentDocumentState]
   );
   const designQuality = useMemo(
-    () => currentDocument ? validateDesignQuality(currentDocumentState, projectState) : { issues: [], issueCountBySection: {} },
+    () =>
+      currentDocument
+        ? validateDesignQuality(currentDocumentState, projectState)
+        : { issues: [], issueCountBySection: {} },
     [currentDocument, currentDocumentState, projectState]
   );
   const projectQuality = useMemo(
@@ -197,16 +207,19 @@ export function DocumentEditor({
   const validationItems = useMemo(() => {
     if (!currentDocument) return [];
     const nonTableWarnings = validation.warnings.filter(
-      (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
+      (w) => !w.id.includes(':table-empty') && !w.id.includes(':row')
     );
-    const basicItems = enrichValidation(nonTableWarnings).map((item) => ({ ...item, documentId: currentDocument.id }));
+    const basicItems = enrichValidation(nonTableWarnings).map((item) => ({
+      ...item,
+      documentId: currentDocument.id,
+    }));
     const designItems = convertDesignIssues(designQuality.issues);
     return [...basicItems, ...designItems];
   }, [validation.warnings, designQuality.issues, currentDocument]);
 
   // All-document validation items for the panel (enables cross-document navigation)
   const allValidationItems = useMemo(() => {
-    const items: import("../types/validation").ValidationItem[] = [];
+    const items: import('../types/validation').ValidationItem[] = [];
 
     for (const doc of projectState.documents) {
       const state = documentStates[doc.id];
@@ -215,7 +228,7 @@ export function DocumentEditor({
       // Basic required-field validation
       const docValidation = validateDocument(state);
       const nonTableWarnings = docValidation.warnings.filter(
-        (w) => !w.id.includes(":table-empty") && !w.id.includes(":row")
+        (w) => !w.id.includes(':table-empty') && !w.id.includes(':row')
       );
       const basicItems = enrichValidation(nonTableWarnings).map((item) => ({
         ...item,
@@ -228,7 +241,7 @@ export function DocumentEditor({
     // Project-level design quality issues (already cover all documents)
     const designItems = convertDesignIssues(projectQuality.issues).map((item) => ({
       ...item,
-      documentTitle: documentById[item.documentId ?? ""]?.title ?? "",
+      documentTitle: documentById[item.documentId ?? '']?.title ?? '',
     }));
     items.push(...designItems);
 
@@ -238,7 +251,7 @@ export function DocumentEditor({
   const errorFieldIds = useMemo(() => {
     const ids = new Set<string>();
     for (const item of validationItems) {
-      if (item.severity === "error") {
+      if (item.severity === 'error') {
         ids.add(item.fieldId);
       }
     }
@@ -248,7 +261,7 @@ export function DocumentEditor({
   const cellErrors = useMemo(() => {
     const keys = new Set<string>();
     for (const issue of designQuality.issues) {
-      if (issue.severity === "error" && issue.rowIndex !== undefined && issue.columnKey) {
+      if (issue.severity === 'error' && issue.rowIndex !== undefined && issue.columnKey) {
         keys.add(`${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`);
       }
     }
@@ -258,7 +271,7 @@ export function DocumentEditor({
   const cellWarnings = useMemo(() => {
     const keys = new Set<string>();
     for (const issue of designQuality.issues) {
-      if (issue.severity === "warning" && issue.rowIndex !== undefined && issue.columnKey) {
+      if (issue.severity === 'warning' && issue.rowIndex !== undefined && issue.columnKey) {
         keys.add(`${issue.fieldId}:row${issue.rowIndex}:${issue.columnKey}`);
       }
     }
@@ -266,7 +279,8 @@ export function DocumentEditor({
   }, [designQuality.issues]);
 
   const selectedSection = currentDocument
-    ? (currentDocument.sections.find((section) => section.id === selectedSectionId) ?? currentDocument.sections[0])
+    ? (currentDocument.sections.find((section) => section.id === selectedSectionId) ??
+      currentDocument.sections[0])
     : undefined;
 
   const handleFieldValueChange = (fieldId: string, value: FieldValue) => {
@@ -318,7 +332,7 @@ export function DocumentEditor({
       // Initialize section selection for new document
       setSelectedSectionIdByDocument((prev) => ({
         ...prev,
-        [newDoc.id]: newDoc.sections[0]?.id ?? "",
+        [newDoc.id]: newDoc.sections[0]?.id ?? '',
       }));
 
       // Select the new document
@@ -385,59 +399,56 @@ export function DocumentEditor({
     [projectState.documents, selectedDocumentId, onDeleteDocument]
   );
 
-  const handleReorderDocument = useCallback(
-    (documentId: string, direction: "up" | "down") => {
-      setProjectState((prev) => {
-        // Group documents by kind to reorder within the same kind group
-        const kindGroups = new Map<string, Document[]>();
-        for (const doc of prev.documents) {
-          const existing = kindGroups.get(doc.kind) ?? [];
-          existing.push(doc);
-          kindGroups.set(doc.kind, existing);
-        }
+  const handleReorderDocument = useCallback((documentId: string, direction: 'up' | 'down') => {
+    setProjectState((prev) => {
+      // Group documents by kind to reorder within the same kind group
+      const kindGroups = new Map<string, Document[]>();
+      for (const doc of prev.documents) {
+        const existing = kindGroups.get(doc.kind) ?? [];
+        existing.push(doc);
+        kindGroups.set(doc.kind, existing);
+      }
 
-        // Find the document and its group
-        const targetDoc = prev.documents.find((doc) => doc.id === documentId);
-        if (!targetDoc) return prev;
+      // Find the document and its group
+      const targetDoc = prev.documents.find((doc) => doc.id === documentId);
+      if (!targetDoc) return prev;
 
-        const group = kindGroups.get(targetDoc.kind);
-        if (!group) return prev;
+      const group = kindGroups.get(targetDoc.kind);
+      if (!group) return prev;
 
-        const indexInGroup = group.findIndex((doc) => doc.id === documentId);
-        if (indexInGroup === -1) return prev;
+      const indexInGroup = group.findIndex((doc) => doc.id === documentId);
+      if (indexInGroup === -1) return prev;
 
-        // Check boundaries
-        if (direction === "up" && indexInGroup === 0) return prev;
-        if (direction === "down" && indexInGroup === group.length - 1) return prev;
+      // Check boundaries
+      if (direction === 'up' && indexInGroup === 0) return prev;
+      if (direction === 'down' && indexInGroup === group.length - 1) return prev;
 
-        // Swap within the group
-        const newIndex = direction === "up" ? indexInGroup - 1 : indexInGroup + 1;
-        const newGroup = [...group];
-        [newGroup[indexInGroup], newGroup[newIndex]] = [newGroup[newIndex]!, newGroup[indexInGroup]!];
-        kindGroups.set(targetDoc.kind, newGroup);
+      // Swap within the group
+      const newIndex = direction === 'up' ? indexInGroup - 1 : indexInGroup + 1;
+      const newGroup = [...group];
+      [newGroup[indexInGroup], newGroup[newIndex]] = [newGroup[newIndex]!, newGroup[indexInGroup]!];
+      kindGroups.set(targetDoc.kind, newGroup);
 
-        // Rebuild the documents array maintaining kind order
-        const kindOrder = ["screen-spec", "api-spec", "er-spec", "business-rule"];
-        const newDocuments: Document[] = [];
+      // Rebuild the documents array maintaining kind order
+      const kindOrder = ['screen-spec', 'api-spec', 'er-spec', 'business-rule'];
+      const newDocuments: Document[] = [];
 
-        for (const kind of kindOrder) {
-          const docs = kindGroups.get(kind);
-          if (docs) {
-            newDocuments.push(...docs);
-            kindGroups.delete(kind);
-          }
-        }
-
-        // Add any remaining kinds
-        for (const docs of kindGroups.values()) {
+      for (const kind of kindOrder) {
+        const docs = kindGroups.get(kind);
+        if (docs) {
           newDocuments.push(...docs);
+          kindGroups.delete(kind);
         }
+      }
 
-        return { ...prev, documents: newDocuments };
-      });
-    },
-    []
-  );
+      // Add any remaining kinds
+      for (const docs of kindGroups.values()) {
+        newDocuments.push(...docs);
+      }
+
+      return { ...prev, documents: newDocuments };
+    });
+  }, []);
 
   const handleDocumentTitleChange = useCallback(
     async (documentId: string, newTitle: string) => {
@@ -476,7 +487,7 @@ export function DocumentEditor({
   );
 
   const handleNavigateToField = useCallback(
-    (documentId: string, sectionId: string, fieldId: string, rowIndex?: number) => {
+    (documentId: string, sectionId: string, fieldId: string, _rowIndex?: number) => {
       const isCrossDocument = documentId !== currentDocument?.id;
       if (isCrossDocument) {
         setSelectedDocumentId(documentId);
@@ -488,9 +499,12 @@ export function DocumentEditor({
         }));
       }
       // Use longer delay for cross-document navigation to allow re-render
-      setTimeout(() => {
-        setFocusFieldId(fieldId);
-      }, isCrossDocument ? 150 : 50);
+      setTimeout(
+        () => {
+          setFocusFieldId(fieldId);
+        },
+        isCrossDocument ? 150 : 50
+      );
     },
     [selectedSectionId, currentDocument?.id]
   );
@@ -499,19 +513,25 @@ export function DocumentEditor({
     setFocusFieldId(null);
   }, []);
 
-  const handleNavigateToReference = useCallback((documentId: string, sectionId?: string, fieldId?: string) => {
-    // Navigate directly to the referenced document
-    const targetDoc = projectState.documents.find((doc) => doc.id === documentId);
-    if (!targetDoc) return;
+  const handleNavigateToReference = useCallback(
+    (documentId: string, sectionId?: string, fieldId?: string) => {
+      // Navigate directly to the referenced document
+      const targetDoc = projectState.documents.find((doc) => doc.id === documentId);
+      if (!targetDoc) return;
 
-    const targetSectionId = sectionId || targetDoc.sections[0]?.id || "";
-    handleNavigateToField(documentId, targetSectionId, fieldId ?? "");
-  }, [projectState.documents, handleNavigateToField]);
+      const targetSectionId = sectionId || targetDoc.sections[0]?.id || '';
+      handleNavigateToField(documentId, targetSectionId, fieldId ?? '');
+    },
+    [projectState.documents, handleNavigateToField]
+  );
 
-  const handleHealthNavigateToDocument = useCallback((documentId: string, sectionId: string, fieldId: string) => {
-    setViewMode("editor");
-    handleNavigateToField(documentId, sectionId, fieldId);
-  }, [handleNavigateToField]);
+  const handleHealthNavigateToDocument = useCallback(
+    (documentId: string, sectionId: string, fieldId: string) => {
+      setViewMode('editor');
+      handleNavigateToField(documentId, sectionId, fieldId);
+    },
+    [handleNavigateToField]
+  );
 
   const handleImportProject = useCallback(
     (importedProject: Project, importedDocumentStates: DocumentEditorState[]) => {
@@ -527,7 +547,7 @@ export function DocumentEditor({
       // Initialize section selections for all documents
       const sectionSelections: Record<string, string> = {};
       for (const doc of importedProject.documents) {
-        sectionSelections[doc.id] = doc.sections[0]?.id ?? "";
+        sectionSelections[doc.id] = doc.sections[0]?.id ?? '';
       }
       setSelectedSectionIdByDocument(sectionSelections);
 
@@ -559,7 +579,7 @@ export function DocumentEditor({
       // Initialize section selection
       setSelectedSectionIdByDocument((prev) => ({
         ...prev,
-        [importedDocument.id]: importedDocument.sections[0]?.id ?? "",
+        [importedDocument.id]: importedDocument.sections[0]?.id ?? '',
       }));
 
       // Select the imported document
@@ -573,56 +593,64 @@ export function DocumentEditor({
     return (
       <main
         style={{
-          fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
-          backgroundColor: "#F1F5F9",
-          minHeight: "100vh",
-          padding: "24px",
-          boxSizing: "border-box",
+          fontFamily:
+            "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
+          backgroundColor: '#F1F5F9',
+          minHeight: '100vh',
+          padding: '24px',
+          boxSizing: 'border-box',
         }}
       >
-        <header style={{ marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <header
+          style={{
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <div>
-            <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "#0F172A" }}>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#0F172A' }}>
               SpecForge
             </h1>
-            <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.875rem" }}>
+            <p style={{ margin: '4px 0 0', color: '#64748B', fontSize: '0.875rem' }}>
               {projectState.title}
             </p>
           </div>
         </header>
         <div
           style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: "8px",
-            border: "1px solid #E2E8F0",
-            padding: "48px",
-            textAlign: "center",
+            backgroundColor: '#FFFFFF',
+            borderRadius: '8px',
+            border: '1px solid #E2E8F0',
+            padding: '48px',
+            textAlign: 'center',
           }}
         >
-          <p style={{ margin: "0 0 24px", color: "#64748B", fontSize: "0.875rem" }}>
+          <p style={{ margin: '0 0 24px', color: '#64748B', fontSize: '0.875rem' }}>
             ドキュメントがありません。最初のドキュメントを追加してください。
           </p>
-          <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
-            {(["screen-spec", "api-spec", "er-spec", "business-rule"] as const).map((kind) => (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {(['screen-spec', 'api-spec', 'er-spec', 'business-rule'] as const).map((kind) => (
               <button
                 key={kind}
                 type="button"
                 onClick={() => handleAddDocument(kind)}
                 style={{
-                  padding: "10px 20px",
-                  fontSize: "0.875rem",
+                  padding: '10px 20px',
+                  fontSize: '0.875rem',
                   fontWeight: 600,
-                  color: "#FFFFFF",
-                  backgroundColor: "#3B82F6",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
+                  color: '#FFFFFF',
+                  backgroundColor: '#3B82F6',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
                 }}
               >
-                {kind === "screen-spec" && "画面仕様書を追加"}
-                {kind === "api-spec" && "API仕様書を追加"}
-                {kind === "er-spec" && "ER設計書を追加"}
-                {kind === "business-rule" && "ビジネスルールを追加"}
+                {kind === 'screen-spec' && '画面仕様書を追加'}
+                {kind === 'api-spec' && 'API仕様書を追加'}
+                {kind === 'er-spec' && 'ER設計書を追加'}
+                {kind === 'business-rule' && 'ビジネスルールを追加'}
               </button>
             ))}
           </div>
@@ -634,43 +662,51 @@ export function DocumentEditor({
   return (
     <main
       style={{
-        fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
-        backgroundColor: "#F1F5F9",
-        minHeight: "100vh",
-        padding: "24px",
-        boxSizing: "border-box" as const,
-        maxWidth: "100vw",
-        overflow: "hidden",
+        fontFamily:
+          "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif",
+        backgroundColor: '#F1F5F9',
+        minHeight: '100vh',
+        padding: '24px',
+        boxSizing: 'border-box' as const,
+        maxWidth: '100vw',
+        overflow: 'hidden',
       }}
     >
-      <header style={{ marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <header
+        style={{
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div>
-          <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "#0F172A" }}>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#0F172A' }}>
             SpecForge
           </h1>
-          <p style={{ margin: "4px 0 0", color: "#64748B", fontSize: "0.875rem" }}>
+          <p style={{ margin: '4px 0 0', color: '#64748B', fontSize: '0.875rem' }}>
             スキーマ駆動の構造化設計書エディタ
           </p>
         </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {isSaving && (
             <span
               style={{
-                fontSize: "0.75rem",
-                color: "#64748B",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                marginRight: "8px",
+                fontSize: '0.75rem',
+                color: '#64748B',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginRight: '8px',
               }}
             >
               <span
                 style={{
-                  width: "8px",
-                  height: "8px",
-                  backgroundColor: "#3B82F6",
-                  borderRadius: "50%",
-                  animation: "pulse 1.5s ease-in-out infinite",
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: '#3B82F6',
+                  borderRadius: '50%',
+                  animation: 'pulse 1.5s ease-in-out infinite',
                 }}
               />
               保存中...
@@ -680,15 +716,15 @@ export function DocumentEditor({
             type="button"
             onClick={() => setShowImportModal(true)}
             style={{
-              padding: "6px 14px",
-              fontSize: "0.8rem",
+              padding: '6px 14px',
+              fontSize: '0.8rem',
               fontWeight: 600,
-              color: "#475569",
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #CBD5E1",
-              borderRadius: "6px",
-              cursor: "pointer",
-              transition: "all 0.15s",
+              color: '#475569',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
           >
             インポート
@@ -697,300 +733,307 @@ export function DocumentEditor({
             type="button"
             onClick={() => setShowExportModal(true)}
             style={{
-              padding: "6px 14px",
-              fontSize: "0.8rem",
+              padding: '6px 14px',
+              fontSize: '0.8rem',
               fontWeight: 600,
-              color: "#475569",
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #CBD5E1",
-              borderRadius: "6px",
-              cursor: "pointer",
-              transition: "all 0.15s",
+              color: '#475569',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
           >
             エクスポート
           </button>
           <button
             type="button"
-            onClick={() => setViewMode(viewMode === "editor" ? "health" : "editor")}
+            onClick={() => setViewMode(viewMode === 'editor' ? 'health' : 'editor')}
             style={{
-              padding: "6px 14px",
-              fontSize: "0.8rem",
+              padding: '6px 14px',
+              fontSize: '0.8rem',
               fontWeight: 600,
-              color: viewMode === "health" ? "#FFFFFF" : "#475569",
-              backgroundColor: viewMode === "health" ? "#3B82F6" : "#FFFFFF",
-              border: `1px solid ${viewMode === "health" ? "#3B82F6" : "#CBD5E1"}`,
-              borderRadius: "6px",
-              cursor: "pointer",
-              transition: "all 0.15s",
+              color: viewMode === 'health' ? '#FFFFFF' : '#475569',
+              backgroundColor: viewMode === 'health' ? '#3B82F6' : '#FFFFFF',
+              border: `1px solid ${viewMode === 'health' ? '#3B82F6' : '#CBD5E1'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
           >
-            {viewMode === "health" ? "エディタに戻る" : "プロジェクトヘルス"}
+            {viewMode === 'health' ? 'エディタに戻る' : 'プロジェクトヘルス'}
           </button>
-          <div style={{ width: "1px", height: "24px", backgroundColor: "#E2E8F0", margin: "0 4px" }} />
+          <div
+            style={{ width: '1px', height: '24px', backgroundColor: '#E2E8F0', margin: '0 4px' }}
+          />
           <UserMenu />
         </div>
       </header>
 
-      {viewMode === "health" ? (
+      {viewMode === 'health' ? (
         <ProjectHealthDashboard
           project={projectState}
           documentStates={documentStates}
           projectValidation={projectQuality}
           allValidationItems={allValidationItems}
           onNavigateToDocument={handleHealthNavigateToDocument}
-          onBack={() => setViewMode("editor")}
+          onBack={() => setViewMode('editor')}
         />
       ) : (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "240px 1fr 320px",
-          gap: "16px",
-          alignItems: "start",
-          minWidth: 0,
-        }}
-      >
-        <aside
+        <div
           style={{
-            border: "1px solid #E2E8F0",
-            borderRadius: "8px",
-            padding: "16px",
-            backgroundColor: "#FFFFFF",
+            display: 'grid',
+            gridTemplateColumns: '240px 1fr 320px',
+            gap: '16px',
+            alignItems: 'start',
             minWidth: 0,
           }}
         >
-          {/* Project title */}
-          {editingProjectTitle ? (
-            <input
-              type="text"
-              autoFocus
-              maxLength={100}
-              defaultValue={projectState.title}
-              onBlur={async (e) => {
-                const newTitle = e.target.value.trim();
-                if (newTitle) {
-                  if (onProjectTitleChange) {
-                    await onProjectTitleChange(newTitle);
-                  } else {
-                    setProjectState((prev) => ({ ...prev, title: newTitle }));
-                  }
-                }
-                setEditingProjectTitle(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  (e.target as HTMLInputElement).blur();
-                } else if (e.key === "Escape") {
-                  setEditingProjectTitle(false);
-                }
-              }}
-              style={{
-                margin: "0 0 12px",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                color: "#0F172A",
-                border: "1px solid #3B82F6",
-                borderRadius: "4px",
-                padding: "2px 6px",
-                width: "100%",
-                boxSizing: "border-box",
-                outline: "none",
-                letterSpacing: "0.05em",
-              }}
-            />
-          ) : (
-            <h2
-              style={{
-                margin: "0 0 12px",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                color: "#64748B",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-              title="クリックしてプロジェクト名を編集"
-              onClick={() => setEditingProjectTitle(true)}
-            >
-              Project · {projectState.title}
-              <span style={{ fontSize: "0.65rem", color: "#94A3B8", textTransform: "none" }}>
-                (編集)
-              </span>
-            </h2>
-          )}
-
-          {/* Document list */}
-          <DocumentList
-            documents={projectState.documents}
-            selectedDocumentId={selectedDocumentId}
-            onSelectDocument={handleDocumentSelect}
-            onAddDocument={handleAddDocument}
-            onDeleteDocument={projectState.documents.length > 1 ? handleDeleteDocument : undefined}
-            onReorderDocument={handleReorderDocument}
-          />
-
-          {/* Divider */}
-          <div
+          <aside
             style={{
-              height: "1px",
-              backgroundColor: "#E2E8F0",
-              margin: "12px 0",
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              padding: '16px',
+              backgroundColor: '#FFFFFF',
+              minWidth: 0,
             }}
-          />
-
-          {/* Current document info with editable title */}
-          {editingTitleDocId === currentDocument.id ? (
-            <input
-              type="text"
-              autoFocus
-              defaultValue={currentDocument.title}
-              onBlur={(e) => {
-                const newTitle = e.target.value.trim();
-                if (newTitle && newTitle !== currentDocument.title) {
-                  handleDocumentTitleChange(currentDocument.id, newTitle);
-                }
-                setEditingTitleDocId(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  (e.target as HTMLInputElement).blur();
-                } else if (e.key === "Escape") {
-                  setEditingTitleDocId(null);
-                }
-              }}
-              style={{
-                margin: "0 0 4px",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                color: "#0F172A",
-                border: "1px solid #3B82F6",
-                borderRadius: "4px",
-                padding: "2px 6px",
-                width: "100%",
-                boxSizing: "border-box",
-                outline: "none",
-              }}
-            />
-          ) : (
-            <h3
-              style={{
-                margin: "0 0 4px",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                color: "#0F172A",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-              title="クリックしてタイトルを編集"
-              onClick={() => setEditingTitleDocId(currentDocument.id)}
-            >
-              {currentDocument.title}
-              <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
-                (編集)
-              </span>
-            </h3>
-          )}
-          <p style={{ margin: "0 0 12px", color: "#94A3B8", fontSize: "0.75rem" }}>
-            種別: {currentDocument.kind}　／　バージョン: {currentDocument.version}
-            <br />
-            key: {currentDocument.key}
-          </p>
-
-          {/* Section list */}
-          <SectionList
-            sections={currentDocument.sections}
-            selectedSectionId={selectedSectionId}
-            missingRequiredBySection={validation.missingRequiredBySection}
-            issueCountBySection={designQuality.issueCountBySection}
-            fieldValues={currentDocumentState.fieldValues}
-            onSelectSection={(sectionId) =>
-              setSelectedSectionIdByDocument((prev) => ({
-                ...prev,
-                [currentDocument.id]: sectionId,
-              }))
-            }
-          />
-        </aside>
-
-        <section
-          key={`center:${currentDocument.id}`}
-          style={{
-            border: "1px solid #E2E8F0",
-            borderRadius: "8px",
-            padding: "16px",
-            backgroundColor: "#FFFFFF",
-            minWidth: 0,
-          }}
-        >
-          {/* Edit / Preview toggle */}
-          <div style={{ display: "flex", gap: "0", borderBottom: "1px solid #E2E8F0", marginBottom: "16px" }}>
-            {(["edit", "preview"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setCenterMode(mode)}
-                style={{
-                  padding: "8px 16px",
-                  fontSize: "0.8rem",
-                  fontWeight: centerMode === mode ? 600 : 400,
-                  color: centerMode === mode ? "#3B82F6" : "#64748B",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  borderBottom: centerMode === mode ? "2px solid #3B82F6" : "2px solid transparent",
-                  cursor: "pointer",
-                  transition: "color 0.15s, border-color 0.15s",
+          >
+            {/* Project title */}
+            {editingProjectTitle ? (
+              <input
+                type="text"
+                autoFocus
+                maxLength={100}
+                defaultValue={projectState.title}
+                onBlur={async (e) => {
+                  const newTitle = e.target.value.trim();
+                  if (newTitle) {
+                    if (onProjectTitleChange) {
+                      await onProjectTitleChange(newTitle);
+                    } else {
+                      setProjectState((prev) => ({ ...prev, title: newTitle }));
+                    }
+                  }
+                  setEditingProjectTitle(false);
                 }}
-              >
-                {mode === "edit" ? "編集" : "プレビュー"}
-              </button>
-            ))}
-          </div>
-
-          {centerMode === "edit" ? (
-            selectedSection ? (
-              <SectionForm
-                section={selectedSection}
-                fieldValues={currentDocumentState.fieldValues}
-                errorFieldIds={errorFieldIds}
-                cellErrors={cellErrors}
-                cellWarnings={cellWarnings}
-                focusFieldId={focusFieldId}
-                fieldRefs={fieldRefs}
-                onValueChange={handleFieldValueChange}
-                onFocusHandled={handleFocusHandled}
-                project={projectState}
-                documentStates={documentStates}
-                onNavigateToReference={handleNavigateToReference}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    (e.target as HTMLInputElement).blur();
+                  } else if (e.key === 'Escape') {
+                    setEditingProjectTitle(false);
+                  }
+                }}
+                style={{
+                  margin: '0 0 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: '#0F172A',
+                  border: '1px solid #3B82F6',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                  letterSpacing: '0.05em',
+                }}
               />
             ) : (
-              <p style={{ color: "#64748B" }}>セクションが存在しません。</p>
-            )
-          ) : (
-            <DocumentPreview
-              document={currentDocument}
-              state={currentDocumentState}
-            />
-          )}
-        </section>
+              <h2
+                style={{
+                  margin: '0 0 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: '#64748B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                title="クリックしてプロジェクト名を編集"
+                onClick={() => setEditingProjectTitle(true)}
+              >
+                Project · {projectState.title}
+                <span style={{ fontSize: '0.65rem', color: '#94A3B8', textTransform: 'none' }}>
+                  (編集)
+                </span>
+              </h2>
+            )}
 
-        <RightPanel
-          key={`right:${currentDocument.id}`}
-          document={currentDocument}
-          state={currentDocumentState}
-          validationItems={validationItems}
-          allValidationItems={allValidationItems}
-          projectValidation={projectQuality}
-          project={projectState}
-          documentStates={documentStates}
-          onNavigateToField={handleNavigateToField}
-        />
-      </div>
+            {/* Document list */}
+            <DocumentList
+              documents={projectState.documents}
+              selectedDocumentId={selectedDocumentId}
+              onSelectDocument={handleDocumentSelect}
+              onAddDocument={handleAddDocument}
+              onDeleteDocument={
+                projectState.documents.length > 1 ? handleDeleteDocument : undefined
+              }
+              onReorderDocument={handleReorderDocument}
+            />
+
+            {/* Divider */}
+            <div
+              style={{
+                height: '1px',
+                backgroundColor: '#E2E8F0',
+                margin: '12px 0',
+              }}
+            />
+
+            {/* Current document info with editable title */}
+            {editingTitleDocId === currentDocument.id ? (
+              <input
+                type="text"
+                autoFocus
+                defaultValue={currentDocument.title}
+                onBlur={(e) => {
+                  const newTitle = e.target.value.trim();
+                  if (newTitle && newTitle !== currentDocument.title) {
+                    handleDocumentTitleChange(currentDocument.id, newTitle);
+                  }
+                  setEditingTitleDocId(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    (e.target as HTMLInputElement).blur();
+                  } else if (e.key === 'Escape') {
+                    setEditingTitleDocId(null);
+                  }
+                }}
+                style={{
+                  margin: '0 0 4px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#0F172A',
+                  border: '1px solid #3B82F6',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            ) : (
+              <h3
+                style={{
+                  margin: '0 0 4px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#0F172A',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                title="クリックしてタイトルを編集"
+                onClick={() => setEditingTitleDocId(currentDocument.id)}
+              >
+                {currentDocument.title}
+                <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>(編集)</span>
+              </h3>
+            )}
+            <p style={{ margin: '0 0 12px', color: '#94A3B8', fontSize: '0.75rem' }}>
+              種別: {currentDocument.kind} / バージョン: {currentDocument.version}
+              <br />
+              key: {currentDocument.key}
+            </p>
+
+            {/* Section list */}
+            <SectionList
+              sections={currentDocument.sections}
+              selectedSectionId={selectedSectionId}
+              missingRequiredBySection={validation.missingRequiredBySection}
+              issueCountBySection={designQuality.issueCountBySection}
+              fieldValues={currentDocumentState.fieldValues}
+              onSelectSection={(sectionId) =>
+                setSelectedSectionIdByDocument((prev) => ({
+                  ...prev,
+                  [currentDocument.id]: sectionId,
+                }))
+              }
+            />
+          </aside>
+
+          <section
+            key={`center:${currentDocument.id}`}
+            style={{
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              padding: '16px',
+              backgroundColor: '#FFFFFF',
+              minWidth: 0,
+            }}
+          >
+            {/* Edit / Preview toggle */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '0',
+                borderBottom: '1px solid #E2E8F0',
+                marginBottom: '16px',
+              }}
+            >
+              {(['edit', 'preview'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setCenterMode(mode)}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: centerMode === mode ? 600 : 400,
+                    color: centerMode === mode ? '#3B82F6' : '#64748B',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom:
+                      centerMode === mode ? '2px solid #3B82F6' : '2px solid transparent',
+                    cursor: 'pointer',
+                    transition: 'color 0.15s, border-color 0.15s',
+                  }}
+                >
+                  {mode === 'edit' ? '編集' : 'プレビュー'}
+                </button>
+              ))}
+            </div>
+
+            {centerMode === 'edit' ? (
+              selectedSection ? (
+                <SectionForm
+                  section={selectedSection}
+                  fieldValues={currentDocumentState.fieldValues}
+                  errorFieldIds={errorFieldIds}
+                  cellErrors={cellErrors}
+                  cellWarnings={cellWarnings}
+                  focusFieldId={focusFieldId}
+                  fieldRefs={fieldRefs}
+                  onValueChange={handleFieldValueChange}
+                  onFocusHandled={handleFocusHandled}
+                  project={projectState}
+                  documentStates={documentStates}
+                  onNavigateToReference={handleNavigateToReference}
+                />
+              ) : (
+                <p style={{ color: '#64748B' }}>セクションが存在しません。</p>
+              )
+            ) : (
+              <DocumentPreview document={currentDocument} state={currentDocumentState} />
+            )}
+          </section>
+
+          <RightPanel
+            key={`right:${currentDocument.id}`}
+            document={currentDocument}
+            state={currentDocumentState}
+            validationItems={validationItems}
+            allValidationItems={allValidationItems}
+            projectValidation={projectQuality}
+            project={projectState}
+            documentStates={documentStates}
+            onNavigateToField={handleNavigateToField}
+          />
+        </div>
       )}
 
       {/* Export Modal */}

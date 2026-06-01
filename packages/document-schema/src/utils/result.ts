@@ -75,20 +75,14 @@ export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T {
 /**
  * Map over a successful result.
  */
-export function map<T, U, E>(
-  result: Result<T, E>,
-  fn: (value: T) => U
-): Result<U, E> {
+export function map<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
   return result.ok ? ok(fn(result.value)) : result;
 }
 
 /**
  * Map over a failed result's error.
  */
-export function mapErr<T, E, F>(
-  result: Result<T, E>,
-  fn: (error: E) => F
-): Result<T, F> {
+export function mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
   return result.ok ? result : err(fn(result.error));
 }
 
