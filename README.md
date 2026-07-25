@@ -90,9 +90,28 @@ docker compose down
 4. 汎用的すぎる `utils` / `common` の乱立を避ける
 5. 仕様と思想を docs に明文化し、実装より先に整合性を取る
 
+## コード品質ツール
+
+ESLint と Prettier を導入しています。
+
+```bash
+# Lint 実行
+pnpm lint
+
+# Lint 自動修正
+pnpm lint:fix
+
+# フォーマット
+pnpm format
+
+# フォーマットチェック
+pnpm format:check
+```
+
 ## ドキュメント
 - Docs Index: `docs/README.md`
 - Product Vision: `docs/product/vision.md`
 - Product Quality Principles: `docs/product/quality-principles.md`
+- User Guide: `docs/product/user-guide.md`
 - Architecture Structure: `docs/architecture/repository-structure.md`
 - Architecture Principles: `docs/architecture/architecture-principles.md`
